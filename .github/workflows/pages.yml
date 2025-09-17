@@ -41,23 +41,37 @@ jobs:
           done
 
       # Validate CSS url(...) targets (no missing ../assets again)
-      - name: Validate CSS asset references
+      - name: Validate CSS asset references (no external deps)
         run: |
-          set -e
+          set -euo pipefail
           node - <<'NODE'
-          const fs=require('fs'), path=require('path');
-          const glob=(p)=>new (require('glob').GlobSync)(p).found;
-          const bad=[];
-          for (const css of glob('**/*.css')) {
-            const text=fs.readFileSync(css,'utf8');
-            for (const m of text.matchAll(/url\((["']?)([^)'"#]+)\1\)/g)) {
-              const p=m[2].trim();
-              if (/^(data:|https?:|\/\/)/i.test(p)) continue; // ignore externals/data
-              const resolved=path.resolve(path.dirname(css), p);
-              if (!fs.existsSync(resolved)) bad.push(`${css} -> ${p} -> ${resolved}`);
+          const fs = require('fs');
+          const path = require('path');
+          function walk(dir, out=[]) {
+            for (const e of fs.readdirSync(dir, { withFileTypes:true })) {
+              const p = path.join(dir, e.name);
+              if (e.isDirectory() && !['.git','node_modules','dist'].includes(e.name)) walk(p, out);
+              else if (e.isFile() && p.endsWith('.css')) out.push(p);
+            }
+            return out;
+          }
+          const cssFiles = walk(process.cwd());
+          const missing = [];
+          const re = /url\(\s*(['"]?)([^'")#]+)(?:\?[^'")]*)?\1\s*\)/g;
+          for (const css of cssFiles) {
+            const text = fs.readFileSync(css, 'utf8');
+            let m;
+            while ((m = re.exec(text))) {
+              const href = m[2].trim();
+              if (/^(data:|https?:|\/\/)/i.test(href)) continue; // ignore externals/data
+              const target = path.resolve(path.dirname(css), href);
+              if (!fs.existsSync(target)) missing.push(`${css} -> ${href}`);
             }
           }
-          if (bad.length){ console.error('Missing assets:\n'+bad.join('\n')); process.exit(1); }
+          if (missing.length) {
+            console.error('Missing CSS assets:\\n' + missing.join('\\n'));
+            process.exit(1);
+          }
           console.log('CSS assets OK');
           NODE
 
