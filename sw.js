@@ -2,6 +2,11 @@
 const CACHE_NAME = 'fcb-kids-v1';
 const OFFLINE_URL = '/fc-barcelona-kids/offline.html';
 
+// Handle instant update messages from page
+self.addEventListener('message', (e) => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
 // Precache minimal shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
