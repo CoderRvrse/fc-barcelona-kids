@@ -1,5 +1,5 @@
 // File: sw.js
-const CACHE_NAME = 'fcb-kids-v1';
+const CACHE_NAME = 'fcb-kids-v4';
 const OFFLINE_URL = '/fc-barcelona-kids/offline.html';
 
 // Handle instant update messages from page
