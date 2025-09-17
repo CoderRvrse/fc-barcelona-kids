@@ -421,11 +421,11 @@
     if ('performance' in window) {
         window.addEventListener('load', () => {
             const navTiming = performance.getEntriesByType('navigation')[0];
-            if (navTiming) {
+            if (navTiming && navTiming.loadEventEnd && navTiming.loadEventStart) {
                 const loadTime = navTiming.loadEventEnd - navTiming.loadEventStart;
                 const domTime = navTiming.domContentLoadedEventEnd - navTiming.domContentLoadedEventStart;
-                console.log(`Page Load Time: ${Math.round(loadTime)}ms`);
-                console.log(`DOM Content Loaded: ${Math.round(domTime)}ms`);
+                if (loadTime > 0) console.log(`Page Load Time: ${Math.round(loadTime)}ms`);
+                if (domTime > 0) console.log(`DOM Content Loaded: ${Math.round(domTime)}ms`);
             }
         });
     }
