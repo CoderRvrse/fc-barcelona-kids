@@ -1,0 +1,60 @@
+name: Auto Regression Guard
+on:
+  workflow_run:
+    workflows: ["Deploy to GitHub Pages"]
+    types: [completed]
+
+jobs:
+  open_issue_on_failure:
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create regression issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const title = `🚨 Regression: ${run.name} #${run.id} failed`;
+            const body = [
+              `**Branch:** ${run.head_branch}`,
+              `**Commit:** ${run.head_commit.id}`,
+              `**Actor:** @${run.actor.login}`,
+              `**URL:** ${run.html_url}`,
+              '',
+              'Auto-created because the post-deploy smoke test or deploy failed.',
+              'Acceptance:',
+              '- Smoke passes on main',
+              '- Console has no errors',
+              '- Offline page reachable',
+              '- robots.txt + sitemap.xml 200'
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title, body, labels: ['regression','ci']
+            });
+
+  # OPTIONAL: open a revert PR automatically (keeps humans in the loop)
+  open_revert_pr:
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main, fetch-depth: 0 }
+      - name: Create revert branch
+        run: |
+          git checkout -b ci/revert-${{ github.event.workflow_run.id }}
+          git revert --no-edit ${{ github.event.workflow_run.head_sha }} || echo "Nothing to revert"
+          git push -u origin ci/revert-${{ github.event.workflow_run.id }}
+      - name: Open PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const head = `ci/revert-${context.payload.workflow_run.id}`;
+            const base = 'main';
+            const title = `chore(ci): revert failing commit ${context.payload.workflow_run.head_sha.substring(0,7)}`;
+            const body = 'Auto-opened because Deploy→Smoke failed. Merge to restore last good state.';
+            await github.rest.pulls.create({ owner: context.repo.owner, repo: context.repo.repo, title, head, base, body, maintainer_can_modify: true });
