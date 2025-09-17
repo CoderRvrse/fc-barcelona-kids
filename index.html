@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FC Barcelona Juniors</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles/main.css" />
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script defer src="scripts/main.js"></script>
+</head>
+<body>
+    <div class="scroll-progress" aria-hidden="true">
+        <span></span>
+    </div>
+    <div class="global-loader" role="status" aria-live="polite">
+        <span class="loader-icon" aria-hidden="true"></span>
+        <span class="loader-text">Warming up the Camp Nou magic...</span>
+    </div>
+    <header class="top-bar" data-observe>
+        <div class="container top-bar__inner">
+            <a class="brand" href="#hero">
+                <span class="crest" aria-hidden="true">
+                    <span class="crest-stripe crest-stripe--blue"></span>
+                    <span class="crest-stripe crest-stripe--garnet"></span>
+                    <span class="crest-cross"></span>
+                    <span class="crest-ball"></span>
+                </span>
+                <span class="brand-text">FC Barcelona Juniors</span>
+            </a>
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+                <span class="sr-only">Toggle menu</span>
+            </button>
+            <nav id="primary-nav" class="primary-nav" data-nav>
+                <a class="nav-link" href="#hero">Home</a>
+                <a class="nav-link" href="#about">About</a>
+                <a class="nav-link" href="#coaches">Coaches</a>
+                <a class="nav-link" href="#schedule">Schedule</a>
+                <a class="nav-link" href="#testimonials">Testimonials</a>
+                <a class="nav-link" href="#join">Join Us</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <section id="hero" class="hero" data-section>
+            <div class="hero-parallax hero-parallax--field" data-parallax data-speed="0.15" aria-hidden="true"></div>
+            <div class="hero-parallax hero-parallax--stadium" data-parallax data-speed="0.25" aria-hidden="true"></div>
+            <div class="floating-ball" aria-hidden="true">
+                <span class="ball"></span>
+                <span class="shadow"></span>
+            </div>
+            <div class="container">
+                <p class="hero-kicker" data-animate>Barcelona methodology for future stars</p>
+                <h1 class="hero-title">
+                    <span class="title-line" data-animate>Play the</span>
+                    <span class="title-line typewriter" data-text="Barca Way"></span>
+                </h1>
+                <p class="hero-subtitle" data-animate>Inspiring the next generation of champions with teamwork, creativity, and respect on and off the pitch.</p>
+                <div class="hero-cta">
+                    <a class="btn primary pulse" href="#join" data-btn="primary">Join the Team</a>
+                    <a class="btn secondary outline" href="#about" data-btn="secondary">Learn More</a>
+                </div>
+                <div class="hero-statistics" data-animate>
+                    <div class="stat-card">
+                        <span class="stat-number" data-count="120">0</span>
+                        <span class="stat-label">Players developed</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" data-count="24">0</span>
+                        <span class="stat-label">Weekly training sessions</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" data-count="15">0</span>
+                        <span class="stat-label">Licensed coaches</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about" data-section>
+            <div class="container">
+                <h2 data-underline>Our Mission</h2>
+                <p class="section-intro">FC Barcelona Juniors is a fun-first academy for players ages 6-12. We develop confident players by blending Barca-inspired technical training with a family atmosphere that celebrates every child.</p>
+                <div class="mission-grid">
+                    <article class="mission-card" tabindex="0" data-animate>
+                        <div class="card-inner">
+                            <div class="card-face card-front">
+                                <span class="value-icon" aria-hidden="true"></span>
+                                <h3>Teamwork</h3>
+                                <p>We teach kids to move the ball, communicate, and support one another like their Barca heroes.</p>
+                            </div>
+                            <div class="card-face card-back">
+                                <p>Small-sided rondos and cooperative challenges build shared habits and leadership from day one.</p>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="mission-card" tabindex="0" data-animate>
+                        <div class="card-inner">
+                            <div class="card-face card-front">
+                                <span class="value-icon" aria-hidden="true"></span>
+                                <h3>Creativity</h3>
+                                <p>Free play, bold ideas, and expression on the field help every player find their flair.</p>
+                            </div>
+                            <div class="card-face card-back">
+                                <p>We mix skill labs with freestyle labs so kids feel brave experimenting with skills that make the crowd cheer.</p>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="mission-card" tabindex="0" data-animate>
+                        <div class="card-inner">
+                            <div class="card-face card-front">
+                                <span class="value-icon" aria-hidden="true"></span>
+                                <h3>Respect</h3>
+                                <p>We model empathy, sportsmanship, and fair play with opponents, referees, and teammates.</p>
+                            </div>
+                            <div class="card-face card-back">
+                                <p>Mindset huddles and parent workshops help the entire family embrace the Barca values of humility and effort.</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <div class="mission-icons" aria-hidden="true">
+                    <span class="icon-ball" data-animate></span>
+                    <span class="icon-ball" data-animate></span>
+                    <span class="icon-ball" data-animate></span>
+                </div>
+            </div>
+        </section>
+
+        <section id="coaches" class="coaches" data-section>
+            <div class="container">
+                <h2 data-underline>Meet the Coaches</h2>
+                <p class="section-intro">UEFA licensed mentors who live the Barca identity and nurture young footballers with heart.</p>
+                <div class="coach-grid">
+                    <article class="coach-card" tabindex="0" data-animate>
+                        <figure class="coach-media">
+                            <img src="https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf?auto=format&amp;fit=crop&amp;w=600&amp;q=80" alt="Coach Marta leading a training session" loading="lazy" />
+                            <span class="photo-frame" aria-hidden="true"></span>
+                        </figure>
+                        <div class="coach-content">
+                            <h3>Coach Marta</h3>
+                            <p>UEFA B licensed and former Barca Femeni standout. Specializes in developing technical footwork and game intelligence.</p>
+                        </div>
+                        <div class="coach-overlay">
+                            <p>Designs position-specific sessions and off-field confidence workshops for our strikers and wingers.</p>
+                        </div>
+                        <div class="skill-badges">
+                            <div class="skill-badge" data-value="95">
+                                <span class="skill-label">Technical Mastery</span>
+                                <span class="skill-bar"><span class="skill-fill"></span></span>
+                            </div>
+                            <div class="skill-badge" data-value="88">
+                                <span class="skill-label">Match IQ</span>
+                                <span class="skill-bar"><span class="skill-fill"></span></span>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="coach-card" tabindex="0" data-animate>
+                        <figure class="coach-media">
+                            <img src="https://images.unsplash.com/photo-1530989811438-3c95327ee46d?auto=format&amp;fit=crop&amp;w=600&amp;q=80" alt="Coach Luis giving instructions" loading="lazy" />
+                            <span class="photo-frame" aria-hidden="true"></span>
+                        </figure>
+                        <div class="coach-content">
+                            <h3>Coach Luis</h3>
+                            <p>10 seasons coaching youth academies in Catalonia. Loves building confident defenders and future captains.</p>
+                        </div>
+                        <div class="coach-overlay">
+                            <p>Captains leadership pods, ensuring every player finds their voice and guides their back line.</p>
+                        </div>
+                        <div class="skill-badges">
+                            <div class="skill-badge" data-value="90">
+                                <span class="skill-label">Leadership</span>
+                                <span class="skill-bar"><span class="skill-fill"></span></span>
+                            </div>
+                            <div class="skill-badge" data-value="86">
+                                <span class="skill-label">Defensive Tactics</span>
+                                <span class="skill-bar"><span class="skill-fill"></span></span>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="coach-card" tabindex="0" data-animate>
+                        <figure class="coach-media">
+                            <img src="https://images.unsplash.com/photo-1517832207067-4db24a2ae47c?auto=format&amp;fit=crop&amp;w=600&amp;q=80" alt="Coach Amir assisting a goalkeeper" loading="lazy" />
+                            <span class="photo-frame" aria-hidden="true"></span>
+                        </figure>
+                        <div class="coach-content">
+                            <h3>Coach Amir</h3>
+                            <p>Goalkeeper mentor who focuses on agility, bravery, and leadership from the back.</p>
+                        </div>
+                        <div class="coach-overlay">
+                            <p>Combines reaction drills with mindfulness routines so keepers stay fearless during penalty drama.</p>
+                        </div>
+                        <div class="skill-badges">
+                            <div class="skill-badge" data-value="93">
+                                <span class="skill-label">Shot Stopping</span>
+                                <span class="skill-bar"><span class="skill-fill"></span></span>
+                            </div>
+                            <div class="skill-badge" data-value="85">
+                                <span class="skill-label">Distribution</span>
+                                <span class="skill-bar"><span class="skill-fill"></span></span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="schedule" class="schedule" data-section>
+            <div class="container">
+                <h2 data-underline>Training Schedule</h2>
+                <p class="section-intro">Choose the squad that matches your young culer's age and experience. Hover or tap on a day to learn more.</p>
+                <div class="schedule-grid" data-schedule>
+                    <article class="schedule-card" data-animate>
+                        <header>
+                            <h3>U8 (Ages 6-7)</h3>
+                            <span class="badge badge-fundamentals">Fundamentals</span>
+                        </header>
+                        <div class="calendar-grid">
+                            <button type="button" class="calendar-slot fundamentals" data-day="Tuesday" data-tooltip="5:00 - 6:15 PM · Skills Lab">Tue</button>
+                            <button type="button" class="calendar-slot matchday" data-day="Saturday" data-tooltip="9:00 - 10:30 AM · Fun Match Play">Sat</button>
+                            <button type="button" class="calendar-slot friendly" data-day="Weekend" data-tooltip="Friendly match every third weekend">Sun</button>
+                        </div>
+                        <ul class="time-slots">
+                            <li>Coordinated movement discovery</li>
+                            <li>1v1 bravery games</li>
+                            <li>Parent &amp; player celebrations</li>
+                        </ul>
+                        <div class="skeleton" aria-hidden="true"></div>
+                    </article>
+                    <article class="schedule-card" data-animate>
+                        <header>
+                            <h3>U10 (Ages 8-9)</h3>
+                            <span class="badge badge-development">Development</span>
+                        </header>
+                        <div class="calendar-grid">
+                            <button type="button" class="calendar-slot fundamentals" data-day="Wednesday" data-tooltip="5:30 - 7:00 PM · Positional Play">Wed</button>
+                            <button type="button" class="calendar-slot training" data-day="Friday" data-tooltip="5:00 - 6:30 PM · Finishing Studio">Fri</button>
+                            <button type="button" class="calendar-slot matchday" data-day="Sunday" data-tooltip="League match · rotating venues">Sun</button>
+                        </div>
+                        <ul class="time-slots">
+                            <li>Tactical rondos with constraints</li>
+                            <li>Finishing circuits and transitions</li>
+                            <li>Weekly video highlights</li>
+                        </ul>
+                        <div class="skeleton" aria-hidden="true"></div>
+                    </article>
+                    <article class="schedule-card" data-animate>
+                        <header>
+                            <h3>U12 (Ages 10-12)</h3>
+                            <span class="badge badge-performance">Performance</span>
+                        </header>
+                        <div class="calendar-grid">
+                            <button type="button" class="calendar-slot training" data-day="Tuesday" data-tooltip="6:00 - 7:30 PM · Tactical rehearsal">Tue</button>
+                            <button type="button" class="calendar-slot training" data-day="Thursday" data-tooltip="6:00 - 7:30 PM · Game model focus">Thu</button>
+                            <button type="button" class="calendar-slot conditioning" data-day="Saturday" data-tooltip="Strength &amp; agility every other weekend">Sat</button>
+                        </div>
+                        <ul class="time-slots">
+                            <li>Match analysis &amp; goals review</li>
+                            <li>Leadership &amp; communication labs</li>
+                            <li>Competitive fixtures twice per month</li>
+                        </ul>
+                        <div class="skeleton" aria-hidden="true"></div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-banner" data-animate>
+            <div class="container">
+                <h2>Summer Camp Registration is Open</h2>
+                <p>One week of Barca-inspired training from July 15-19. Limited to 60 players with daily surprise guests.</p>
+                <a class="btn light" href="#join" data-btn="light">Reserve a Spot</a>
+            </div>
+        </section>
+
+        <section id="testimonials" class="testimonials" data-section>
+            <div class="container">
+                <h2 data-underline>Parent Love</h2>
+                <div class="testimonial-slider" data-carousel>
+                    <button class="slider-control prev" type="button" aria-label="Previous testimonial" data-carousel-prev></button>
+                    <div class="slider-track">
+                        <article class="testimonial-slide is-active" data-animate>
+                            <figure>
+                                <div class="parent-photo">
+                                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&amp;fit=crop&amp;w=200&amp;q=80" alt="Parent Ana smiling" loading="lazy" />
+                                </div>
+                                <blockquote>
+                                    <span class="quote-mark" aria-hidden="true">“</span>
+                                    My son can't wait for training days. The coaches make learning fun and his ball control has improved so much.
+                                </blockquote>
+                                <figcaption>— Ana, U8 parent</figcaption>
+                            </figure>
+                        </article>
+                        <article class="testimonial-slide" data-animate>
+                            <figure>
+                                <div class="parent-photo">
+                                    <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&amp;fit=crop&amp;w=200&amp;q=80" alt="Parent Jordi cheering" loading="lazy" />
+                                </div>
+                                <blockquote>
+                                    <span class="quote-mark" aria-hidden="true">“</span>
+                                    Positive, organized, and true to Barca's values. Our daughter is more confident on and off the field.
+                                </blockquote>
+                                <figcaption>— Jordi, U10 parent</figcaption>
+                            </figure>
+                        </article>
+                        <article class="testimonial-slide" data-animate>
+                            <figure>
+                                <div class="parent-photo">
+                                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&amp;fit=crop&amp;w=200&amp;q=80" alt="Parent Sara celebrating a goal" loading="lazy" />
+                                </div>
+                                <blockquote>
+                                    <span class="quote-mark" aria-hidden="true">“</span>
+                                    The staff celebrates every little win. The atmosphere feels like stepping into the Camp Nou.
+                                </blockquote>
+                                <figcaption>— Sara, U12 parent</figcaption>
+                            </figure>
+                        </article>
+                    </div>
+                    <button class="slider-control next" type="button" aria-label="Next testimonial" data-carousel-next></button>
+                    <ul class="slider-dots" role="tablist">
+                        <li><button type="button" class="dot is-active" aria-label="Go to testimonial 1" role="tab"></button></li>
+                        <li><button type="button" class="dot" aria-label="Go to testimonial 2" role="tab"></button></li>
+                        <li><button type="button" class="dot" aria-label="Go to testimonial 3" role="tab"></button></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="join" class="join" data-section>
+            <div class="camp-nou-silhouette" aria-hidden="true"></div>
+            <div class="container">
+                <h2 data-underline>Join FC Barcelona Juniors</h2>
+                <p>Tell us about your player and we'll share next steps within 48 hours. We can't wait to welcome another culer!</p>
+                <form class="interest-form" action="#" method="post" novalidate>
+                    <div class="form-row">
+                        <label>
+                            Player Name
+                            <input type="text" name="playerName" required autocomplete="given-name" />
+                            <span class="field-message" aria-live="polite"></span>
+                        </label>
+                        <label>
+                            Age Group
+                            <select name="ageGroup" required>
+                                <option value="">Select</option>
+                                <option value="U8">U8 (6-7)</option>
+                                <option value="U10">U10 (8-9)</option>
+                                <option value="U12">U12 (10-12)</option>
+                            </select>
+                            <span class="field-message" aria-live="polite"></span>
+                        </label>
+                    </div>
+                    <label>
+                        Parent Email
+                        <input type="email" name="parentEmail" required autocomplete="email" />
+                        <span class="field-message" aria-live="polite"></span>
+                    </label>
+                    <label>
+                        Notes or Questions
+                        <textarea name="notes" rows="3" placeholder="Tell us about your player's goals"></textarea>
+                        <span class="field-message" aria-live="polite"></span>
+                    </label>
+                    <div class="form-actions">
+                        <button class="btn primary" type="submit" data-btn="primary">
+                            <span class="btn-label">Send Interest</span>
+                            <span class="btn-spinner" aria-hidden="true"></span>
+                        </button>
+                        <span class="form-status" role="status" aria-live="polite"></span>
+                    </div>
+                </form>
+                <div class="confetti-container" aria-hidden="true"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" data-animate>
+        <div class="container">
+            <div>
+                <strong>FC Barcelona Juniors</strong>
+                <p>Ciutat Esportiva - Sant Joan Despi</p>
+                <p><a href="tel:+34930000000">+34 930 000 000</a> · <a href="mailto:info@fcbjuniors.com">info@fcbjuniors.com</a></p>
+            </div>
+            <div class="footer-links">
+                <a href="#hero">Top</a>
+                <a href="#schedule">Programs</a>
+                <a href="#join">Contact</a>
+                <a href="#">Privacy</a>
+            </div>
+        </div>
+        <p class="credit">Visca Barca - 2025</p>
+    </footer>
+
+    <div class="floating-mascot" aria-hidden="true">
+        <span class="mascot-body"></span>
+        <span class="mascot-ball"></span>
+    </div>
+
+    <div class="sr-only" id="animation-pref-note">Animations reduce automatically when your device requests reduced motion.</div>
+</body>
+</html>
