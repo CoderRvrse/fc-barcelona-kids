@@ -20,6 +20,22 @@
 
     <!-- Accessibility -->
     <meta name="color-scheme" content="light dark">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://coderrvse.github.io/fc-barcelona-kids/">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SportsOrganization",
+      "name": "FC Barcelona Junior Kids",
+      "url": "https://coderrvse.github.io/fc-barcelona-kids/",
+      "sport": "Soccer",
+      "areaServed": "Community youth program",
+      "description": "Playful, family-friendly soccer program for kids."
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -417,5 +433,12 @@
     </div>
 
     <div class="sr-only" id="animation-pref-note">Animations reduce automatically when your device requests reduced motion.</div>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: '/fc-barcelona-kids/' })
+        .catch(console.error);
+    }
+    </script>
 </body>
 </html>
