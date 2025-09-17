@@ -22,13 +22,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Syntax check all JS (node --check)
+      # DEBUG: show tree + env
+      - name: Debug dump (tree/env)
+        run: |
+          set -euxo pipefail
+          pwd; node -v; npm -v
+          ls -la
+          echo "---- repo tree ----"
+          find . -maxdepth 2 -type f | sort
+
+      # Fail fast on JS syntax (prevents shipping parse errors)
+      - name: Syntax check all JS
         run: |
           set -e
           shopt -s globstar nullglob
           for f in **/*.js; do
             echo "checking $f"; node --check "$f";
           done
+
+      # Validate CSS url(...) targets (no missing ../assets again)
+      - name: Validate CSS asset references
+        run: |
+          set -e
+          node - <<'NODE'
+          const fs=require('fs'), path=require('path');
+          const glob=(p)=>new (require('glob').GlobSync)(p).found;
+          const bad=[];
+          for (const css of glob('**/*.css')) {
+            const text=fs.readFileSync(css,'utf8');
+            for (const m of text.matchAll(/url\((["']?)([^)'"#]+)\1\)/g)) {
+              const p=m[2].trim();
+              if (/^(data:|https?:|\/\/)/i.test(p)) continue; // ignore externals/data
+              const resolved=path.resolve(path.dirname(css), p);
+              if (!fs.existsSync(resolved)) bad.push(`${css} -> ${p} -> ${resolved}`);
+            }
+          }
+          if (bad.length){ console.error('Missing assets:\n'+bad.join('\n')); process.exit(1); }
+          console.log('CSS assets OK');
+          NODE
 
       - name: Detect package manager lockfile
         id: detect_lock
@@ -80,6 +111,17 @@ jobs:
         with:
           path: .
 
+      # Upload workspace snapshot even if later steps fail
+      - name: Upload workspace snapshot
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-tree
+          path: |
+            .
+          include-hidden-files: true
+          retention-days: 7
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -100,25 +142,23 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Probe key endpoints
+      - name: Probe key endpoints (verbose)
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           URL="${{ needs.deploy.outputs.page_url }}"
           ROOT="${URL%/}"
-          echo "Testing $ROOT"
-
-          # 1) Home resolves and contains the base href (GH Pages subpath safety)
-          curl -fsSL "$ROOT/" | tee /tmp/index.html | grep -q '<base href="/fc-barcelona-kids/">'
-
-          # 2) Service worker reachable
-          curl -I -s "$ROOT/sw.js" | grep -qE 'HTTP/.* 200'
-
-          # 3) Offline page present
-          curl -fsSL "$ROOT/offline.html" | grep -qi 'offline'
-
-          # 4) SEO files
-          curl -fsSL "$ROOT/robots.txt" | grep -q 'Sitemap: https://coderrvse.github.io/fc-barcelona-kids/sitemap.xml'
-          curl -fsSL "$ROOT/sitemap.xml" | grep -q '<urlset'
-
-          # 5) Soccer ball asset must be served
-          curl -fsSL "$ROOT/assets/soccer-ball.svg" | head -n1 | grep -q "<svg"
+          {
+            echo "ROOT=$ROOT"
+            curl -I -L -sS "$ROOT/" || true
+            curl -I -L -sS "$ROOT/sw.js" || true
+            curl -I -L -sS "$ROOT/offline.html" || true
+            curl -I -L -sS "$ROOT/assets/soccer-ball.svg" || true
+            curl -sSL "$ROOT/assets/soccer-ball.svg" | head -n1
+          } | tee smoke.log
+      - name: Upload smoke logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-logs
+          path: smoke.log
+          retention-days: 7

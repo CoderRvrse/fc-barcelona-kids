@@ -20,7 +20,7 @@
     "validate:html": "html-validate index.html",
     "validate:css": "stylelint styles/*.css",
     "validate:accessibility": "axe http://localhost:3000",
-    "lint": "npx --yes eslint@9 \"**/*.js\" --max-warnings=0",
+    "lint": "npx --yes eslint@8 \"**/*.js\" --ignore-path .eslintignore --max-warnings=0",
     "links": "npx --yes lychee@0.2.12 --config .lychee.toml ."
   },
   "devDependencies": {

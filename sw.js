@@ -1,5 +1,6 @@
 // File: sw.js
-const CACHE_NAME = 'fcb-kids-v4';
+const VERSION = 'v5';
+const CACHE_NAME = `fcb-kids-${VERSION}`;
 const OFFLINE_URL = '/fc-barcelona-kids/offline.html';
 
 // Handle instant update messages from page
@@ -34,6 +35,14 @@ self.addEventListener('activate', (event) => {
 // Network-first for HTML; cache-first for others
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  const url = new URL(req.url);
+
+  // avoid caching third-party
+  if (url.origin !== location.origin) {
+    event.respondWith(fetch(req));
+    return;
+  }
+
   const isHTML = req.headers.get('accept')?.includes('text/html');
 
   if (isHTML) {

@@ -33,13 +33,20 @@ jobs:
               - 'sitemap.xml'
 
       # Run lychee only if content changed OR it's a push to main
-      - name: Link Checker
+      - name: Link Checker (with report)
         if: ${{ steps.filter.outputs.content == 'true' || github.event_name == 'push' }}
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --config .lychee.toml .
+          args: --config .lychee.toml --format json --output lychee.json .
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload lychee report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lychee-report
+          path: lychee.json
+          retention-days: 7
 
       # Make PRs green when nothing content-related changed
       - name: No content changes — skipping link check (OK)

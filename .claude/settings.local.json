@@ -18,7 +18,8 @@
       "WebFetch(domain:github.com)",
       "Bash(npx --yes eslint@9 \"**/*.js\" --ignore-path .eslintignore --max-warnings=0)",
       "Bash(npx:*)",
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "Bash([ -f \".eslintrc.json\" ])"
     ],
     "deny": [],
     "ask": []
