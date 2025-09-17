@@ -23,8 +23,7 @@ jobs:
           filters: |
             js:
               - '**/*.js'
-              - '.eslintrc.json'
-              - '.eslintignore'
+              - 'eslint.config.js'
 
       - uses: actions/setup-node@v4
         with: { node-version: 18 }
@@ -32,7 +31,7 @@ jobs:
       # Run only if JS changed OR it's a push to main
       - name: Run ESLint
         if: ${{ steps.filter.outputs.js == 'true' || github.event_name == 'push' }}
-        run: npx --yes eslint@9 "**/*.js" --ignore-path .eslintignore --max-warnings=0
+        run: npx --yes eslint@9 "**/*.js" --max-warnings=0
 
       # Make PRs green when nothing JS-related changed
       - name: No JS changes — skipping lint (OK)

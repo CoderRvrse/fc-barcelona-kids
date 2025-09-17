@@ -1,5 +1,6 @@
 {
   "name": "fc-barcelona-kids",
+  "type": "module",
   "private": true,
   "version": "1.0.0",
   "description": "FC Barcelona Kids Team Interactive Website",
@@ -19,8 +20,8 @@
     "validate:html": "html-validate index.html",
     "validate:css": "stylelint styles/*.css",
     "validate:accessibility": "axe http://localhost:3000",
-    "lint": "npx --yes eslint@9 \"**/*.js\" --ignore-path .eslintignore --max-warnings=0",
-    "links": "npx --yes lychee@0.15.1 --config .lychee.toml ."
+    "lint": "npx --yes eslint@9 \"**/*.js\" --max-warnings=0",
+    "links": "npx --yes lychee@0.2.12 --config .lychee.toml ."
   },
   "devDependencies": {
     "axe-cli": "^4.7.0",
