@@ -154,6 +154,8 @@ jobs:
             curl -I -L -sS "$ROOT/offline.html" || true
             curl -I -L -sS "$ROOT/assets/soccer-ball.svg" || true
             curl -sSL "$ROOT/assets/soccer-ball.svg" | head -n1
+            echo "Checking SVG format..."
+            curl -fsSL "$ROOT/assets/soccer-ball.svg" | head -n1 | grep -q "<svg"
           } | tee smoke.log
       - name: Upload smoke logs
         if: ${{ always() }}
