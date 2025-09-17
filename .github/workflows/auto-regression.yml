@@ -1,111 +1,60 @@
 name: Auto Regression Guard
-
 on:
   workflow_run:
     workflows: ["Deploy to GitHub Pages"]
     types: [completed]
 
-# default: minimal read; we escalate per-job
-permissions:
-  contents: read
-
-concurrency:
-  group: auto-regression-${{ github.event.workflow_run.id }}
-  cancel-in-progress: true
-
 jobs:
-  # ✅ If deploy succeeded, this workflow passes quickly (no noise).
-  noop_success:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Upstream deploy succeeded — nothing to do
-        run: |
-          echo "Deploy run ${{ github.event.workflow_run.id }} concluded: ${{ github.event.workflow_run.conclusion }}"
-
-  # ❌ Only run the guard when deploy did NOT succeed
-  on_failure:
+  open_issue_on_failure:
     if: ${{ github.event.workflow_run.conclusion != 'success' }}
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      contents: write
-      pull-requests: write
     steps:
-      - name: Dump event payload (debug)
-        run: |
-          echo '${{ toJson(github.event.workflow_run) }}' > event.json
-          jq . event.json || cat event.json
-      - name: Upload debug payload
-        uses: actions/upload-artifact@v4
-        with:
-          name: auto-regression-debug-${{ github.event.workflow_run.id }}
-          path: event.json
-          retention-days: 7
-
-      - name: Open regression issue
+      - name: Create regression issue
         uses: actions/github-script@v7
         with:
           script: |
             const run = context.payload.workflow_run;
             const title = `🚨 Regression: ${run.name} #${run.id} failed`;
             const body = [
-              `**Conclusion:** ${run.conclusion}`,
               `**Branch:** ${run.head_branch}`,
-              `**Commit:** ${run.head_sha}`,
+              `**Commit:** ${run.head_commit.id}`,
               `**Actor:** @${run.actor.login}`,
-              `**Run URL:** ${run.html_url}`,
+              `**URL:** ${run.html_url}`,
               '',
-              'Auto-created because Deploy→Pages or post-deploy smoke failed.',
+              'Auto-created because the post-deploy smoke test or deploy failed.',
               'Acceptance:',
-              '- Deploy job is green',
-              '- Smoke probes pass (/, sw.js, offline.html, assets/soccer-ball.svg)',
-              '- Console has no parse errors'
+              '- Smoke passes on main',
+              '- Console has no errors',
+              '- Offline page reachable',
+              '- robots.txt + sitemap.xml 200'
             ].join('\n');
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title,
-              body,
-              labels: ['regression','ci']
+              title, body, labels: ['regression','ci']
             });
 
-      # OPTIONAL: open a revert PR against main; this will safely no-op if nothing to revert
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-      - name: Configure bot identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+  # OPTIONAL: open a revert PR automatically (keeps humans in the loop)
+  open_revert_pr:
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main, fetch-depth: 0 }
       - name: Create revert branch
         run: |
-          set -e
-          BR="ci/revert-${{ github.event.workflow_run.id }}"
-          git checkout -b "$BR"
-          # Try to revert the failing head SHA; if merge base is unrelated, just skip.
-          git revert --no-edit "${{ github.event.workflow_run.head_sha }}" || echo "Nothing to revert or already reverted"
-          git push -u origin "$BR"
-      - name: Open revert PR
+          git checkout -b ci/revert-${{ github.event.workflow_run.id }}
+          git revert --no-edit ${{ github.event.workflow_run.head_sha }} || echo "Nothing to revert"
+          git push -u origin ci/revert-${{ github.event.workflow_run.id }}
+      - name: Open PR
         uses: actions/github-script@v7
         with:
           script: |
             const head = `ci/revert-${context.payload.workflow_run.id}`;
             const base = 'main';
             const title = `chore(ci): revert failing commit ${context.payload.workflow_run.head_sha.substring(0,7)}`;
-            const body = 'Auto-opened by Auto Regression Guard because Deploy/Smoke failed. Merge to restore last good state.';
-            try {
-              await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title,
-                head,
-                base,
-                body,
-                maintainer_can_modify: true
-              });
-            } catch (e) {
-              core.warning(`PR open skipped: ${e.message}`);
-            }
+            const body = 'Auto-opened because Deploy→Smoke failed. Merge to restore last good state.';
+            await github.rest.pulls.create({ owner: context.repo.owner, repo: context.repo.repo, title, head, base, body, maintainer_can_modify: true });
