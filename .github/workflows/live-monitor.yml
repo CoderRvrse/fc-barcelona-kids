@@ -1,0 +1,18 @@
+name: Live Monitor
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # daily at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production URL
+        run: |
+          set -euo pipefail
+          ROOT="https://coderrvse.github.io/fc-barcelona-kids"
+          curl -fsSL "$ROOT/" > /dev/null
+          curl -I -s "$ROOT/sw.js" | grep -qE 'HTTP/.* 200'
+          echo "OK"

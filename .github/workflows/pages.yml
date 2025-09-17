@@ -18,11 +18,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # change if your build outputs elsewhere
       BUILD_DIR: dist
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Detect package manager lockfile
         id: detect_lock
@@ -35,67 +33,78 @@ jobs:
         id: mode
         run: |
           total_locks=$(( ${{ steps.detect_lock.outputs.npm_lock }} + ${{ steps.detect_lock.outputs.yarn_lock }} + ${{ steps.detect_lock.outputs.pnpm_lock }} ))
-          if [ "$total_locks" -gt 0 ]; then
-            echo "mode=build" >> $GITHUB_OUTPUT
-          else
-            echo "mode=static" >> $GITHUB_OUTPUT
-          fi
+          if [ "$total_locks" -gt 0 ]; then echo "mode=build" >> $GITHUB_OUTPUT; else echo "mode=static" >> $GITHUB_OUTPUT; fi
 
-      # ---------- BUILD PATH (only if a lockfile exists) ----------
+      # ---------- BUILD PATH ----------
       - name: Setup Node
         if: ${{ steps.mode.outputs.mode == 'build' }}
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm' # safe because a lockfile exists
+          cache: 'npm'
 
       - name: Install dependencies
         if: ${{ steps.mode.outputs.mode == 'build' }}
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          elif [ -f yarn.lock ]; then
-            corepack enable
-            yarn install --frozen-lockfile
-          elif [ -f pnpm-lock.yaml ]; then
-            corepack enable
-            pnpm install --frozen-lockfile
+          if [ -f package-lock.json ]; then npm ci;
+          elif [ -f yarn.lock ]; then corepack enable && yarn install --frozen-lockfile;
+          elif [ -f pnpm-lock.yaml ]; then corepack enable && pnpm install --frozen-lockfile;
           fi
 
       - name: Build site
         if: ${{ steps.mode.outputs.mode == 'build' }}
         run: |
-          if npm run | grep -q " build"; then
-            npm run build
-          elif yarn -v >/dev/null 2>&1 && yarn run | grep -q " build"; then
-            yarn build
-          elif pnpm -v >/dev/null 2>&1 && pnpm run | grep -q " build"; then
-            pnpm build
-          else
-            echo "No build script found; failing in build mode."
-            exit 1
-          fi
-        # upload the build output
+          if npm run | grep -q " build"; then npm run build;
+          elif command -v yarn >/dev/null && yarn run | grep -q " build"; then yarn build;
+          elif command -v pnpm >/dev/null && pnpm run | grep -q " build"; then pnpm build;
+          else echo "No build script found; failing in build mode." && exit 1; fi
+
       - name: Upload artifact (build)
         if: ${{ steps.mode.outputs.mode == 'build' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ env.BUILD_DIR }}
 
-      # ---------- STATIC PATH (no lockfile → deploy repo as-is) ----------
+      # ---------- STATIC PATH ----------
       - name: Upload artifact (static)
         if: ${{ steps.mode.outputs.mode == 'static' }}
         uses: actions/upload-pages-artifact@v3
         with:
-          # Deploy the root of the repo. Adjust if your site lives in a subfolder.
           path: .
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  smoke:
+    name: Smoke test live site
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe key endpoints
+        run: |
+          set -euo pipefail
+          URL="${{ needs.deploy.outputs.page_url }}"
+          ROOT="${URL%/}"
+          echo "Testing $ROOT"
+
+          # 1) Home resolves and contains the base href (GH Pages subpath safety)
+          curl -fsSL "$ROOT/" | tee /tmp/index.html | grep -q '<base href="/fc-barcelona-kids/">'
+
+          # 2) Service worker reachable
+          curl -I -s "$ROOT/sw.js" | grep -qE 'HTTP/.* 200'
+
+          # 3) Offline page present
+          curl -fsSL "$ROOT/offline.html" | grep -qi 'offline'
+
+          # 4) SEO files
+          curl -fsSL "$ROOT/robots.txt" | grep -q 'Sitemap: https://coderrvse.github.io/fc-barcelona-kids/sitemap.xml'
+          curl -fsSL "$ROOT/sitemap.xml" | grep -q '<urlset'
