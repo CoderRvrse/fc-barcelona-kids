@@ -1344,7 +1344,11 @@ textarea:focus-visible {
     height: 40px;
     transform: translateX(-50%);
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 203, 5, 0.9), rgba(247, 166, 0, 0.85));
+    background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,.9) 0 28%, rgba(255,255,255,0) 29%),
+        radial-gradient(circle at 70% 70%, rgba(0,0,0,.25), rgba(0,0,0,0) 55%),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='40%'><stop offset='0%' stop-color='%23FFE36A'/><stop offset='100%' stop-color='%23F5B100'/></radialGradient></defs><circle cx='50' cy='50' r='49' fill='url(%23g)'/><g fill='%23181818'><path d='M50 28l-9 6 3 10h12l3-10z'/><path d='M41 34l-9 2-5 9 7 7 10-1z'/><path d='M59 34l9 2 5 9-7 7-10-1z'/><path d='M36 51l-8 6 4 10 11 1 4-9z'/><path d='M64 51l8 6-4 10-11 1-4-9z'/></g><circle cx='50' cy='50' r='49' fill='none' stroke='rgba(0,0,0,.15)' stroke-width='1.5'/></svg>");
+    background-size: cover;
     box-shadow: 0 10px 16px rgba(10, 28, 74, 0.2);
     animation: ballBounce 1.8s ease-in-out infinite;
 }

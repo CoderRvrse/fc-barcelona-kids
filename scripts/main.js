@@ -398,6 +398,25 @@
         }
     }
 
+    window.addEventListener('error', (event) => {
+        console.error('Global Error:', {
+            message: event.message,
+            source: event.filename,
+            line: event.lineno,
+            column: event.colno,
+            error: event.error,
+        });
+    });
+
+    window.safeAnimate = (element, animation) => {
+        try {
+            return window.gsap ? window.gsap.to(element, animation) : null;
+        } catch (error) {
+            console.warn('Animation failed:', error);
+            return null;
+        }
+    };
+
     // Performance monitoring (development only)
     if ('performance' in window) {
         window.addEventListener('load', () => {
@@ -432,23 +451,4 @@
 
         requestAnimationFrame(trackFPS);
     }
-
-    window.addEventListener('error', (event) => {
-        console.error('Global Error:', {
-            message: event.message,
-            source: event.filename,
-            line: event.lineno,
-            column: event.colno,
-            error: event.error,
-        });
-    });
-
-    window.safeAnimate = (element, animation) => {
-        try {
-            return window.gsap ? window.gsap.to(element, animation) : null;
-        } catch (error) {
-            console.warn('Animation failed:', error);
-            return null;
-        }
-    };
 })();

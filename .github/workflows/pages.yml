@@ -22,14 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Syntax check all JS files (node --check)
+      - name: Syntax check all JS (node --check)
         run: |
           set -e
           shopt -s globstar nullglob
-          files=( **/*.js )
-          for f in "${files[@]}"; do
-            echo "checking $f"
-            node --check "$f"
+          for f in **/*.js; do
+            echo "checking $f"; node --check "$f";
           done
 
       - name: Detect package manager lockfile
