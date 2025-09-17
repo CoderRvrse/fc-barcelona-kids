@@ -361,16 +361,16 @@
             });
 
             if (!formValid) {
-                statusEl?.textContent = 'Review highlighted fields before submitting.';
+                if (statusEl) statusEl.textContent = 'Review highlighted fields before submitting.';
                 return;
             }
 
-            statusEl?.textContent = '';
+            if (statusEl) statusEl.textContent = '';
             submitBtn?.classList.add('is-loading');
 
             window.setTimeout(() => {
                 submitBtn?.classList.remove('is-loading');
-                statusEl?.textContent = 'Visca! We have your submission and will reply soon.';
+                if (statusEl) statusEl.textContent = 'Visca! We have your submission and will reply soon.';
                 form.reset();
                 fields.forEach((field) => showMessage(field, ''));
                 if (!reduceMotion) {
