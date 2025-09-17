@@ -1,17 +1,40 @@
 name: Lint
-
 on:
   push:
     branches: [ main ]
   pull_request:
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   eslint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      # Detect relevant changes
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
         with:
-          node-version: 18
-      - name: Run ESLint (no local install)
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            js:
+              - '**/*.js'
+              - '.eslintrc.json'
+              - '.eslintignore'
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 18 }
+
+      # Run only if JS changed OR it's a push to main
+      - name: Run ESLint
+        if: ${{ steps.filter.outputs.js == 'true' || github.event_name == 'push' }}
         run: npx --yes eslint@9 "**/*.js" --ignore-path .eslintignore --max-warnings=0
+
+      # Make PRs green when nothing JS-related changed
+      - name: No JS changes — skipping lint (OK)
+        if: ${{ steps.filter.outputs.js != 'true' && github.event_name != 'push' }}
+        run: echo "No JS changes; lint skipped."
