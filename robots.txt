@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://coderrvse.github.io/fc-barcelona-kids/sitemap.xml

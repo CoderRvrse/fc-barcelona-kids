@@ -1,0 +1,18 @@
+name: Lighthouse
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 1" # weekly Monday 12:00 UTC
+
+jobs:
+  lhci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Audit live site
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            https://coderrvse.github.io/fc-barcelona-kids/
+          uploadArtifacts: true
+          configPath: .lighthouserc.json
