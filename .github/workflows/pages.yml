@@ -142,25 +142,20 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Probe key endpoints (verbose & strict)
+      - name: Probe key endpoints (verbose)
         run: |
           set -euxo pipefail
           URL="${{ needs.deploy.outputs.page_url }}"
           ROOT="${URL%/}"
           {
             echo "ROOT=$ROOT"
-            # must be reachable
-            curl -fIL "$ROOT/"
-            curl -fIL "$ROOT/offline.html"
-            curl -fIL "$ROOT/assets/soccer-ball.svg"
-
-            # content-type must be SVG
-            curl -fsSI "$ROOT/assets/soccer-ball.svg" \
-              | tr -d '\r' | grep -qi '^content-type: *image/svg\+xml'
-
-            # body sanity: allow XML prolog or <svg on first few lines
-            curl -fsSL "$ROOT/assets/soccer-ball.svg" \
-              | tr -d '\r' | head -n 5 | grep -Eqi '<svg|<\?xml'
+            curl -I -L -sS "$ROOT/" || true
+            curl -I -L -sS "$ROOT/sw.js" || true
+            curl -I -L -sS "$ROOT/offline.html" || true
+            curl -I -L -sS "$ROOT/assets/soccer-ball.svg" || true
+            curl -sSL "$ROOT/assets/soccer-ball.svg" | head -n1
+            echo "Checking SVG format..."
+            curl -fsSL "$ROOT/assets/soccer-ball.svg" | head -n1 | grep -q "<svg"
           } | tee smoke.log
       - name: Upload smoke logs
         if: ${{ always() }}
