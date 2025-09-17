@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="40%">
+      <stop offset="0%"  stop-color="#FFE36A"/>
+      <stop offset="100%" stop-color="#F5B100"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.2"/>
+    </filter>
+  </defs>
+
+  <!-- yellow/gold base -->
+  <circle cx="50" cy="50" r="49" fill="url(#g)"/>
+
+  <!-- simple stitched pattern (pentagon + surrounding panels) -->
+  <g fill="#181818">
+    <path d="M50 27l-10 7 4 11h12l4-11z"/>                <!-- center pentagon -->
+    <path d="M40 34l-10 2-6 10 8 7 11-1z"/>               <!-- UL -->
+    <path d="M60 34l10 2 6 10-8 7-11-1z"/>                <!-- UR -->
+    <path d="M35 52l-8 6 5 10 11 1 4-9z"/>                <!-- LL -->
+    <path d="M65 52l8 6-5 10-11 1-4-9z"/>                 <!-- LR -->
+  </g>
+
+  <!-- soft rim -->
+  <circle cx="50" cy="50" r="49" fill="none" stroke="rgba(0,0,0,.15)" stroke-width="1.5"/>
+  <circle cx="40" cy="32" r="9" fill="white" opacity=".6" filter="url(#glow)"/>
+</svg>
