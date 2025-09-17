@@ -40,9 +40,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
-    <link rel="stylesheet" href="styles/main.css?v=v7" />
+    <link rel="stylesheet" href="styles/main.css" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script defer src="scripts/main.js?v=v7"></script>
+    <script defer src="scripts/main.js"></script>
 </head>
 <body>
     <script>
@@ -471,19 +471,17 @@
         if (!refreshing) { refreshing = true; location.reload(); }
       });
 
-      const SW_VERSION = 'v7';
-      const swUrl = `sw.js?v=${SW_VERSION}`;
-
-      navigator.serviceWorker.register(swUrl, { scope: '/fc-barcelona-kids/' }).then((reg) => {
-        // if a new worker is waiting, tell it to activate now
-        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
-
+      navigator.serviceWorker.register('sw.js', { scope: '/fc-barcelona-kids/' }).then((reg) => {
+        // If a new worker is found, prompt the user to refresh
         reg.addEventListener('updatefound', () => {
-          const nw = reg.installing;
-          if (!nw) return;
-          nw.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-              reg.waiting?.postMessage('SKIP_WAITING');
+          const newSW = reg.installing;
+          if (!newSW) return;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              showReloadToast(() => {
+                // tell the waiting SW to activate now
+                if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+              });
             }
           });
         });

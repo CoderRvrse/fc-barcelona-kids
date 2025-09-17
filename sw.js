@@ -1,24 +1,11 @@
 // File: sw.js
-const VERSION = 'v7';
+const VERSION = 'v6';
 const CACHE_NAME = `fcb-kids-${VERSION}`;
 const OFFLINE_URL = '/fc-barcelona-kids/offline.html';
 
 // Handle instant update messages from page
 self.addEventListener('message', (e) => {
   if (e.data === 'SKIP_WAITING') self.skipWaiting();
-});
-
-// ensure instant takeover
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(
-      keys.filter(k => k.startsWith('fcb-kids-') && k !== CACHE_NAME)
-          .map(k => caches.delete(k))
-    );
-    await self.clients.claim();
-  })());
 });
 
 // Precache minimal shell
@@ -33,6 +20,16 @@ self.addEventListener('install', (event) => {
     )
   );
   self.skipWaiting();
+});
+
+// Clean old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
 });
 
 // Network-first for HTML; cache-first for others
