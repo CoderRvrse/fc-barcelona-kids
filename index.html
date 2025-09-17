@@ -45,6 +45,20 @@
     <script defer src="scripts/main.js"></script>
 </head>
 <body>
+    <script>
+    /* Loader guard: guarantees the page becomes visible even if main.js fails */
+    (function () {
+      var hide = function () {
+        var el = document.querySelector('[data-loader], #loader, .loader, #app-loader, .global-loader');
+        if (el) el.style.display = 'none';
+        document.documentElement.classList.add('app-ready');
+      };
+      // 1) Remove loader at DOMContentLoaded
+      document.addEventListener('DOMContentLoaded', hide);
+      // 2) Safety timeout in case DOMContentLoaded was early but something stalled
+      setTimeout(hide, 2500);
+    })();
+    </script>
     <div class="scroll-progress" aria-hidden="true">
         <span></span>
     </div>

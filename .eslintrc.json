@@ -6,7 +6,8 @@
     "no-cond-assign": ["error", "always"],
     "no-unsafe-optional-chaining": "error",
     "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
-    "no-console": "off"
+    "no-console": "off",
+    "no-unexpected-multiline": "error"
   },
   "overrides": [
     {

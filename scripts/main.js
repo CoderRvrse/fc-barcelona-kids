@@ -397,7 +397,9 @@
             window.setTimeout(() => piece.remove(), 2000);
         }
     }
-}    if ('performance' in window) {
+
+    // Performance monitoring (development only)
+    if ('performance' in window) {
         window.addEventListener('load', () => {
             const navTiming = performance.getEntriesByType('navigation')[0];
             if (navTiming) {
