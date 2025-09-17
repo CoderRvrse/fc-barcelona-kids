@@ -116,3 +116,6 @@ jobs:
           # 4) SEO files
           curl -fsSL "$ROOT/robots.txt" | grep -q 'Sitemap: https://coderrvse.github.io/fc-barcelona-kids/sitemap.xml'
           curl -fsSL "$ROOT/sitemap.xml" | grep -q '<urlset'
+
+          # 5) Soccer ball asset must be served
+          curl -fsSL "$ROOT/assets/soccer-ball.svg" | head -n1 | grep -q "<svg"
