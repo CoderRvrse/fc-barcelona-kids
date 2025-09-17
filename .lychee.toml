@@ -1,0 +1,21 @@
+# Output
+verbose = true
+no_progress = true
+exclude_mail = true
+
+# Treat common redirects / throttling as OK
+accept = [200, 204, 206, 301, 302, 307, 308, 429]
+
+# Resolve root-relative paths like /fc-barcelona-kids/...
+base = "https://coderrvse.github.io/fc-barcelona-kids/"
+
+# Skip domains that often block CI bots
+exclude = [
+  "https://fonts.googleapis.com",
+  "https://fonts.gstatic.com",
+  "https://twitter.com", "https://x.com",
+  "https://facebook.com", "https://www.facebook.com",
+  "https://instagram.com", "https://www.instagram.com",
+  "https://youtube.com", "https://www.youtube.com",
+  "mailto:*", "tel:*", "data:*"
+]
