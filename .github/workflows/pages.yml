@@ -1,0 +1,101 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # change if your build outputs elsewhere
+      BUILD_DIR: dist
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect package manager lockfile
+        id: detect_lock
+        run: |
+          echo "npm_lock=$(ls -1 **/package-lock.json 2>/dev/null | wc -l)" >> $GITHUB_OUTPUT
+          echo "yarn_lock=$(ls -1 **/yarn.lock 2>/dev/null | wc -l)"       >> $GITHUB_OUTPUT
+          echo "pnpm_lock=$(ls -1 **/pnpm-lock.yaml 2>/dev/null | wc -l)"  >> $GITHUB_OUTPUT
+
+      - name: Set mode (build vs static)
+        id: mode
+        run: |
+          total_locks=$(( ${{ steps.detect_lock.outputs.npm_lock }} + ${{ steps.detect_lock.outputs.yarn_lock }} + ${{ steps.detect_lock.outputs.pnpm_lock }} ))
+          if [ "$total_locks" -gt 0 ]; then
+            echo "mode=build" >> $GITHUB_OUTPUT
+          else
+            echo "mode=static" >> $GITHUB_OUTPUT
+          fi
+
+      # ---------- BUILD PATH (only if a lockfile exists) ----------
+      - name: Setup Node
+        if: ${{ steps.mode.outputs.mode == 'build' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm' # safe because a lockfile exists
+
+      - name: Install dependencies
+        if: ${{ steps.mode.outputs.mode == 'build' }}
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f yarn.lock ]; then
+            corepack enable
+            yarn install --frozen-lockfile
+          elif [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            pnpm install --frozen-lockfile
+          fi
+
+      - name: Build site
+        if: ${{ steps.mode.outputs.mode == 'build' }}
+        run: |
+          if npm run | grep -q " build"; then
+            npm run build
+          elif yarn -v >/dev/null 2>&1 && yarn run | grep -q " build"; then
+            yarn build
+          elif pnpm -v >/dev/null 2>&1 && pnpm run | grep -q " build"; then
+            pnpm build
+          else
+            echo "No build script found; failing in build mode."
+            exit 1
+          fi
+        # upload the build output
+      - name: Upload artifact (build)
+        if: ${{ steps.mode.outputs.mode == 'build' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.BUILD_DIR }}
+
+      # ---------- STATIC PATH (no lockfile → deploy repo as-is) ----------
+      - name: Upload artifact (static)
+        if: ${{ steps.mode.outputs.mode == 'static' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Deploy the root of the repo. Adjust if your site lives in a subfolder.
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
