@@ -222,27 +222,56 @@
                 ballAnimationId = requestAnimationFrame(ballFrame);
             }
 
+            let textBBox = null;
+            let startXText = 0;
+            let endXText = 0;
+            let REVEAL_PAD_PX = 16; // cushion for first glyph
+            let padNorm = 0;
+
+            function setRevealByBallX(ballCenterX) {
+                if (!textBBox) return;
+
+                // Normalize progress to [0,1] using actual text bounds
+                let progress = (ballCenterX - startXText) / (endXText - startXText) + padNorm;
+
+                if (progress >= 0.999) {
+                    // Snap to exactly 1.0 so the first glyph (F) cannot be clipped
+                    revealRect.setAttribute('width', '1');
+                    finishReveal();
+                    return true; // Signal completion
+                } else {
+                    // Clamp and set with 4 decimals (helps avoid oscillating)
+                    progress = Math.max(0, Math.min(0.999, progress));
+                    revealRect.setAttribute('width', progress.toFixed(4));
+                    return false;
+                }
+            }
+
+            function finishReveal() {
+                revealRect.setAttribute('width', '1');
+                titleSolid.style.opacity = '1';
+                setTimeout(() => maskedGroup?.setAttribute('display', 'none'), 350);
+                cancelAnimationFrame(rafId);
+            }
+
             function tick() {
                 // Read current ball center X
                 const ballBounds = ball.getBoundingClientRect();
                 const ballCenterX = (ballBounds.left + ballBounds.right) / 2;
 
-                // Progress 0..1
-                const raw = (ballCenterX - startX) / (endX - startX);
-                const progress = Math.max(0, Math.min(1, raw));
+                const isComplete = setRevealByBallX(ballCenterX);
 
-                // ClipPath width is [0..1] in objectBoundingBox units
-                const width = Math.min(1, Math.max(0, progress + revealSoftPad));
-                revealRect.setAttribute('width', width.toFixed(4));
-
-                // When done: fade in solid, stop the loop, remove masked group
-                if (progress >= 1) {
-                    titleSolid.style.opacity = '1';
-                    setTimeout(() => maskedGroup?.setAttribute('display', 'none'), 350);
-                    cancelAnimationFrame(rafId);
-                    return;
+                if (!isComplete) {
+                    rafId = requestAnimationFrame(tick);
                 }
-                rafId = requestAnimationFrame(tick);
+            }
+
+            // Safety net: check if ball is already past end (handles race conditions)
+            function isBallPastEnd() {
+                if (!textBBox) return false;
+                const ballBounds = ball.getBoundingClientRect();
+                const ballCenterX = (ballBounds.left + ballBounds.right) / 2;
+                return ballCenterX >= endXText;
             }
 
             async function runHeroReveal(replay = false) {
@@ -255,6 +284,15 @@
                     }
                 }
 
+                // Compute text bbox once after fonts load for stable glyph geometry
+                if (!textBBox) {
+                    textBBox = titleMasked.getBBox();
+                    startXText = textBBox.x;
+                    endXText = textBBox.x + textBBox.width;
+                    const widthPx = textBBox.width;
+                    padNorm = Math.max(0, Math.min(1, REVEAL_PAD_PX / widthPx));
+                }
+
                 // Reset for replay
                 if (replay) {
                     cancelAnimationFrame(rafId);
@@ -263,6 +301,12 @@
                     revealRect.setAttribute('width', '0');
                     titleSolid.style.opacity = '0';
                     ball.style.transform = '';
+                }
+
+                // Safety net: if ball is already past end, force final state
+                if (isBallPastEnd()) {
+                    finishReveal();
+                    return;
                 }
 
                 // Start both animations

@@ -1678,17 +1678,20 @@ textarea:focus-visible {
   height: 100%;
   display: block;
 }
-/* Crisp SVG text styling */
+/* Bulletproof typography - same style for both masked and solid */
 .hero-title text {
-  font: 800 clamp(36px, 9vw, 96px)/1.05 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 900 clamp(48px, 10vw, 132px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   letter-spacing: 0.02em;
   fill: #ffffff;
   paint-order: stroke fill; /* crisp edges */
 }
 
+/* Only the solid text has transition - masked group is clipped */
 #titleSolid {
   opacity: 0;
   transition: opacity .35s ease;
+  /* Ensure solid text is NEVER clipped */
+  clip-path: none !important;
 }
 
 /* Fallback for noscript */
