@@ -27,6 +27,9 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then((cache) =>
       cache.addAll([
         '/fc-barcelona-kids/',
+        '/fc-barcelona-kids/index.html',
+        '/fc-barcelona-kids/styles/main.css',
+        '/fc-barcelona-kids/scripts/main.js',
         '/fc-barcelona-kids/assets/soccer-ball.svg',
         '/fc-barcelona-kids/assets/FC_Barcelona_logo.svg',
         OFFLINE_URL
