@@ -120,6 +120,12 @@ jobs:
 
             # verify back-to-top button exists
             curl -fsSL "$ROOT/" | tr -d '\r' | grep -Eq 'id="backToTop"|id="back-to-top"'
+
+            # prove tooltip text exists somewhere
+            curl -fsSL "$ROOT/" | tr -d '\r' | grep -qi 'Back to top'
+
+            # crest exists and is an SVG
+            curl -fsSL "$ROOT/assets/FC_Barcelona_logo.svg" | head -n1 | grep -qi "<svg"
           } | tee smoke.log
       - name: Upload smoke logs
         if: ${{ always() }}

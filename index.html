@@ -41,9 +41,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet" />
     <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
-    <link rel="stylesheet" href="styles/main.css?v=v8" />
+    <link rel="stylesheet" href="styles/main.css?v=v9" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script defer src="scripts/main.js?v=v8"></script>
+    <script defer src="scripts/main.js?v=v9"></script>
 </head>
 <body>
     <div id="top-sentinel"></div>
@@ -70,14 +70,17 @@
     </div>
     <header class="top-bar" data-observe>
         <div class="container top-bar__inner">
-            <a class="brand" href="#hero">
-                <span class="crest" aria-hidden="true">
-                    <span class="crest-stripe crest-stripe--blue"></span>
-                    <span class="crest-stripe crest-stripe--garnet"></span>
-                    <span class="crest-cross"></span>
-                    <span class="crest-ball"></span>
-                </span>
-                <span class="brand-text">FC Barcelona Juniors</span>
+            <!-- Brand -->
+            <a href="#hero" class="brand" id="brand" aria-label="FC Barcelona Juniors home">
+              <img
+                src="assets/FC_Barcelona_logo.svg"
+                alt="FC Barcelona Juniors logo"
+                class="brand-logo"
+                width="36" height="36"
+                decoding="async"
+                fetchpriority="high"
+              />
+              <span class="brand-name">FC BARCELONA JUNIORS</span>
             </a>
             <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
                 <span class="nav-toggle-bar"></span>
@@ -473,7 +476,7 @@
         if (!refreshing) { refreshing = true; location.reload(); }
       });
 
-      const SW_VERSION = 'v8';
+      const SW_VERSION = 'v9';
       const swUrl = `sw.js?v=${SW_VERSION}`;
 
       navigator.serviceWorker.register(swUrl, { scope: '/fc-barcelona-kids/' }).then((reg) => {
@@ -495,8 +498,17 @@
 
     <!-- Back-to-top control -->
     <div id="back-to-top-sentinel" style="position: absolute; top: 100vh; height: 1px; pointer-events: none;"></div>
-    <button id="backToTop" class="back-to-top" aria-label="Back to top">
-        <img src="assets/soccer-ball.svg" alt="Soccer ball" width="50" height="50">
+    <!-- Back to top (soccer ball) -->
+    <button
+      id="backToTop"
+      class="back-to-top"
+      aria-label="Back to top"
+      title="Back to top"
+    >
+      <img src="assets/soccer-ball.svg" alt="" aria-hidden="true" />
+      <span class="bt-arrow" aria-hidden="true">↑</span>
+      <span class="bt-shadow" aria-hidden="true"></span>
+      <span class="bt-tip" role="tooltip">Back to top</span>
     </button>
 
     <!-- No-JS graceful fallback -->
@@ -506,5 +518,32 @@
             <span class="bt-shadow" aria-hidden="true"></span>
         </a>
     </noscript>
+
+    <script>
+    (() => {
+      const btn = document.getElementById('backToTop');
+      if (!btn) return;
+
+      const hideBRStrays = () => {
+        const vw = innerWidth, vh = innerHeight;
+        document.querySelectorAll('body *').forEach(el => {
+          if (el === btn || btn.contains(el)) return;
+          const cs = getComputedStyle(el);
+          if (cs.position === 'fixed') {
+            const r = el.getBoundingClientRect();
+            // any fixed element overlapping the bottom-right 160×160 area,
+            // and not too huge, gets hidden
+            const inBR = (r.right > vw - 160) && (r.bottom > vh - 160);
+            if (inBR && r.width * r.height < 40000) {
+              el.style.display = 'none';
+              el.setAttribute('data-hidden-by', 'bt-cleanup');
+            }
+          }
+        });
+      };
+
+      addEventListener('load', hideBRStrays);
+    })();
+    </script>
 </body>
 </html>

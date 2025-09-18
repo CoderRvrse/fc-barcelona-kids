@@ -19,7 +19,10 @@
       "Bash(npx --yes eslint@9 \"**/*.js\" --ignore-path .eslintignore --max-warnings=0)",
       "Bash(npx:*)",
       "Bash(npm view:*)",
-      "Bash([ -f \".eslintrc.json\" ])"
+      "Bash([ -f \".eslintrc.json\" ])",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []
