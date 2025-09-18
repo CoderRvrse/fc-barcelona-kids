@@ -1648,50 +1648,259 @@ textarea:focus-visible {
     }
 }
 
-/* Kill any old bottom-right decorative blobs/orbs */
-[data-orb="bottom-right"], .orb--br, .floating-orb--br,
-.hero-blob--br, .floating-blob--br, .decor-orb--br {
-  display: none !important;
+/* === Back-to-top control === */
+.back-to-top {
+    position: fixed;
+    right: max(clamp(16px, 2.8vw, 28px), env(safe-area-inset-right));
+    bottom: calc(max(clamp(16px, 2.8vw, 28px), env(safe-area-inset-bottom)) + 0px);
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #004D98 0%, #B21516 100%);
+    box-shadow: 0 8px 24px rgba(0, 77, 152, 0.3);
+    cursor: pointer;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    animation: bob 3s ease-in-out infinite;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    will-change: transform;
+    contain: layout paint;
 }
 
-.bt {
-  position: fixed;
-  right: max(clamp(16px, 2.8vw, 28px), env(safe-area-inset-right));
-  bottom: max(clamp(16px, 2.8vw, 28px), env(safe-area-inset-bottom));
-  z-index: 9999;
-  display: inline-grid;
-  place-items: center;
-  width: 56px; height: 56px; border-radius: 9999px;
-  background: linear-gradient(135deg,#004D98 0%,#B21516 100%);
-  box-shadow: 0 8px 24px rgba(0,0,0,.25);
-  border: 0; cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  will-change: transform;
-  transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+.back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
 }
-.bt:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 10px 28px rgba(0,0,0,.28); }
-.bt:focus-visible { outline: 3px solid #FFE36A; outline-offset: 4px; }
 
-.bt-ball { width: 40px; height: 40px; pointer-events: none; }
-.bt-arrow {
-  position: absolute; bottom: 6px; font-weight: 800; color: #FFE36A;
-  text-shadow: 0 1px 1px rgba(0,0,0,.35);
-  transform: translateY(6px); opacity: 0; transition: transform .2s ease, opacity .2s ease;
-  pointer-events: none;
+.back-to-top:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 12px 32px rgba(0, 77, 152, 0.4);
+    background: linear-gradient(135deg, #0066CC 0%, #E60012 100%);
 }
-.bt:hover .bt-arrow, .bt:focus-visible .bt-arrow { transform: translateY(0); opacity: 1; }
 
-.bt-tip {
-  position: absolute; right: 64px;
-  background: linear-gradient(135deg,#004D98 0%,#B21516 100%);
-  color: white; border-radius: 9999px; padding: 8px 12px; font-size: 12px;
-  transform: translateX(8px); opacity: 0; pointer-events: none;
-  transition: transform .18s ease, opacity .18s ease;
-  box-shadow: 0 6px 18px rgba(0,0,0,.22);
+.back-to-top:active {
+    transform: translateY(-1px) scale(1.05);
 }
-.bt:hover .bt-tip, .bt:focus-visible .bt-tip { transform: translateX(0); opacity: 1; }
+
+.back-to-top img {
+    width: 36px;
+    height: 36px;
+    pointer-events: none;
+    transition: transform 0.2s ease;
+}
+
+.back-to-top:hover img {
+    transform: rotate(15deg);
+}
+
+.back-to-top:focus-visible {
+    outline: 2px solid #FFE36A;
+    outline-offset: 3px;
+}
+
+/* Bullet-proof kick animation */
+@keyframes bt-kick {
+    0% { transform: rotate(0) scale(1); }
+    45% { transform: rotate(-14deg) scale(1.06); }
+    100% { transform: rotate(0) scale(1); }
+}
+
+.back-to-top.kick img {
+    animation: bt-kick 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.back-to-top.kick .bt-arrow {
+    animation: bt-arrow-bounce 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes bt-arrow-bounce {
+    0% { transform: translate(-50%, 0) scale(1); }
+    30% { transform: translate(-50%, -8px) scale(1.2); }
+    60% { transform: translate(-50%, 2px) scale(0.9); }
+    100% { transform: translate(-50%, 0) scale(1); }
+}
+
+/* Bob animation */
+@keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Up-arrow overlay (shows on hover/focus) */
+.back-to-top .bt-arrow {
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translate(-50%, 6px);
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    color: #FFE36A; /* Barca yellow */
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.back-to-top:hover .bt-arrow,
+.back-to-top:focus-visible .bt-arrow {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* Tooltip pill */
+.back-to-top .bt-tip {
+    position: absolute;
+    right: calc(100% + 10px);
+    bottom: 50%;
+    transform: translateY(50%) translateX(6px);
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #004D98 0%, #B21516 100%); /* Barça */
+    color: #fff;
+    font: 600 12px/1 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    white-space: nowrap;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.back-to-top:hover .bt-tip,
+.back-to-top:focus-visible .bt-tip {
+    opacity: 1;
+    transform: translateY(50%) translateX(0);
+}
+
+/* Use the same animation/position; just force visible briefly on touch */
+.back-to-top .bt-tip.is-touch {
+    opacity: 1;
+    transform: translateY(50%) translateX(0);
+}
+
+/* pulse layer (hidden by default) */
+.back-to-top::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+}
+
+@keyframes bt-pulse {
+    0% { transform: scale(0.9); opacity: 0.45; box-shadow: 0 0 0 0 rgba(178, 21, 22, 0.55), 0 0 0 0 rgba(0, 77, 152, 0.55); }
+    70% { transform: scale(1.2); opacity: 0.15; box-shadow: 0 0 0 14px rgba(178, 21, 22, 0), 0 0 0 28px rgba(0, 77, 152, 0); }
+    100% { transform: scale(1.25); opacity: 0; }
+}
+
+.back-to-top.pulse::after {
+    animation: bt-pulse 0.42s ease-out;
+}
+
+/* default = pill on the left (current style) */
+.back-to-top .bt-tip {
+    right: calc(100% + 10px);
+    left: auto;
+}
+
+/* flipped = pill on the right */
+.back-to-top .bt-tip.flip {
+    left: calc(100% + 10px);
+    right: auto;
+    transform: translateY(50%) translateX(-6px);
+}
+
+.back-to-top:hover .bt-tip.flip,
+.back-to-top:focus-visible .bt-tip.flip,
+.back-to-top .bt-tip.flip.is-touch {
+    transform: translateY(50%) translateX(0);
+}
+
+/* RTL baseline (if document.dir='rtl', tooltip defaults to right side) */
+:root[dir="rtl"] .back-to-top .bt-tip {
+    left: calc(100% + 10px);
+    right: auto;
+    transform: translateY(50%) translateX(-6px);
+}
+
+@media (prefers-contrast: more) {
+    .back-to-top::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px #FFE36A inset;
+        pointer-events: none;
+    }
+}
+
+@media (max-width: 720px) {
+    .back-to-top {
+        width: 50px;
+        height: 50px;
+    }
+
+    .back-to-top img {
+        width: 30px;
+        height: 30px;
+    }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .bt, .bt * { transition: none !important; animation: none !important; }
+    .back-to-top {
+        animation: none;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .back-to-top:hover {
+        transform: none;
+    }
+
+    .back-to-top img {
+        transition: none;
+    }
+
+    .back-to-top:hover img {
+        transform: none;
+    }
+
+    .back-to-top.kick img {
+        animation: none;
+    }
+
+    .back-to-top.kick .bt-arrow {
+        animation: none;
+    }
+
+    .back-to-top .bt-arrow,
+    .back-to-top .bt-tip {
+        transition: none;
+    }
+
+    .back-to-top.pulse::after {
+        animation: none;
+    }
+}
+
+/* Hide legacy decorative blobs/orbs near bottom-right */
+[data-orb="bottom-right"],
+.orb--br, .floating-orb--br, .hero-blob--br,
+.floating-blob--br, .decor-orb--br {
+    display: none !important;
+}
+
+/* No-JS graceful fallback */
+noscript .back-to-top {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
 }
