@@ -27,7 +27,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       # If we add a package.json later, this becomes deterministic and fast.
       # For now, it will no-op (no package-lock).

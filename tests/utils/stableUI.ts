@@ -10,6 +10,17 @@ export async function stabilizeUI(page: Page) {
         caret-color: transparent !important;
       }
       html { scroll-behavior: auto !important; }
+
+      /* Force final state for hero title animation */
+      #titleSolid { opacity: 1 !important; }
+      #titleMasked { display: none !important; }
+      #heroBall { display: none !important; }
+
+      /* Override reduced motion media query */
+      @media (prefers-reduced-motion: reduce) {
+        .hero-title-fallback { display: none !important; }
+        #heroTitleSvg { display: block !important; }
+      }
     `
   });
 }

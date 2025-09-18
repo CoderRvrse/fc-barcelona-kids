@@ -111,12 +111,12 @@
                 <p class="hero-kicker" data-animate>Barcelona methodology for future stars</p>
 
                 <!-- Semantic heading for SEO and screen readers -->
-                <h1 class="sr-only">Barca Way</h1>
+                <h1 class="sr-only">FC BARCELONA</h1>
 
                 <!-- HERO TITLE: ball reveals text as it rolls -->
                 <div class="hero-title">
                   <svg id="heroTitleSvg" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-labelledby="heroTitle">
-                    <title id="heroTitle">Barca Way</title>
+                    <title id="heroTitle">FC BARCELONA</title>
                     <defs>
                       <!-- Mask: we'll add circles here as the ball moves -->
                       <mask id="revealMask">
@@ -130,10 +130,13 @@
                       </filter>
                     </defs>
 
-                    <!-- Text is only visible where the mask turns white -->
+                    <!-- Masked text - visible during animation -->
                     <g mask="url(#revealMask)">
-                      <text x="40" y="150" class="hero-text">Barca Way</text>
+                      <text id="titleMasked" x="80" y="165" class="hero-title">FC BARCELONA</text>
                     </g>
+
+                    <!-- Solid text - shown after animation -->
+                    <text id="titleSolid" x="80" y="165" class="hero-title" opacity="0">FC BARCELONA</text>
                   </svg>
 
                   <!-- Rolling ball -->
@@ -143,8 +146,9 @@
                 <!-- Graceful no-JS fallback: always show text, hide ball -->
                 <noscript>
                   <style>
-                    #revealMask rect{fill:#fff} #heroBall{display:none}
+                    #titleSolid{opacity:1} #titleMasked{display:none} #heroBall{display:none}
                   </style>
+                  <div class="hero-title-fallback">FC BARCELONA</div>
                 </noscript>
                 <p class="hero-subtitle" data-animate>Inspiring the next generation of champions with teamwork, creativity, and respect on and off the pitch.</p>
                 <div class="hero-cta">

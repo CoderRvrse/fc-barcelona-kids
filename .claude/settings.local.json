@@ -33,7 +33,9 @@
       "Bash(chmod:*)",
       "Bash(bash:*)",
       "Bash(gh api:*)",
-      "Bash(gh workflow run:*)"
+      "Bash(gh workflow run:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

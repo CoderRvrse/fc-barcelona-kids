@@ -152,14 +152,16 @@
             applyParallax();
         }
 
-        // Enhanced Rolling ball hero animation with performance optimizations
+        // Enhanced Rolling ball hero animation with final solid text reveal
         (() => {
             const heroBall = document.getElementById('heroBall');
             const maskDots = document.getElementById('maskDots');
             const heroSvg = document.getElementById('heroTitleSvg');
             const softFilter = document.getElementById('soft');
+            const titleMasked = document.getElementById('titleMasked');
+            const titleSolid = document.getElementById('titleSolid');
 
-            if (!heroBall || !maskDots || !heroSvg || reduceMotion) return;
+            if (!heroBall || !maskDots || !heroSvg) return;
 
             // Performance optimizations
             const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -168,11 +170,50 @@
                 softFilter.firstElementChild.setAttribute('stdDeviation', String(blurR));
             }
 
-            function runHeroReveal(replay = false) {
+            // Set consistent text content
+            const TEXT = 'FC BARCELONA';
+            if (titleMasked) titleMasked.textContent = TEXT;
+            if (titleSolid) titleSolid.textContent = TEXT;
+
+            // Handle reduced motion accessibility
+            const reduceMotionCheck = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+            if (reduceMotionCheck) {
+                if (titleSolid) titleSolid.setAttribute('opacity', '1');
+                if (heroBall) heroBall.setAttribute('hidden', 'true');
+                if (titleMasked) titleMasked.remove();
+                return;
+            }
+
+            async function runHeroReveal(replay = false) {
+                // Wait for fonts to be ready for stable glyph outlines
+                if (document.fonts?.ready) {
+                    try {
+                        await document.fonts.ready;
+                    } catch (e) {
+                        console.log('[font-loading] Font ready promise failed, continuing anyway');
+                    }
+                }
+
                 // Clear previous animation if replaying
                 if (replay) {
                     if (window.__heroRafId) cancelAnimationFrame(window.__heroRafId);
                     maskDots.innerHTML = '';
+                    if (titleSolid) titleSolid.setAttribute('opacity', '0');
+                    if (titleMasked && titleMasked.parentNode) {
+                        // Re-add masked text if it was removed
+                        if (!document.getElementById('titleMasked')) {
+                            const maskedGroup = heroSvg.querySelector('g[mask]');
+                            if (maskedGroup) {
+                                const newMasked = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                                newMasked.id = 'titleMasked';
+                                newMasked.setAttribute('x', '80');
+                                newMasked.setAttribute('y', '165');
+                                newMasked.className.baseVal = 'hero-title';
+                                newMasked.textContent = TEXT;
+                                maskedGroup.appendChild(newMasked);
+                            }
+                        }
+                    }
                 }
 
                 const svgRect = heroSvg.getBoundingClientRect();
@@ -227,6 +268,15 @@
                     if (progress >= 1) {
                         cancelAnimationFrame(window.__heroRafId);
                         window.__heroRafId = null;
+
+                        // FINAL STATE: Swap to solid text
+                        if (titleSolid) {
+                            titleSolid.setAttribute('opacity', '1');
+                        }
+                        // Remove masked text after transition
+                        setTimeout(() => {
+                            if (titleMasked) titleMasked.remove();
+                        }, 350); // Match CSS transition duration
                     }
                 };
 

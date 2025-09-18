@@ -109,6 +109,30 @@ jobs:
           # 2) hero markers present
           grep -E 'id="heroTitleSvg"|id="hero-title"' /tmp/index.html >/dev/null
 
+      - name: Smoke - solid hero title present & correct
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="${{ needs.deploy.outputs.page_url }}"
+          if [ -z "$ROOT" ]; then
+            ROOT="https://coderrvrse.github.io/fc-barcelona-kids"
+          fi
+          html="$(curl -fsSL "$ROOT/")"
+          # 1) final solid node exists
+          echo "$html" | grep -q 'id="titleSolid"'
+          # 2) text content is correct
+          echo "$html" | grep -q 'FC BARCELONA'
+          echo "✅ Solid title present and correct"
+
+      - name: Curl checks continued
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="${{ needs.deploy.outputs.page_url }}"
+          if [ -z "$ROOT" ]; then
+            ROOT="https://coderrvrse.github.io/fc-barcelona-kids"
+          fi
+
           # 3) critical assets exist + header checks
           curl -fsSI "$ROOT/assets/soccer-ball.svg" | grep -Ei '^content-type: *image/svg\+xml' >/dev/null
           curl -fsSI "$ROOT/assets/FC_Barcelona_logo.svg" | grep -Ei '^content-type: *image/svg\+xml' >/dev/null
