@@ -52,7 +52,7 @@ jobs:
             const run = context.payload.workflow_run;
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
-              title: `🚨 Regression: ${run.name} #${run.id} failed`,
+              title: `Regression: ${run.name} #${run.id} failed`,
               body: `**Conclusion:** ${run.conclusion}
 **Branch:** ${run.head_branch}
 **Commit:** ${run.head_sha}
