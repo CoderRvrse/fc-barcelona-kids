@@ -175,84 +175,157 @@
                 return;
             }
 
-            // Ball animation setup
-            const heroBounds = svg.getBoundingClientRect();
-            const startX = heroBounds.left + 80;              // left margin near text start
-            const endX = heroBounds.right - heroBounds.width * 0.08; // near right
-            const revealSoftPad = 0.04; // extra width so the wipe is a little ahead of the ball
-
+            // Ball animation: roll → drop → bounce beside the 'A'
             let rafId = 0;
             let ballAnimationId = 0;
+            let rotation = 0;
 
-            function animateBall() {
-                const duration = 2800;
-                const start = performance.now();
+            // Helper: apply translate/rotate to ball
+            const setBall = (x, y, rot) => {
+                if (!ball) return;
+                const r = 56; // ball radius (112px / 2)
+                ball.style.transform = `translate(${x - r}px, ${y - r}px) rotate(${rot}deg)`;
+            };
 
-                function ballFrame(time) {
-                    const elapsed = time - start;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+            function animateBallSequence() {
+                if (!textBBox) return;
 
-                    const ballSize = 112;
-                    const svgRect = svg.getBoundingClientRect();
-                    const ballStartX = -ballSize / 2;
-                    const ballEndX = svgRect.width - ballSize / 2;
-                    const centerY = svgRect.height / 2 - ballSize / 2;
+                // Compute target position beside the 'A'
+                const vb = svg.viewBox.baseVal;
+                const cx = vb.x + vb.width / 2;
+                const cy = vb.y + vb.height / 2;
 
-                    const currentX = ballStartX + (ballEndX - ballStartX) * eased;
-                    const rotation = eased * 720;
+                const r = 56; // ball radius
+                const BALL_GAP = 24; // space between A and ball
+                const targetXpx = Math.round(textBBox.x + textBBox.width + BALL_GAP + r);
+                const baselineY = Math.round(cy + textBBox.height * 0.10); // visually nice baseline
+                const targetYpx = Math.round(baselineY);
 
-                    // Use transform for performance
-                    if (gsapSafe) {
-                        gsapSafe(ball, {
-                            x: currentX,
-                            rotation,
-                            duration: 0.016,
-                            ease: window.gsap ? 'power3.out' : 'none'
-                        });
-                    } else {
-                        ball.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
-                    }
-
-                    if (progress < 1) {
-                        ballAnimationId = requestAnimationFrame(ballFrame);
-                    }
+                // Position ball for start of animation
+                if (ball) {
+                    ball.style.position = 'absolute';
+                    ball.style.willChange = 'transform';
                 }
 
-                ballAnimationId = requestAnimationFrame(ballFrame);
+                // Animation durations
+                const rollDuration = 0.9; // seconds
+                const drop = Math.max(14, Math.round(r * 0.18));
+                const bounceDuration = 0.5; // seconds
+
+                const prefersReduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+
+                if (prefersReduce || !ball) {
+                    // No animations: put ball at target and show solid text
+                    setBall(targetXpx, targetYpx, 0);
+                    setProgress(1);
+                    return;
+                }
+
+                if (window.gsap) {
+                    // GSAP timeline version
+                    const startX = Math.round(targetXpx + r * 3); // start to the right, roll in
+                    const startY = targetYpx;
+
+                    setBall(startX, startY, 0);
+
+                    const tl = gsap.timeline({
+                        defaults: { ease: 'power3.out' }
+                    });
+
+                    tl.to({}, {
+                        duration: rollDuration,
+                        onUpdate() {
+                            const t = this.progress(); // 0→1
+                            const x = startX + (targetXpx - startX) * t;
+                            rotation = 360 * t * 1.5; // spin while rolling
+                            setBall(x, startY, rotation);
+                            // Drive reveal progress with roll
+                            setProgress(Math.min(0.98, t)); // final snap happens inside setProgress
+                        }
+                    })
+                    .to(ball, {
+                        duration: bounceDuration,
+                        // drop + bounce using y transform
+                        onStart() {
+                            // ensure we ended roll at target
+                            setBall(targetXpx, startY, rotation);
+                        },
+                        onUpdate() {
+                            const t = this.progress(); // 0→1
+                            // simple bounce curve (yoyo-like)
+                            const y = targetYpx + (t < 0.5 ? drop * (t / 0.5) : drop * (1 - (t - 0.5) / 0.5));
+                            setBall(targetXpx, y, rotation);
+                        },
+                        onComplete() {
+                            setBall(targetXpx, targetYpx, rotation);
+                            // Ensure reveal is fully snapped + solid title shown
+                            setProgress(1);
+                        }
+                    });
+                } else {
+                    // RAF fallback
+                    const start = performance.now();
+                    const startX = Math.round(targetXpx + r * 3);
+                    const startY = targetYpx;
+                    setBall(startX, startY, 0);
+
+                    const rollMs = rollDuration * 1000;
+                    const bounceMs = bounceDuration * 1000;
+
+                    const step = (now) => {
+                        const elapsed = now - start;
+                        if (elapsed <= rollMs) {
+                            const t = elapsed / rollMs;
+                            const x = startX + (targetXpx - startX) * t;
+                            rotation = 360 * t * 1.5;
+                            setBall(x, startY, rotation);
+                            setProgress(Math.min(0.98, t));
+                            ballAnimationId = requestAnimationFrame(step);
+                            return;
+                        }
+
+                        const dropElapsed = elapsed - rollMs;
+                        if (dropElapsed <= bounceMs) {
+                            const t = dropElapsed / bounceMs; // 0→1
+                            const y = targetYpx + (t < 0.5 ? drop * (t / 0.5) : drop * (1 - (t - 0.5) / 0.5));
+                            setBall(targetXpx, y, rotation);
+                            ballAnimationId = requestAnimationFrame(step);
+                            return;
+                        }
+
+                        setBall(targetXpx, targetYpx, rotation);
+                        setProgress(1); // ensure solid + snap
+                    };
+
+                    ballAnimationId = requestAnimationFrame(step);
+                }
             }
 
             let textBBox = null;
             let rectX = 0;
             let totalWidth = 0;
-            const LEFT_GUARD = 140;  // generous margin before centered 'F' in longer text
-            const RIGHT_GUARD = 100; // generous overshoot past 'A' in longer text
+            const LEFT_GUARD = 120;  // generous margin before centered 'F'
+            const RIGHT_GUARD = 120; // extra generous overshoot past 'A' to eliminate any clipping
+            const TOP_GUARD = 24;    // vertical padding above text
+            const BOT_GUARD = 24;    // vertical padding below text
 
             function setProgress(progress) {
                 if (!textBBox) return false;
 
                 // Clamp + pixel-round for stability
                 progress = Math.max(0, Math.min(1, progress));
-                let width = Math.round(totalWidth * progress);
 
-                // SNAP to full at >= 0.98 to avoid any precision artifacts
                 if (progress >= 0.98) {
-                    width = totalWidth;
+                    // Hard snap +2px to obliterate any subpixel clipping on the last glyph
+                    const width = totalWidth + 2;
                     revealRect.setAttribute('width', String(width));
                     finishReveal();
                     return true;
                 }
 
+                const width = Math.round((totalWidth + 2) * progress);
                 revealRect.setAttribute('width', String(width));
                 return false;
-            }
-
-            function setRevealByBallX(ballCenterX) {
-                if (!textBBox) return false;
-
-                // Map ball position to progress (0-1)
-                const ballProgress = (ballCenterX - (textBBox.x - LEFT_GUARD)) / totalWidth;
-                return setProgress(ballProgress);
             }
 
             function finishReveal() {
@@ -260,22 +333,11 @@
                 titleSolid.style.opacity = '1';
                 setTimeout(() => maskedGroup?.setAttribute('display', 'none'), 350);
                 cancelAnimationFrame(rafId);
+                cancelAnimationFrame(ballAnimationId);
             }
 
             // Expose for debugging and replay
             window.__heroRevealSetProgress = setProgress;
-
-            function tick() {
-                // Read current ball center X
-                const ballBounds = ball.getBoundingClientRect();
-                const ballCenterX = (ballBounds.left + ballBounds.right) / 2;
-
-                const isComplete = setRevealByBallX(ballCenterX);
-
-                if (!isComplete) {
-                    rafId = requestAnimationFrame(tick);
-                }
-            }
 
             // Safety net: check if ball is already past end (handles race conditions)
             function isBallPastEnd() {
@@ -305,14 +367,15 @@
                     textBBox = titleMasked.getBBox();
 
                     // For centered text with text-anchor="middle", start the reveal well before left edge
-                    // The bbox.x is already the left edge of the centered text
                     rectX = Math.round(textBBox.x - LEFT_GUARD);
+                    const rectY = Math.round(textBBox.y - TOP_GUARD);
+                    const rectH = Math.round(textBBox.height + TOP_GUARD + BOT_GUARD);
                     totalWidth = Math.round(textBBox.width + LEFT_GUARD + RIGHT_GUARD);
 
-                    // Set initial rect position and dimensions with extra vertical padding
+                    // Set initial rect position and dimensions
                     revealRect.setAttribute('x', String(rectX));
-                    revealRect.setAttribute('y', String(Math.floor(textBBox.y) - 30));
-                    revealRect.setAttribute('height', String(Math.ceil(textBBox.height) + 60));
+                    revealRect.setAttribute('y', String(rectY));
+                    revealRect.setAttribute('height', String(rectH));
                     revealRect.setAttribute('width', '0');
 
                     console.log('[hero-reveal] Centered FC BARCELONA bounds:', {
@@ -344,9 +407,8 @@
                     return;
                 }
 
-                // Start both animations
-                animateBall();
-                rafId = requestAnimationFrame(tick);
+                // Start the new ball sequence (roll → drop → bounce)
+                animateBallSequence();
             }
 
             // Expose for replay functionality
