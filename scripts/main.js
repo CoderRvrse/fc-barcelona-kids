@@ -617,6 +617,101 @@
           initHero(HERO_CONFIG);
         }
 
+        // ========= SAFE AUTOPLAY PATCH =========
+        // Ensures animation runs reliably even if gates fail
+        (() => {
+          // ---- knobs ----
+          const AUTOPLAY = true;          // force a run on first view
+          const IO_THRESHOLD = 0.15;      // 15% of hero visible
+          const IO_ROOT_MARGIN = '0px 0px -20% 0px'; // trigger slightly before fully in view
+          const AUTORUN_TIMEOUT_MS = 1800; // fallback if IO never fires
+          // ----------------
+
+          const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+
+          // guard: API must exist
+          if (!window.__heroAnimation) return;
+
+          // if we intentionally skip, bail early
+          if (window.__heroSkipAnimation === true) return;
+
+          // ensure idle/rolling balls have the intended initial vis
+          const rollBall = document.getElementById('heroBall');
+          const idleBall = document.getElementById('heroBallIdle');
+          if (rollBall) rollBall.style.opacity = '0'; // will be shown on run()
+          if (idleBall) idleBall.style.opacity = '0'; // shown after run() finishes
+
+          const runOnce = () => {
+            if (prefersReduced) {
+              window.__heroAnimation.showFinal?.();
+              return;
+            }
+            window.__heroAnimation.run?.();
+            // clean up any observers/timeouts when we do run
+            obs?.disconnect?.();
+            if (autorunTimer) clearTimeout(autorunTimer);
+          };
+
+          let autorunTimer = null;
+          let obs = null;
+
+          // fall back if visibility was hidden on load (e.g., background tab)
+          const whenVisible = (fn) => {
+            if (document.visibilityState === 'visible') fn();
+            else {
+              const onVis = () => {
+                if (document.visibilityState === 'visible') {
+                  document.removeEventListener('visibilitychange', onVis);
+                  fn();
+                }
+              };
+              document.addEventListener('visibilitychange', onVis);
+            }
+          };
+
+          // Fonts gate — only if your hero waits on fonts. If not, you can remove.
+          const onFontsReady = async () => {
+            try { await document.fonts?.ready; } catch {}
+          };
+
+          const bootstrap = async () => {
+            await onFontsReady();
+
+            // IntersectionObserver gating (preferred)
+            const hero = document.getElementById('hero') || document.getElementById('heroTitle') || document.body;
+            if ('IntersectionObserver' in window) {
+              obs = new IntersectionObserver((entries) => {
+                const e = entries[0];
+                if (e?.isIntersecting && e.intersectionRatio >= IO_THRESHOLD) runOnce();
+              }, { root: null, threshold: IO_THRESHOLD, rootMargin: IO_ROOT_MARGIN });
+              obs.observe(hero);
+            }
+
+            // Fallback autorun: if IO never fires (layout/position quirks), run anyway
+            if (AUTOPLAY) {
+              autorunTimer = setTimeout(() => whenVisible(runOnce), AUTORUN_TIMEOUT_MS);
+            }
+          };
+
+          // Kick it off
+          if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            bootstrap();
+          } else {
+            window.addEventListener('DOMContentLoaded', bootstrap, { once: true });
+          }
+
+          // last-chance safety: if still nothing by full load, run
+          window.addEventListener('load', () => {
+            setTimeout(() => {
+              // if we never ran (e.g., both gates failed), try one more time
+              if (rollBall && +getComputedStyle(rollBall).opacity === 0 &&
+                  idleBall && +getComputedStyle(idleBall).opacity === 0) {
+                whenVisible(runOnce);
+              }
+            }, 500);
+          });
+        })();
+
         // Replay button functionality
         (() => {
             const replayBtn = document.querySelector('.hero-replay');

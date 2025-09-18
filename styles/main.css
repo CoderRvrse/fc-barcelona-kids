@@ -1722,15 +1722,16 @@ textarea:focus-visible {
   z-index: 10;
 }
 
-/* Rolling ball - visible during animation */
+/* Rolling ball - hidden initially, shown during animation */
 #heroBall {
-  opacity: 1;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
 /* Idle ball - hidden initially, shown after animation */
 #heroBallIdle {
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.15s ease;
 }
 
 /* No-JS fallback */
