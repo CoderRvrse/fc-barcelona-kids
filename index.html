@@ -115,28 +115,22 @@
 
                 <!-- HERO TITLE: ball reveals text as it rolls -->
                 <div class="hero-title">
-                  <svg id="heroTitleSvg" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-labelledby="heroTitle">
+                  <svg class="hero-svg" id="heroTitleSvg" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-labelledby="heroTitle">
                     <title id="heroTitle">FC BARCELONA</title>
                     <defs>
-                      <!-- Mask: we'll add circles here as the ball moves -->
-                      <mask id="revealMask">
-                        <rect x="0" y="0" width="100%" height="100%" fill="black"/>
-                        <g id="maskDots"></g>
-                      </mask>
-
-                      <!-- Soft blur so the "paint" looks smooth -->
-                      <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="6"/>
-                      </filter>
+                      <!-- ClipPath for smooth rounded rectangle reveal -->
+                      <clipPath id="revealClip" clipPathUnits="objectBoundingBox">
+                        <rect id="revealRect" x="0" y="0" width="0" height="1" rx="0.02" ry="0.05"/>
+                      </clipPath>
                     </defs>
 
                     <!-- Masked text - visible during animation -->
-                    <g mask="url(#revealMask)">
+                    <g id="maskedGroup" clip-path="url(#revealClip)">
                       <text id="titleMasked" x="80" y="165" class="hero-title">FC BARCELONA</text>
                     </g>
 
                     <!-- Solid text - shown after animation -->
-                    <text id="titleSolid" x="80" y="165" class="hero-title" opacity="0">FC BARCELONA</text>
+                    <text id="titleSolid" x="80" y="165" class="hero-title">FC BARCELONA</text>
                   </svg>
 
                   <!-- Rolling ball -->

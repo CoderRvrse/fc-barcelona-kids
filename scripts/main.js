@@ -152,40 +152,101 @@
             applyParallax();
         }
 
-        // Enhanced Rolling ball hero animation with final solid text reveal
+        // ClipPath hero text reveal with ball animation
         (() => {
-            const heroBall = document.getElementById('heroBall');
-            const maskDots = document.getElementById('maskDots');
-            const heroSvg = document.getElementById('heroTitleSvg');
-            const softFilter = document.getElementById('soft');
+            const TEXT = 'FC BARCELONA';
+            const svg = document.querySelector('.hero-svg');
+            const maskedGroup = document.getElementById('maskedGroup');
+            const revealRect = document.getElementById('revealRect');
             const titleMasked = document.getElementById('titleMasked');
             const titleSolid = document.getElementById('titleSolid');
+            const ball = document.getElementById('heroBall');
 
-            if (!heroBall || !maskDots || !heroSvg) return;
+            if (!svg || !revealRect || !titleMasked || !titleSolid || !ball) return;
 
-            // Performance optimizations
-            const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-            const blurR = Math.max(4, 6 * (1/dpr));
-            if (softFilter) {
-                softFilter.firstElementChild.setAttribute('stdDeviation', String(blurR));
-            }
+            // Ensure consistent text (defensive)
+            titleMasked.textContent = TEXT;
+            titleSolid.textContent = TEXT;
 
-            // Set consistent text content
-            const TEXT = 'FC BARCELONA';
-            if (titleMasked) titleMasked.textContent = TEXT;
-            if (titleSolid) titleSolid.textContent = TEXT;
-
-            // Handle reduced motion accessibility
-            const reduceMotionCheck = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-            if (reduceMotionCheck) {
-                if (titleSolid) titleSolid.setAttribute('opacity', '1');
-                if (heroBall) heroBall.setAttribute('hidden', 'true');
-                if (titleMasked) titleMasked.remove();
+            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (prefersReduced) {
+                maskedGroup?.setAttribute('display', 'none');
+                titleSolid.style.opacity = '1';
                 return;
             }
 
+            // Ball animation setup
+            const heroBounds = svg.getBoundingClientRect();
+            const startX = heroBounds.left + 80;              // left margin near text start
+            const endX = heroBounds.right - heroBounds.width * 0.08; // near right
+            const revealSoftPad = 0.04; // extra width so the wipe is a little ahead of the ball
+
+            let rafId = 0;
+            let ballAnimationId = 0;
+
+            function animateBall() {
+                const duration = 2800;
+                const start = performance.now();
+
+                function ballFrame(time) {
+                    const elapsed = time - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+                    const ballSize = 112;
+                    const svgRect = svg.getBoundingClientRect();
+                    const ballStartX = -ballSize / 2;
+                    const ballEndX = svgRect.width - ballSize / 2;
+                    const centerY = svgRect.height / 2 - ballSize / 2;
+
+                    const currentX = ballStartX + (ballEndX - ballStartX) * eased;
+                    const rotation = eased * 720;
+
+                    // Use transform for performance
+                    if (gsapSafe) {
+                        gsapSafe(ball, {
+                            x: currentX,
+                            rotation,
+                            duration: 0.016,
+                            ease: window.gsap ? 'power3.out' : 'none'
+                        });
+                    } else {
+                        ball.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
+                    }
+
+                    if (progress < 1) {
+                        ballAnimationId = requestAnimationFrame(ballFrame);
+                    }
+                }
+
+                ballAnimationId = requestAnimationFrame(ballFrame);
+            }
+
+            function tick() {
+                // Read current ball center X
+                const ballBounds = ball.getBoundingClientRect();
+                const ballCenterX = (ballBounds.left + ballBounds.right) / 2;
+
+                // Progress 0..1
+                const raw = (ballCenterX - startX) / (endX - startX);
+                const progress = Math.max(0, Math.min(1, raw));
+
+                // ClipPath width is [0..1] in objectBoundingBox units
+                const width = Math.min(1, Math.max(0, progress + revealSoftPad));
+                revealRect.setAttribute('width', width.toFixed(4));
+
+                // When done: fade in solid, stop the loop, remove masked group
+                if (progress >= 1) {
+                    titleSolid.style.opacity = '1';
+                    setTimeout(() => maskedGroup?.setAttribute('display', 'none'), 350);
+                    cancelAnimationFrame(rafId);
+                    return;
+                }
+                rafId = requestAnimationFrame(tick);
+            }
+
             async function runHeroReveal(replay = false) {
-                // Wait for fonts to be ready for stable glyph outlines
+                // Wait for fonts to avoid glyph jumps
                 if (document.fonts?.ready) {
                     try {
                         await document.fonts.ready;
@@ -194,93 +255,19 @@
                     }
                 }
 
-                // Clear previous animation if replaying
+                // Reset for replay
                 if (replay) {
-                    if (window.__heroRafId) cancelAnimationFrame(window.__heroRafId);
-                    maskDots.innerHTML = '';
-                    if (titleSolid) titleSolid.setAttribute('opacity', '0');
-                    if (titleMasked && titleMasked.parentNode) {
-                        // Re-add masked text if it was removed
-                        if (!document.getElementById('titleMasked')) {
-                            const maskedGroup = heroSvg.querySelector('g[mask]');
-                            if (maskedGroup) {
-                                const newMasked = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                                newMasked.id = 'titleMasked';
-                                newMasked.setAttribute('x', '80');
-                                newMasked.setAttribute('y', '165');
-                                newMasked.className.baseVal = 'hero-title';
-                                newMasked.textContent = TEXT;
-                                maskedGroup.appendChild(newMasked);
-                            }
-                        }
-                    }
+                    cancelAnimationFrame(rafId);
+                    cancelAnimationFrame(ballAnimationId);
+                    maskedGroup?.setAttribute('display', null);
+                    revealRect.setAttribute('width', '0');
+                    titleSolid.style.opacity = '0';
+                    ball.style.transform = '';
                 }
 
-                const svgRect = heroSvg.getBoundingClientRect();
-                const ballSize = Math.max(72, Math.min(128, 112)); // Clamp ball size
-                const startX = -ballSize / 2;
-                const endX = svgRect.width - ballSize / 2;
-                const centerY = svgRect.height / 2 - ballSize / 2;
-                const duration = 2800;
-                const step = 0.55 / dpr; // DPR-aware dot density
-
-                // Set initial position
-                heroBall.style.left = startX + 'px';
-                heroBall.style.top = centerY + 'px';
-
-                const start = performance.now();
-
-                const animate = (time) => {
-                    window.__heroRafId = requestAnimationFrame(animate);
-
-                    const elapsed = time - start;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-                    const currentX = startX + (endX - startX) * eased;
-                    const rotation = eased * 720;
-
-                    // Use transform only to avoid layout thrash
-                    if (gsapSafe) {
-                        gsapSafe(heroBall, {
-                            x: currentX,
-                            rotation,
-                            duration: 0.016,
-                            ease: window.gsap ? 'power3.out' : 'none'
-                        });
-                    } else {
-                        heroBall.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
-                    }
-
-                    // Progressive dot creation with DPR optimization
-                    const targetDots = Math.floor(eased * 15 * step);
-                    if (maskDots.children.length < targetDots) {
-                        for (let i = maskDots.children.length; i < targetDots; i++) {
-                            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                            dot.setAttribute('r', String(24 / dpr));
-                            dot.setAttribute('fill', 'white');
-                            dot.setAttribute('cx', String(startX + ballSize / 2 + (endX - startX) * (i / (14 * step))));
-                            dot.setAttribute('cy', String(svgRect.height / 2));
-                            maskDots.appendChild(dot);
-                        }
-                    }
-
-                    if (progress >= 1) {
-                        cancelAnimationFrame(window.__heroRafId);
-                        window.__heroRafId = null;
-
-                        // FINAL STATE: Swap to solid text
-                        if (titleSolid) {
-                            titleSolid.setAttribute('opacity', '1');
-                        }
-                        // Remove masked text after transition
-                        setTimeout(() => {
-                            if (titleMasked) titleMasked.remove();
-                        }, 350); // Match CSS transition duration
-                    }
-                };
-
-                window.__heroRafId = requestAnimationFrame(animate);
+                // Start both animations
+                animateBall();
+                rafId = requestAnimationFrame(tick);
             }
 
             // Expose for replay functionality
@@ -295,15 +282,17 @@
                         runHeroReveal();
                     }
                 });
-            }, { rootMargin: '0px 0px -25% 0px', threshold: 0.3 });
+            }, { threshold: 0.1 });
 
-            heroObserver.observe(heroSvg);
+            heroObserver.observe(svg);
 
-            // Cancel animation if page becomes hidden
+            // Page hidden: pause updates
             document.addEventListener('visibilitychange', () => {
-                if (document.hidden && window.__heroRafId) {
-                    cancelAnimationFrame(window.__heroRafId);
-                    window.__heroRafId = null;
+                if (document.hidden) {
+                    cancelAnimationFrame(rafId);
+                    cancelAnimationFrame(ballAnimationId);
+                } else if (!prefersReduced) {
+                    rafId = requestAnimationFrame(tick);
                 }
             });
         })();
