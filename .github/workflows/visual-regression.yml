@@ -2,39 +2,64 @@ name: Visual Regression
 
 on:
   workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: "Update baseline snapshots"
+        required: false
+        default: "false"
   schedule:
     - cron: "0 8 * * *"  # daily 08:00 UTC
 
 jobs:
   visual-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
-      - name: Install Playwright
+      - name: Install Playwright (browsers + deps)
         run: |
-          npx --yes playwright@1 install --with-deps chromium webkit
+          npx --yes playwright@1.48.2 install --with-deps chromium
+          npx --yes playwright@1.48.2 --version
 
-      - name: Run Visual Tests
+      - name: Run visual tests
+        id: run
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: junit.xml
         run: |
-          npx --yes playwright@1 test
+          set -e
+          # Ensure output dirs exist
+          mkdir -p test-results
+          # First run tip: set update=false after baselines are committed
+          if [ "${{ github.event.inputs.update_snapshots }}" = "true" ]; then
+            UPDATE="--update-snapshots"
+          else
+            UPDATE=""
+          fi
+          npx --yes playwright@1.48.2 test \
+            --reporter=html,line \
+            --output=test-results $UPDATE
 
-      - name: Upload Visual Test Results
-        if: always()
+      # Upload HTML report if generated
+      - name: Upload Playwright report
+        if: always() && hashFiles('playwright-report/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
 
-      - name: Upload Test Results
-        if: always()
+      # Upload actual/expected/diff images if generated
+      - name: Upload test results
+        if: always() && hashFiles('test-results/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: test-results
