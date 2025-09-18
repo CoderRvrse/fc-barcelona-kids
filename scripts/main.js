@@ -223,38 +223,47 @@
             }
 
             let textBBox = null;
-            let startXText = 0;
-            let endXText = 0;
-            let textWidthPx = 0;
-            const REVEAL_PAD_LEFT = 16; // cushion for first glyph
-            const REVEAL_PAD_RIGHT = 24; // overshoot for last glyph
+            let rectX = 0;
+            let totalWidth = 0;
+            const LEFT_GUARD = 100;  // start well before 'F'
+            const RIGHT_GUARD = 60;  // leave headroom after 'A'
+
+            function setProgress(progress) {
+                if (!textBBox) return false;
+
+                // Clamp + pixel-round for stability
+                progress = Math.max(0, Math.min(1, progress));
+                let width = Math.round(totalWidth * progress);
+
+                // SNAP to full at >= 0.98 to avoid any precision artifacts
+                if (progress >= 0.98) {
+                    width = totalWidth;
+                    revealRect.setAttribute('width', String(width));
+                    finishReveal();
+                    return true;
+                }
+
+                revealRect.setAttribute('width', String(width));
+                return false;
+            }
 
             function setRevealByBallX(ballCenterX) {
-                if (!textBBox) return;
+                if (!textBBox) return false;
 
-                // Calculate reveal width in pixels (not normalized)
-                const progress = (ballCenterX - startXText + REVEAL_PAD_LEFT) / (endXText - startXText);
-                let revealWidthPx = Math.max(0, progress * textWidthPx + REVEAL_PAD_RIGHT);
-
-                if (progress >= 0.98) {
-                    // Final state: overshoot past text end to ensure no clipping
-                    revealWidthPx = textWidthPx + REVEAL_PAD_RIGHT + 20; // extra safety margin
-                    finishReveal();
-                    return true; // Signal completion
-                } else {
-                    // Set pixel width directly
-                    revealRect.setAttribute('width', Math.round(revealWidthPx).toString());
-                    return false;
-                }
+                // Map ball position to progress (0-1)
+                const ballProgress = (ballCenterX - (textBBox.x - LEFT_GUARD)) / totalWidth;
+                return setProgress(ballProgress);
             }
 
             function finishReveal() {
-                // Overshoot past text end with generous margin
-                revealRect.setAttribute('width', (textWidthPx + REVEAL_PAD_RIGHT + 20).toString());
+                // Show solid, hide masked for clean final state
                 titleSolid.style.opacity = '1';
                 setTimeout(() => maskedGroup?.setAttribute('display', 'none'), 350);
                 cancelAnimationFrame(rafId);
             }
+
+            // Expose for debugging and replay
+            window.__heroRevealSetProgress = setProgress;
 
             function tick() {
                 // Read current ball center X
@@ -273,7 +282,8 @@
                 if (!textBBox) return false;
                 const ballBounds = ball.getBoundingClientRect();
                 const ballCenterX = (ballBounds.left + ballBounds.right) / 2;
-                return ballCenterX >= (endXText + 50); // extra margin for safety
+                const endThreshold = textBBox.x + textBBox.width + RIGHT_GUARD;
+                return ballCenterX >= endThreshold;
             }
 
             async function runHeroReveal(replay = false) {
@@ -288,14 +298,28 @@
 
                 // Compute text bbox once after fonts load for stable glyph geometry
                 if (!textBBox) {
+                    // Force layout and ensure text is visible for measurement
+                    titleMasked.setAttribute('visibility', 'visible');
+
                     textBBox = titleMasked.getBBox();
-                    startXText = textBBox.x;
-                    endXText = textBBox.x + textBBox.width;
-                    textWidthPx = textBBox.width;
-                    console.log('[hero-reveal] Text bounds:', {
-                        startX: startXText,
-                        endX: endXText,
-                        width: textWidthPx
+
+                    // Position the reveal rect to start BEFORE the text
+                    rectX = Math.round(textBBox.x - LEFT_GUARD);
+                    totalWidth = Math.round(textBBox.width + LEFT_GUARD + RIGHT_GUARD);
+
+                    // Set initial rect position and dimensions
+                    revealRect.setAttribute('x', String(rectX));
+                    revealRect.setAttribute('y', String(Math.floor(textBBox.y) - 20));
+                    revealRect.setAttribute('height', String(Math.ceil(textBBox.height) + 40));
+                    revealRect.setAttribute('width', '0');
+
+                    console.log('[hero-reveal] Bulletproof text bounds:', {
+                        bboxX: textBBox.x,
+                        bboxWidth: textBBox.width,
+                        rectX: rectX,
+                        totalWidth: totalWidth,
+                        leftGuard: LEFT_GUARD,
+                        rightGuard: RIGHT_GUARD
                     });
                 }
 
