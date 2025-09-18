@@ -1118,67 +1118,89 @@
   if (spinner) spinner.style.opacity = '1';
 })();
 
-// Ball positioning system - places ball above title
+// Robust ball positioning system - auto-repositions on all viewport changes
 (() => {
-  const hero     = document.getElementById('hero');
-  const titleEl  = document.getElementById('heroTitle');
-  const layer    = document.getElementById('ballLayer');
-  const ball     = document.getElementById('ballSpinner');
+  const hero    = document.getElementById('hero');
+  const titleEl = document.getElementById('heroTitle');
+  const layer   = document.getElementById('ballLayer');
+  const ball    = document.getElementById('ballSpinner');
 
   if (!hero || !titleEl || !layer || !ball) {
     console.warn('[Hero] Required DOM elements not found');
     return;
   }
 
-  // Gap ABOVE title in ball-heights (0.10–0.18 looks good)
-  const GAP_ABOVE_TITLE = 0.14;
+  // Gap above title, expressed in ball-heights (tweak 0.08–0.18 to taste)
+  const GAP_BALL_HEIGHTS = 0.14;
 
-  // Debounce helper
-  const debounce = (fn, ms = 120) => {
-    let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+  // Debounce with rAF (fast + jank-free)
+  let rafId = 0;
+  const schedule = (fn) => {
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(fn);
   };
 
-  const px = (n) => `${Math.round(n)}px`;
-
-  function placeBallAboveTitle() {
-    // Ensure we measure final font layout
-    const titleBox = titleEl.getBoundingClientRect();
+  function placeBall() {
+    // ensure fonts/layout are in final state
     const heroBox  = hero.getBoundingClientRect();
+    const titleBox = titleEl.getBoundingClientRect();
     const ballBox  = ball.getBoundingClientRect(); // current rendered size
 
     const ballSize = ballBox.width; // square
+    const gapPx = ballSize * GAP_BALL_HEIGHTS;
 
-    // Center horizontally over the title
+    // Title center X in page coords
     const titleCenterX = titleBox.left + titleBox.width / 2;
-    const left = titleCenterX - ballSize / 2 - heroBox.left;
 
-    // Sit ABOVE the title by a gap proportional to ball size
-    const gap = ballSize * GAP_ABOVE_TITLE;
-    const top = (titleBox.top - heroBox.top) - gap - ballSize;
+    // We want the ball's anchor to sit on the "cap line" – for block caps, using top is fine.
+    const capLineY = titleBox.top;
 
-    layer.style.left = px(left);
-    layer.style.top  = px(top);
+    // Convert to hero-local coordinates for absolute positioning
+    const left = titleCenterX - heroBox.left;
+    const top  = capLineY     - heroBox.top - gapPx;
+
+    // Because we use translate(-50%, -100%), set anchor to the title center/cap line
+    layer.style.left = `${Math.round(left)}px`;
+    layer.style.top  = `${Math.round(top)}px`;
   }
 
   async function init() {
     try { await document.fonts?.ready; } catch (e) {
       console.warn('Font loading failed:', e);
     }
-    // Wait a tick for layout to settle
-    requestAnimationFrame(() => {
-      placeBallAboveTitle();
-      // also on resize
-      window.addEventListener('resize', debounce(placeBallAboveTitle, 120), { passive: true });
-    });
+    schedule(placeBall);
   }
 
-  // Run when hero is in view or immediately if already visible
+  // Recalc triggers
+  const recalc = () => schedule(placeBall);
+
+  // Title/hero content changes (line-wrap, font substitution, etc.)
+  const ro = new ResizeObserver(recalc);
+  ro.observe(titleEl);
+  ro.observe(hero);
+
+  // Window & viewport changes
+  window.addEventListener('resize', recalc, { passive: true });
+  window.addEventListener('orientationchange', recalc, { passive: true });
+  window.addEventListener('scroll', recalc, { passive: true }); // mobile URL bar show/hide
+  document.addEventListener('visibilitychange', recalc, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', recalc, { passive: true });
+  }
+
+  // Run when hero enters view (lazy) or immediately if visible
   const io = new IntersectionObserver((entries) => {
     if (entries.some(e => e.isIntersecting)) {
       io.disconnect();
       init();
     }
   }, { rootMargin: '200px' });
-
   io.observe(hero);
+
+  // Fallback: in case IO never fires (e.g., SSR prerender or some browsers)
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(init, 0);
+  } else {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  }
 })();

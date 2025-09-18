@@ -1720,9 +1720,11 @@ textarea:focus-visible {
 }
 
 #ballLayer {
-  position: absolute;     /* positioned by JS */
-  z-index: 5;             /* BELOW the title, ABOVE background */
-  pointer-events: none;   /* never block clicks */
+  position: absolute;
+  /* we will set left/top to the title center & cap line in JS, then translate to anchor */
+  transform: translate(-50%, -100%); /* center horizontally, sit above vertically */
+  z-index: 5;                         /* below title, above background */
+  pointer-events: none;
 }
 
 #ballSpinner {
