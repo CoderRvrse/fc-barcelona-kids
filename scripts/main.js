@@ -783,9 +783,10 @@
 
         if (window.gsap && !reduceMotion) {
             const tl = window.gsap.timeline();
+            const exists = sel => document.querySelector(sel);
+
             tl.from('.top-bar', { y: -80, duration: 0.6, ease: 'power2.out' })
                 .from('.hero-kicker', { opacity: 0, y: 30, duration: 0.4, ease: 'power2.out' }, '-=0.2')
-                .from('.hero-title .title-line', { opacity: 0, y: 40, duration: 0.5, stagger: 0.15, ease: 'power2.out' }, '-=0.1')
                 .from('.hero-subtitle', { opacity: 0, y: 30, duration: 0.5, ease: 'power2.out' }, '-=0.2')
                 .from('.hero-cta .btn', { opacity: 0, y: 24, duration: 0.45, stagger: 0.1, ease: 'power2.out' }, '-=0.2')
                 .from('.hero-statistics .stat-card', { opacity: 0, y: 30, duration: 0.4, stagger: 0.08, ease: 'power2.out' }, '-=0.3');
