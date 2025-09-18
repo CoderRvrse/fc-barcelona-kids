@@ -127,7 +127,7 @@ jobs:
             curl -fsSL "$ROOT/" | tr -d '\r' | grep -qi 'Back to top'
 
             # crest exists and is an SVG
-            curl -fsSL "$ROOT/assets/FC_Barcelona_logo.svg" | head -n1 | grep -qi "<svg"
+            curl -fsSL "$ROOT/assets/FC_Barcelona_logo.svg" | grep -qi "<svg"
           } | tee smoke.log
       - name: Upload smoke logs
         if: ${{ always() }}
