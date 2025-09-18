@@ -1,17 +1,39 @@
-verbose = true
-no_progress = true
-base = "https://coderrvse.github.io/fc-barcelona-kids/"
-accept = [200,204,206,301,302,307,308,429]
+# Conservative link checking config
 max_concurrency = 4
 timeout = 20
 max_retries = 2
-retry_wait_time = 2
-exclude_mail = true
+insecure = false
+include_verbatim = true
+
+# Accept various redirect codes and 429 rate limiting
+accept = [200, 204, 301, 302, 303, 307, 308, 429]
+
+# Skip social media and known throttlers
 exclude = [
-  "https://fonts.googleapis.com","https://fonts.gstatic.com",
-  "https://twitter.com","https://x.com",
-  "https://facebook.com","https://www.facebook.com",
-  "https://instagram.com","https://www.instagram.com",
-  "https://youtube.com","https://www.youtube.com",
-  "mailto:*","tel:*","data:*"
+  "https://www.facebook.com/*",
+  "https://facebook.com/*",
+  "https://www.instagram.com/*",
+  "https://instagram.com/*",
+  "https://twitter.com/*",
+  "https://x.com/*",
+  "https://linkedin.com/*",
+  "https://www.linkedin.com/*",
+  "https://fonts.googleapis.com/*",
+  "https://fonts.gstatic.com/*",
+  "https://cdnjs.cloudflare.com/*",
+  "https://cdn.jsdelivr.net/*",
+  "https://unpkg.com/*"
 ]
+
+# User agent to avoid blocks
+user_agent = "lychee/0.13.0"
+
+# Headers to send with requests
+headers = []
+
+# Check external links but be conservative
+check_file = true
+exclude_file = []
+
+# Only check actual URLs, not mailto etc
+include = ["https?://.*"]

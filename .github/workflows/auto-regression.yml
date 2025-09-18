@@ -2,93 +2,51 @@ name: Auto Regression Guard
 
 on:
   workflow_run:
-    workflows: ["Deploy to GitHub Pages"]
-    types: [completed]
+    workflows: [ "Deploy to GitHub Pages" ]
+    types: [ completed ]
 
 permissions:
   contents: read
-
-concurrency:
-  group: auto-regression-${{ github.event.workflow_run.id }}
-  cancel-in-progress: true
+  issues: write
 
 jobs:
   noop_success:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Deploy succeeded — nothing to do."
+      - run: echo "Deploy succeeded; nothing to do."
 
   on_failure:
     if: ${{ github.event.workflow_run.conclusion != 'success' }}
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      contents: write
-      pull-requests: write
     steps:
-      - name: Dump event payload (debug)
+      - name: Save event payload
         run: |
-          echo '${{ toJson(github.event.workflow_run) }}' > event.json
-          jq . event.json || cat event.json
-
+          mkdir -p ci
+          echo '${{ toJson(github.event) }}' > ci/event.json
       - name: Upload debug payload
-        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: auto-regression-debug-${{ github.event.workflow_run.id }}
-          path: event.json
-          retention-days: 7
+          name: auto-regression-debug
+          path: ci/event.json
+          retention-days: 14
 
-      - name: Open regression issue (plain text title)
+      - name: Open regression issue
         uses: actions/github-script@v7
         with:
           script: |
             const run = context.payload.workflow_run;
+            const body = [
+              `**Regression detected** in "${run.name}"`,
+              `Conclusion: **${run.conclusion}**`,
+              `Commit: ${run.head_sha}`,
+              `By: ${run.actor?.login}`,
+              `Run: ${run.html_url}`
+            ].join('\n');
             await github.rest.issues.create({
-              owner: context.repo.owner, repo: context.repo.repo,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               title: `Regression: ${run.name} #${run.id} failed`,
-              body: `Conclusion: ${run.conclusion}\nBranch: ${run.head_branch}\nCommit: ${run.head_sha}\nActor: @${run.actor.login}\nRun: ${run.html_url}`,
-              labels: ['regression','ci']
+              body,
+              labels: ['ci','regression']
             });
-
-      # Best-effort revert (never fail the job)
-      - uses: actions/checkout@v4
-        with: { ref: main, fetch-depth: 0 }
-
-      - name: Configure bot identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Try to revert failing commit (best-effort)
-        continue-on-error: true
-        run: |
-          set -e
-          BR="ci/revert-${{ github.event.workflow_run.id }}"
-          git checkout -b "$BR" || git checkout "$BR"
-          git revert --no-edit "${{ github.event.workflow_run.head_sha }}" || echo "Nothing to revert"
-          if ! git diff --quiet origin/main...HEAD; then
-            git push -u origin "$BR" || true
-          else
-            echo "No changes to push"
-          fi
-
-      - name: Open revert PR (best-effort)
-        continue-on-error: true
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const head = `ci/revert-${context.payload.workflow_run.id}`;
-            try {
-              await github.rest.pulls.create({
-                owner: context.repo.owner, repo: context.repo.repo,
-                head, base: 'main',
-                title: `chore(ci): revert ${context.payload.workflow_run.head_sha.substring(0,7)} (auto)`,
-                body: 'Auto-opened because Deploy pipeline failed.'
-              });
-            } catch (e) {
-              core.warning(`PR open skipped: ${e.message}`);
-            }
-
-      - run: echo "failure handled"
