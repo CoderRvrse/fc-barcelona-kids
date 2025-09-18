@@ -26,7 +26,7 @@ jobs:
               - '.eslintrc.json'
               - '.eslintignore'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with: { node-version: 18 }
 
       # Run only if JS changed OR it's a push to main
