@@ -1118,50 +1118,67 @@
   if (spinner) spinner.style.opacity = '1';
 })();
 
-// Ball positioning system - places ball below title and above CTAs
-(function () {
-  const title = document.getElementById('heroTitle');
-  const ball  = document.getElementById('ballSpinner');
-  const cta   = document.querySelector('.hero-cta');
-  if (!title || !ball) return;
+// Ball positioning system - places ball above title
+(() => {
+  const hero     = document.getElementById('hero');
+  const titleEl  = document.getElementById('heroTitle');
+  const layer    = document.getElementById('ballLayer');
+  const ball     = document.getElementById('ballSpinner');
 
-  const GAP_BELOW_TITLE = 0.12;  // 12% of ball size gap under title
-  const CTA_CLEAR_RATIO  = 0.85; // CTA starts this much lower than ball size
+  if (!hero || !titleEl || !layer || !ball) {
+    console.warn('[Hero] Required DOM elements not found');
+    return;
+  }
 
-  function placeBall() {
-    // ensure fonts have rendered so the title size is correct
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(_place);
-    } else {
-      _place();
+  // Gap ABOVE title in ball-heights (0.10–0.18 looks good)
+  const GAP_ABOVE_TITLE = 0.14;
+
+  // Debounce helper
+  const debounce = (fn, ms = 120) => {
+    let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+  };
+
+  const px = (n) => `${Math.round(n)}px`;
+
+  function placeBallAboveTitle() {
+    // Ensure we measure final font layout
+    const titleBox = titleEl.getBoundingClientRect();
+    const heroBox  = hero.getBoundingClientRect();
+    const ballBox  = ball.getBoundingClientRect(); // current rendered size
+
+    const ballSize = ballBox.width; // square
+
+    // Center horizontally over the title
+    const titleCenterX = titleBox.left + titleBox.width / 2;
+    const left = titleCenterX - ballSize / 2 - heroBox.left;
+
+    // Sit ABOVE the title by a gap proportional to ball size
+    const gap = ballSize * GAP_ABOVE_TITLE;
+    const top = (titleBox.top - heroBox.top) - gap - ballSize;
+
+    layer.style.left = px(left);
+    layer.style.top  = px(top);
+  }
+
+  async function init() {
+    try { await document.fonts?.ready; } catch (e) {
+      console.warn('Font loading failed:', e);
     }
+    // Wait a tick for layout to settle
+    requestAnimationFrame(() => {
+      placeBallAboveTitle();
+      // also on resize
+      window.addEventListener('resize', debounce(placeBallAboveTitle, 120), { passive: true });
+    });
   }
 
-  function _place() {
-    const titleRect = title.getBoundingClientRect();
-    const scrollY   = window.scrollY || document.documentElement.scrollTop;
-
-    // compute current rendered ball size
-    const ballRect  = ball.getBoundingClientRect();
-    const ballSize  = ballRect.width || 160;
-
-    // target top = title bottom + small gap + half ball (because translateY(-50%))
-    const topPx = titleRect.bottom + scrollY + (ballSize * GAP_BELOW_TITLE) + (ballSize * 0.5);
-    ball.style.top = `${topPx}px`;
-
-    // push CTA block far enough to never overlap the ball
-    if (cta) {
-      cta.style.setProperty('--hero-cta-offset', `${ballSize * CTA_CLEAR_RATIO}px`);
+  // Run when hero is in view or immediately if already visible
+  const io = new IntersectionObserver((entries) => {
+    if (entries.some(e => e.isIntersecting)) {
+      io.disconnect();
+      init();
     }
-  }
+  }, { rootMargin: '200px' });
 
-  // simple debounce
-  let t;
-  function onResize() {
-    clearTimeout(t);
-    t = setTimeout(placeBall, 120);
-  }
-
-  window.addEventListener('load', placeBall, { once: true });
-  window.addEventListener('resize', onResize);
+  io.observe(hero);
 })();

@@ -109,16 +109,16 @@
                 <!-- Main title with clean display -->
                 <h1 id="heroTitle" class="hero-title" data-animate>FC BARCELONA</h1>
 
-                <!-- Centered spinning ball positioned after title -->
-                <img
-                    id="ballSpinner"
-                    class="hero-ball-center"
-                    src="assets/soccer-ball.svg"
-                    alt=""
-                    decoding="async"
-                    fetchpriority="high"
-                    aria-hidden="true"
-                />
+                <!-- Ball layer positioned above title -->
+                <div id="ballLayer" aria-hidden="true">
+                    <img
+                        id="ballSpinner"
+                        src="assets/soccer-ball.svg"
+                        alt=""
+                        decoding="async"
+                        fetchpriority="high"
+                    />
+                </div>
 
                 <!-- Graceful no-JS fallback: always show text, hide ball -->
                 <noscript>
