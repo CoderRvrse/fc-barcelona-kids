@@ -117,11 +117,8 @@ jobs:
               | tr -d '\r' | grep -qi 'image/svg+xml'
 
             # body sanity: allow XML prolog or <svg on first few lines
-            if curl -fsSL "$ROOT/assets/soccer-ball.svg" | head -n 5 | grep -Eiq '<svg|<\?xml'; then
-              echo "SVG content validation passed"
-            else
-              echo "Warning: SVG content check failed"
-            fi
+            curl -fsSL "$ROOT/assets/soccer-ball.svg" \
+              | tr -d '\r' | head -n 5 | grep -Eqi '<svg|<\?xml'
 
             # brand logo present
             curl -fsS "$ROOT/" | grep -q 'id="brandLogo"'
