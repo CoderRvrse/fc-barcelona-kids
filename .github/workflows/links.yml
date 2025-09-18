@@ -8,7 +8,7 @@ on:
 
 jobs:
   lychee:
-    # skip on Dependabot and on PRs from forks (where links to the prod site can flake)
+    # Skip on Dependabot and skip PRs from forks (avoid flaky externals)
     if: |
       github.actor != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
@@ -17,12 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Lychee (JSON report)
-        id: lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --config .lychee.toml .
-          format: json
-          output: lychee.json
+          args: --config .lychee.toml --format json --output lychee.json .
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload lychee report

@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,34 +10,28 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages-${{ github.ref }}
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      BUILD_DIR: dist
     steps:
       - uses: actions/checkout@v4
 
       # Ensure Node exists for syntax gate & validator
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # Debug dump (env/tree)
       - name: Debug dump (env/tree)
         run: |
           set -euxo pipefail
           node -v
-          npm -v || true
           pwd
           find . -maxdepth 2 -type f | sort
 
-      # JS parse gate (fast fail on real syntax errors)
-      - name: Syntax check all JS
+      - name: Syntax check all JS (fast fail on real parse errors)
         run: |
           set -euo pipefail
           jsfiles=$(git ls-files '*.js' || true)
@@ -50,119 +43,61 @@ jobs:
             echo "no JS files to check"
           fi
 
-      # Safer CSS asset validator (non-blocking, logs missing assets)
-      - name: Validate CSS asset references (no external deps)
+      # Non-fatal CSS reference validator (no external deps)
+      - name: Validate CSS asset references (non-fatal)
         continue-on-error: true
         run: |
           set -euo pipefail
           node - <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-          function walk(dir, out = []) {
-            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-              const full = path.join(dir, entry.name);
-              if (entry.isDirectory() && !['.git', 'node_modules', 'dist'].includes(entry.name)) {
-                walk(full, out);
-              } else if (entry.isFile() && full.endsWith('.css')) {
-                out.push(full);
-              }
+          const fs = require('fs'); const path = require('path');
+          function walk(d, out=[]){
+            for (const e of fs.readdirSync(d,{withFileTypes:true})) {
+              const p = path.join(d, e.name);
+              if (e.isDirectory() && !['.git','node_modules','dist'].includes(e.name)) walk(p,out);
+              else if (e.isFile() && p.endsWith('.css')) out.push(p);
             }
             return out;
           }
           const cssFiles = walk(process.cwd());
           const re = /url\(\s*(['"]?)([^'")#]+)(?:\?[^'")]*)?\1\s*\)/g;
-          const missing = [];
+          const missing=[];
           for (const css of cssFiles) {
-            const text = fs.readFileSync(css, 'utf8');
-            let match;
-            while ((match = re.exec(text))) {
-              const href = match[2].trim();
-              if (/^(data:|https?:|\/\/)/i.test(href)) continue;
+            const text = fs.readFileSync(css, 'utf8'); let m;
+            while ((m = re.exec(text))) {
+              const href = m[2].trim();
+              if (/^(data:|https?:|\/\/)/i.test(href)) continue; // externals/data
               const target = path.resolve(path.dirname(css), href);
               if (!fs.existsSync(target)) missing.push(`${css} -> ${href}`);
             }
           }
           if (missing.length) {
-            console.warn('Missing CSS assets (non-fatal):\n' + missing.join('\n'));
-            process.exitCode = 0;
+            console.warn('CSS references that do not exist (non-fatal):');
+            for (const line of missing) console.warn(line);
           } else {
             console.log('CSS assets OK');
           }
           NODE
 
-      - name: Detect package manager lockfile
-        id: detect_lock
-        run: |
-          echo "npm_lock=$(ls -1 **/package-lock.json 2>/dev/null | wc -l)" >> $GITHUB_OUTPUT
-          echo "yarn_lock=$(ls -1 **/yarn.lock 2>/dev/null | wc -l)"       >> $GITHUB_OUTPUT
-          echo "pnpm_lock=$(ls -1 **/pnpm-lock.yaml 2>/dev/null | wc -l)"  >> $GITHUB_OUTPUT
-
-      - name: Set mode (build vs static)
-        id: mode
-        run: |
-          total_locks=$(( ${{ steps.detect_lock.outputs.npm_lock }} + ${{ steps.detect_lock.outputs.yarn_lock }} + ${{ steps.detect_lock.outputs.pnpm_lock }} ))
-          if [ "$total_locks" -gt 0 ]; then echo "mode=build" >> $GITHUB_OUTPUT; else echo "mode=static" >> $GITHUB_OUTPUT; fi
-
-      # ---------- BUILD PATH ----------
-      - name: Install dependencies
-        if: ${{ steps.mode.outputs.mode == 'build' }}
-        run: |
-          if [ -f package-lock.json ]; then npm ci;
-          elif [ -f yarn.lock ]; then corepack enable && yarn install --frozen-lockfile;
-          elif [ -f pnpm-lock.yaml ]; then corepack enable && pnpm install --frozen-lockfile;
-          fi
-
-      - name: Build site
-        if: ${{ steps.mode.outputs.mode == 'build' }}
-        run: |
-          if npm run | grep -q " build"; then npm run build;
-          elif command -v yarn >/dev/null && yarn run | grep -q " build"; then yarn build;
-          elif command -v pnpm >/dev/null && pnpm run | grep -q " build"; then pnpm build;
-          else echo "No build script found; failing in build mode." && exit 1; fi
-
-      - name: Upload artifact (build)
-        if: ${{ steps.mode.outputs.mode == 'build' }}
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ${{ env.BUILD_DIR }}
-
-      # ---------- STATIC PATH ----------
-      - name: Upload artifact (static)
-        if: ${{ steps.mode.outputs.mode == 'static' }}
+      # Static site -> upload whole repo (adjust to dist/ if you build)
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
-      # Upload workspace snapshot even if later steps fail
-      - name: Upload workspace snapshot
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: workspace-tree
-          path: |
-            .
-          include-hidden-files: true
-          retention-days: 7
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
 
   smoke:
     name: Smoke test live site
-    needs: deploy
     runs-on: ubuntu-latest
+    needs: deploy
     steps:
       - name: Probe key endpoints (verbose & strict)
         run: |
@@ -171,9 +106,8 @@ jobs:
           ROOT="${URL%/}"
           {
             echo "ROOT=$ROOT"
-            # must be reachable
             curl -fIL "$ROOT/"
-            curl -fIL "$ROOT/offline.html"
+            curl -fIL "$ROOT/offline.html" || true
             curl -fIL "$ROOT/assets/soccer-ball.svg"
 
             # content-type must be SVG

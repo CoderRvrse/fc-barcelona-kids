@@ -5,7 +5,6 @@ on:
     workflows: ["Deploy to GitHub Pages"]
     types: [completed]
 
-# default: minimal read; we escalate per-job
 permissions:
   contents: read
 
@@ -14,16 +13,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ✅ If deploy succeeded, this workflow passes quickly (no noise).
   noop_success:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Upstream deploy succeeded — nothing to do
-        run: |
-          echo "Deploy run ${{ github.event.workflow_run.id }} concluded: ${{ github.event.workflow_run.conclusion }}"
+      - run: echo "Deploy succeeded — nothing to do."
 
-  # ❌ Only run the guard when deploy did NOT succeed
   on_failure:
     if: ${{ github.event.workflow_run.conclusion != 'success' }}
     runs-on: ubuntu-latest
@@ -45,7 +40,7 @@ jobs:
           path: event.json
           retention-days: 7
 
-      - name: Open regression issue
+      - name: Open regression issue (plain text title)
         uses: actions/github-script@v7
         with:
           script: |
@@ -53,20 +48,13 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
               title: `Regression: ${run.name} #${run.id} failed`,
-              body: `**Conclusion:** ${run.conclusion}
-**Branch:** ${run.head_branch}
-**Commit:** ${run.head_sha}
-**Actor:** @${run.actor.login}
-**Run URL:** ${run.html_url}`,
+              body: `Conclusion: ${run.conclusion}\nBranch: ${run.head_branch}\nCommit: ${run.head_sha}\nActor: @${run.actor.login}\nRun: ${run.html_url}`,
               labels: ['regression','ci']
             });
 
-      # Best-effort revert branch & PR (never fail job)
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
+      # Best-effort revert (never fail the job)
+      - uses: actions/checkout@v4
+        with: { ref: main, fetch-depth: 0 }
 
       - name: Configure bot identity
         run: |
@@ -78,7 +66,7 @@ jobs:
         run: |
           set -e
           BR="ci/revert-${{ github.event.workflow_run.id }}"
-          git checkout -b "$BR"
+          git checkout -b "$BR" || git checkout "$BR"
           git revert --no-edit "${{ github.event.workflow_run.head_sha }}" || echo "Nothing to revert"
           if ! git diff --quiet origin/main...HEAD; then
             git push -u origin "$BR" || true
@@ -97,11 +85,10 @@ jobs:
                 owner: context.repo.owner, repo: context.repo.repo,
                 head, base: 'main',
                 title: `chore(ci): revert ${context.payload.workflow_run.head_sha.substring(0,7)} (auto)`,
-                body: 'Auto-opened when Deploy pipeline failed.'
+                body: 'Auto-opened because Deploy pipeline failed.'
               });
             } catch (e) {
               core.warning(`PR open skipped: ${e.message}`);
             }
 
-      - name: Mark handled
-        run: echo "failure handled"
+      - run: echo "failure handled"
