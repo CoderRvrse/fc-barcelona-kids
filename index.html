@@ -109,10 +109,39 @@
             </div>
             <div class="container">
                 <p class="hero-kicker" data-animate>Barcelona methodology for future stars</p>
-                <h1 class="hero-title">
-                    <span class="title-line" data-animate>Play the</span>
-                    <span class="title-line typewriter" data-text="Barca Way"></span>
-                </h1>
+                <!-- HERO TITLE: ball reveals text as it rolls -->
+                <div class="hero-title">
+                  <svg id="heroTitleSvg" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-labelledby="heroTitle">
+                    <title id="heroTitle">Barca Way</title>
+                    <defs>
+                      <!-- Mask: we'll add circles here as the ball moves -->
+                      <mask id="revealMask">
+                        <rect x="0" y="0" width="100%" height="100%" fill="black"/>
+                        <g id="maskDots"></g>
+                      </mask>
+
+                      <!-- Soft blur so the "paint" looks smooth -->
+                      <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="6"/>
+                      </filter>
+                    </defs>
+
+                    <!-- Text is only visible where the mask turns white -->
+                    <g mask="url(#revealMask)">
+                      <text x="40" y="150" class="hero-text">Barca Way</text>
+                    </g>
+                  </svg>
+
+                  <!-- Rolling ball -->
+                  <img id="heroBall" src="assets/soccer-ball.svg" alt="" width="112" height="112" decoding="async" />
+                </div>
+
+                <!-- Graceful no-JS fallback: always show text, hide ball -->
+                <noscript>
+                  <style>
+                    #revealMask rect{fill:#fff} #heroBall{display:none}
+                  </style>
+                </noscript>
                 <p class="hero-subtitle" data-animate>Inspiring the next generation of champions with teamwork, creativity, and respect on and off the pitch.</p>
                 <div class="hero-cta">
                     <a class="btn primary pulse" href="#join" data-btn="primary">Join the Team</a>

@@ -144,24 +144,69 @@
             applyParallax();
         }
 
-        const typewriter = document.querySelector('.typewriter');
-        if (typewriter) {
-            const text = typewriter.dataset.text || typewriter.textContent || '';
-            typewriter.textContent = '';
-            if (!reduceMotion) {
-                let index = 0;
-                const interval = window.setInterval(() => {
-                    typewriter.textContent = text.slice(0, index);
-                    index += 1;
-                    if (index > text.length) {
-                        window.clearInterval(interval);
-                        typewriter.classList.add('is-complete');
+        // Rolling ball hero animation
+        const heroBall = document.getElementById('heroBall');
+        const maskDots = document.getElementById('maskDots');
+        const heroSvg = document.getElementById('heroTitleSvg');
+
+        if (heroBall && maskDots && heroSvg && !reduceMotion) {
+            const animateRollingBall = () => {
+                const svgRect = heroSvg.getBoundingClientRect();
+                const ballSize = 112;
+                const startX = -ballSize / 2;
+                const endX = svgRect.width - ballSize / 2;
+                const centerY = svgRect.height / 2 - ballSize / 2;
+                const duration = 2800;
+
+                heroBall.style.left = startX + 'px';
+                heroBall.style.top = centerY + 'px';
+
+                const start = performance.now();
+
+                const animate = (time) => {
+                    const elapsed = time - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+                    const currentX = startX + (endX - startX) * eased;
+                    const rotation = eased * 720;
+
+                    if (gsapSafe) {
+                        gsapSafe(heroBall, { x: currentX, rotation, duration: 0.016, ease: 'none' });
+                    } else {
+                        heroBall.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
                     }
-                }, 90);
-            } else {
-                typewriter.textContent = text;
-                typewriter.classList.add('is-complete');
-            }
+
+                    const dotCount = Math.floor(eased * 15);
+                    if (maskDots.children.length < dotCount) {
+                        for (let i = maskDots.children.length; i < dotCount; i++) {
+                            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            dot.setAttribute('r', '24');
+                            dot.setAttribute('fill', 'white');
+                            dot.setAttribute('cx', startX + ballSize / 2 + (endX - startX) * (i / 14));
+                            dot.setAttribute('cy', svgRect.height / 2);
+                            maskDots.appendChild(dot);
+                        }
+                    }
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                };
+
+                requestAnimationFrame(animate);
+            };
+
+            const heroObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+                        animateRollingBall();
+                        heroObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.3 });
+
+            heroObserver.observe(heroSvg);
         }
 
         const countObserver = new IntersectionObserver((entries) => {
