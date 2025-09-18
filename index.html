@@ -103,36 +103,24 @@
         <section id="hero" class="hero" data-section>
             <div class="hero-parallax hero-parallax--field" data-parallax data-speed="0.15" aria-hidden="true"></div>
             <div class="hero-parallax hero-parallax--stadium" data-parallax data-speed="0.25" aria-hidden="true"></div>
-            <div class="floating-ball" aria-hidden="true">
-                <span class="ball" data-orb="hero-soccer"></span>
-                <span class="shadow"></span>
+            <!-- Centered spinning ball (the only ball) -->
+            <div class="hero-ball-center" aria-hidden="true">
+                <img
+                    id="ballSpinner"
+                    src="assets/soccer-ball.svg"
+                    width="256"
+                    height="256"
+                    alt=""
+                    decoding="async"
+                    fetchpriority="high"
+                />
             </div>
+
             <div class="container">
                 <p class="hero-kicker" data-animate>Barcelona methodology for future stars</p>
 
-                <!-- Semantic heading for SEO and screen readers -->
-                <h1 class="sr-only">FC BARCELONA</h1>
-
-                <!-- HERO TITLE: rolling ball reveal animation -->
-                <section id="hero">
-                  <div class="hero-wrap">
-                    <!-- Main title SVG -->
-                    <svg id="heroTitle" role="img" aria-labelledby="heroTitleLbl">
-                      <title id="heroTitleLbl">FC BARCELONA</title>
-                    </svg>
-
-                    <!-- Rolling ball that animates -->
-                    <div id="heroBall" aria-hidden="true"></div>
-
-                    <!-- Idle ball visible after animation completes, at same final coords -->
-                    <div id="heroBallIdle" aria-hidden="true"></div>
-                  </div>
-
-                  <!-- No-JS / Reduced-motion fallback -->
-                  <noscript>
-                    <h1 class="hero-fallback">FC BARCELONA</h1>
-                  </noscript>
-                </section>
+                <!-- Main title with clean display -->
+                <h1 class="hero-title" data-animate>FC BARCELONA</h1>
 
                 <!-- Graceful no-JS fallback: always show text, hide ball -->
                 <noscript>

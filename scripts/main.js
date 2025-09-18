@@ -1099,4 +1099,21 @@
             [...document.body.querySelectorAll("*")].forEach(kill);
         }));
     })();
+    })(); // Close backToTopControl function
+
+// Clean ball spinner - disable old animation and show centered spinner
+(() => {
+  // Hard-disable any legacy rolling/idle logic if it still exists:
+  try {
+    window.__heroAnimation = {
+      run() {},        // no-op
+      showFinal() {}   // no-op
+    };
+  } catch (e) {
+    // Silently ignore any errors when overriding hero animation
+  }
+
+  // Ensure the centered spinner is visible (in case CSS was toggled by old code)
+  const spinner = document.getElementById('ballSpinner');
+  if (spinner) spinner.style.opacity = '1';
 })();
