@@ -2,9 +2,6 @@
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const reduceMotion = prefersReducedMotion.matches;
 
-    // Ultra-defensive GSAP guard
-    const gsapSafe = (...args) => (window.gsap?.to ? window.gsap.to(...args) : null);
-
     const onReady = (callback) => {
         if (document.readyState !== 'loading') {
             callback();

@@ -1694,5 +1694,4 @@ textarea:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .bt, .bt * { transition: none !important; animation: none !important; }
-  .bt-tip { transform: none !important; opacity: 1 !important; }
 }
