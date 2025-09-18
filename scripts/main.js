@@ -144,26 +144,46 @@
             applyParallax();
         }
 
-        // Rolling ball hero animation
-        const heroBall = document.getElementById('heroBall');
-        const maskDots = document.getElementById('maskDots');
-        const heroSvg = document.getElementById('heroTitleSvg');
+        // Enhanced Rolling ball hero animation with performance optimizations
+        (() => {
+            const heroBall = document.getElementById('heroBall');
+            const maskDots = document.getElementById('maskDots');
+            const heroSvg = document.getElementById('heroTitleSvg');
+            const softFilter = document.getElementById('soft');
 
-        if (heroBall && maskDots && heroSvg && !reduceMotion) {
-            const animateRollingBall = () => {
+            if (!heroBall || !maskDots || !heroSvg || reduceMotion) return;
+
+            // Performance optimizations
+            const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+            const blurR = Math.max(4, 6 * (1/dpr));
+            if (softFilter) {
+                softFilter.firstElementChild.setAttribute('stdDeviation', String(blurR));
+            }
+
+            function runHeroReveal(replay = false) {
+                // Clear previous animation if replaying
+                if (replay) {
+                    if (window.__heroRafId) cancelAnimationFrame(window.__heroRafId);
+                    maskDots.innerHTML = '';
+                }
+
                 const svgRect = heroSvg.getBoundingClientRect();
-                const ballSize = 112;
+                const ballSize = Math.max(72, Math.min(128, 112)); // Clamp ball size
                 const startX = -ballSize / 2;
                 const endX = svgRect.width - ballSize / 2;
                 const centerY = svgRect.height / 2 - ballSize / 2;
                 const duration = 2800;
+                const step = 0.55 / dpr; // DPR-aware dot density
 
+                // Set initial position
                 heroBall.style.left = startX + 'px';
                 heroBall.style.top = centerY + 'px';
 
                 const start = performance.now();
 
                 const animate = (time) => {
+                    window.__heroRafId = requestAnimationFrame(animate);
+
                     const elapsed = time - start;
                     const progress = Math.min(elapsed / duration, 1);
                     const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
@@ -171,43 +191,76 @@
                     const currentX = startX + (endX - startX) * eased;
                     const rotation = eased * 720;
 
+                    // Use transform only to avoid layout thrash
                     if (gsapSafe) {
-                        gsapSafe(heroBall, { x: currentX, rotation, duration: 0.016, ease: 'none' });
+                        gsapSafe(heroBall, {
+                            x: currentX,
+                            rotation,
+                            duration: 0.016,
+                            ease: window.gsap ? 'power3.out' : 'none'
+                        });
                     } else {
                         heroBall.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
                     }
 
-                    const dotCount = Math.floor(eased * 15);
-                    if (maskDots.children.length < dotCount) {
-                        for (let i = maskDots.children.length; i < dotCount; i++) {
+                    // Progressive dot creation with DPR optimization
+                    const targetDots = Math.floor(eased * 15 * step);
+                    if (maskDots.children.length < targetDots) {
+                        for (let i = maskDots.children.length; i < targetDots; i++) {
                             const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                            dot.setAttribute('r', '24');
+                            dot.setAttribute('r', String(24 / dpr));
                             dot.setAttribute('fill', 'white');
-                            dot.setAttribute('cx', startX + ballSize / 2 + (endX - startX) * (i / 14));
-                            dot.setAttribute('cy', svgRect.height / 2);
+                            dot.setAttribute('cx', String(startX + ballSize / 2 + (endX - startX) * (i / (14 * step))));
+                            dot.setAttribute('cy', String(svgRect.height / 2));
                             maskDots.appendChild(dot);
                         }
                     }
 
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
+                    if (progress >= 1) {
+                        cancelAnimationFrame(window.__heroRafId);
+                        window.__heroRafId = null;
                     }
                 };
 
-                requestAnimationFrame(animate);
-            };
+                window.__heroRafId = requestAnimationFrame(animate);
+            }
 
+            // Expose for replay functionality
+            window.runHeroReveal = runHeroReveal;
+
+            // Intersection observer for initial trigger
+            let playedOnce = false;
             const heroObserver = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
-                        animateRollingBall();
-                        heroObserver.unobserve(entry.target);
+                    if (entry.isIntersecting && !playedOnce) {
+                        playedOnce = true;
+                        runHeroReveal();
                     }
                 });
-            }, { threshold: 0.3 });
+            }, { rootMargin: '0px 0px -25% 0px', threshold: 0.3 });
 
             heroObserver.observe(heroSvg);
-        }
+
+            // Cancel animation if page becomes hidden
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && window.__heroRafId) {
+                    cancelAnimationFrame(window.__heroRafId);
+                    window.__heroRafId = null;
+                }
+            });
+        })();
+
+        // Replay button functionality
+        (() => {
+            const replayBtn = document.querySelector('.hero-replay');
+            if (!replayBtn || reduceMotion) return;
+
+            replayBtn.addEventListener('click', () => {
+                if (typeof window.runHeroReveal === 'function') {
+                    window.runHeroReveal(true);
+                }
+            });
+        })();
 
         const countObserver = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {

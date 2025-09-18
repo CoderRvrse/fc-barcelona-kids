@@ -132,6 +132,10 @@ jobs:
             # crest + ball are real SVGs (check first 5 lines for XML prolog)
             curl -fsS "$ROOT/assets/FC_Barcelona_logo.svg" | head -n5 | grep -iq '<svg'
             curl -fsS "$ROOT/assets/soccer-ball.svg" | head -n5 | grep -iq '<svg'
+
+            # Hero SVG rolling ball components present
+            curl -fsSL "$ROOT/" | grep -q 'id="heroTitleSvg"'
+            curl -fsSL "$ROOT/" | grep -q 'mask id="revealMask"'
           } | tee smoke.log
       - name: Upload smoke logs
         if: ${{ always() }}
