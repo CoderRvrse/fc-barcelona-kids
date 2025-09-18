@@ -1666,84 +1666,108 @@ textarea:focus-visible {
   white-space:nowrap;border:0
 }
 
-/* =====[ ROLLING BALL HERO ]=========================== */
+/* =====[ HERO ROLLING BALL ANIMATION ]=========================== */
 
-/* Ball size (adjust as needed) */
+/* CSS Variables for configuration */
 :root {
   --ball-size: 120px;
+  --hero-title-font-size: clamp(48px, min(12vw, (100vw - 160px - 2rem)/11), 120px);
+  --hero-title-font: 900 var(--hero-title-font-size) "Inter", system-ui, -apple-system, sans-serif;
 }
 
-.hero-title {
+/* Hero section layout */
+#hero {
   position: relative;
-  height: clamp(140px, 24vw, 260px);
+  width: 100%;
   margin-block: 18px 8px;
 }
 
-.hero-title {
-  font: 900 clamp(48px, min(12vw, (100vw - 160px - 2rem)/11), 120px) "Inter", system-ui, sans-serif;
-  fill: #fff;
-  paint-order: stroke fill;
-  letter-spacing: 0.02em;
+.hero-wrap {
+  position: relative;
+  height: clamp(140px, 24vw, 260px);
+  width: 100%;
+  overflow: visible;
 }
 
+/* Main SVG title */
 #heroTitle {
   width: 100%;
   height: 100%;
   display: block;
+  overflow: visible;
 }
 
-#titleSolid {
-  clip-path: none !important;
-  transition: opacity .35s ease;
+/* Text styling for SVG elements */
+#heroTitle text {
+  font: var(--hero-title-font);
+  fill: #ffffff;
+  paint-order: stroke fill;
+  letter-spacing: 0.02em;
+  text-anchor: middle;
+  dominant-baseline: central;
 }
 
-/* Rolling ball (absolutely positioned via JS) */
+/* Ball elements - shared styling */
 #heroBall,
 #heroBallIdle {
   position: absolute;
   width: var(--ball-size);
   height: var(--ball-size);
   background: url('assets/soccer-ball.svg') center/contain no-repeat;
+  background-size: contain;
   will-change: transform;
-  filter: drop-shadow(0 10px 12px rgba(0,0,0,.35));
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.35));
   transform-origin: 50% 50%;
   pointer-events: none;
+  z-index: 10;
 }
 
-/* Idle (spinning) ball is invisible until the end */
+/* Rolling ball - visible during animation */
+#heroBall {
+  opacity: 1;
+}
+
+/* Idle ball - hidden initially, shown after animation */
 #heroBallIdle {
   opacity: 0;
-  transition: opacity .25s ease;
+  transition: opacity 0.25s ease;
 }
 
-/* Fallback for noscript */
-.hero-title-fallback{
+/* No-JS fallback */
+.hero-fallback {
   display: none;
-  font: 900 clamp(48px, min(12vw, (100vw - 160px - 2rem)/11), 120px) "Inter", system-ui, sans-serif;
-  letter-spacing: 0.02em;
-  color: #fff;
+  font: var(--hero-title-font);
+  color: #ffffff;
   text-align: center;
-  margin-block: 18px 8px;
+  margin: 0;
+  letter-spacing: 0.02em;
 }
 
-/* Prefers-reduced-motion: skip animation entirely */
+noscript .hero-fallback {
+  display: block;
+}
+
+/* Accessibility - reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  #titleMasked {
+  #heroBall {
     display: none !important;
   }
-  #titleSolid {
-    opacity: 1 !important;
-    transition: none;
-  }
-  .hero-title-fallback {
+  .hero-fallback {
     display: block;
   }
   #heroTitle {
     display: none;
   }
-  #heroBall,
-  #heroBallIdle {
-    display: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 720px) {
+  :root {
+    --ball-size: 100px;
+  }
+
+  .hero-wrap {
+    height: clamp(120px, 20vw, 180px);
   }
 }
 

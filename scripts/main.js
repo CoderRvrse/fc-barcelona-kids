@@ -152,218 +152,471 @@
             applyParallax();
         }
 
-        // Cap line rolling ball with baseline resting - pixel-perfect implementation
-        (() => {
-          const TEXT = 'FC BARCELONA';              // final string
-          const GAP_RIGHT = 16;                      // gap between A and ball
-          const LEFT_GUARD = 100;                    // reveal start overshoot
-          const RIGHT_GUARD = 160;                   // reveal end overshoot
-          const OFFSET_Y = 4;                        // baseline hug tweak
-          const TOP_GAP = 8;                         // tiny gap above cap line for roll
+        // ========= HERO ROLLING BALL ANIMATION (Greenfield Rebuild) =========
 
-          const svg    = document.getElementById('heroTitle');
-          const masked = document.getElementById('titleMasked');
-          const solid  = document.getElementById('titleSolid');
-          const rect   = document.getElementById('revealRectPx');
-          const ball   = document.getElementById('heroBall');
-          const idle   = document.getElementById('heroBallIdle');
+        /**
+         * Configuration object for precise control of animation behavior
+         */
+        const HERO_CONFIG = {
+          text: 'FC BARCELONA',
+          ballSize: 120,            // px
+          capTopGap: 8,             // px gap above cap line during roll
+          endGapRight: 16,          // px between A's right edge and ball
+          baselineYOffset: 4,       // small +Y after drop to sit on baseline
+          rollDuration: 900,        // ms
+          dropDuration: 380,        // ms
+          ease: 'power3.out',       // if using GSAP; otherwise implement cubic
+          revealOvershootLeft: 100, // px
+          revealOvershootRight: 160 // px
+        };
 
-          if (!svg || !masked || !solid || !rect || !ball || !idle) return;
+        /**
+         * Initialize hero animation system
+         */
+        function initHero(config = HERO_CONFIG) {
+          // DOM elements
+          const heroSection = document.getElementById('hero');
+          const svg = document.getElementById('heroTitle');
+          const ballRolling = document.getElementById('heroBall');
+          const ballIdle = document.getElementById('heroBallIdle');
 
-          masked.textContent = TEXT;
-          solid.textContent  = TEXT;
+          if (!heroSection || !svg || !ballRolling || !ballIdle) {
+            console.warn('[Hero] Required DOM elements not found');
+            return;
+          }
 
-          // Utility: get numeric px from CSS var
-          const ballSize = () => {
-            const v = getComputedStyle(document.documentElement).getPropertyValue('--ball-size').trim();
-            return parseFloat(v) || 120;
-          };
+          // Check for reduced motion preference
+          const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-          // Convert SVG local coords → page pixels
-          function svgToPage(x, y) {
-            const ctm = svg.getScreenCTM();
+          if (prefersReducedMotion) {
+            showFinalState();
+            return;
+          }
+
+          // State variables
+          let isAnimating = false;
+          let geometry = null;
+
+          // Dev toggle for testing (set window.__heroSkipAnimation = true to skip to final state)
+          if (window.__heroSkipAnimation) {
+            showFinalState();
+            return;
+          }
+
+          /**
+           * Build SVG structure with text and reveal mask
+           */
+          function buildSVGStructure() {
+            // Get container dimensions
+            const rect = svg.getBoundingClientRect();
+            const viewBoxWidth = Math.max(1200, rect.width);
+            const viewBoxHeight = Math.max(200, rect.height);
+
+            svg.setAttribute('viewBox', `0 0 ${viewBoxWidth} ${viewBoxHeight}`);
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+            // Clear existing content
+            svg.innerHTML = '';
+
+            // Add title element
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            title.textContent = config.text;
+            title.id = 'heroTitleLbl';
+            svg.appendChild(title);
+
+            // Create defs for clipPath
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+            clipPath.id = 'textRevealClip';
+            clipPath.setAttribute('clipPathUnits', 'userSpaceOnUse');
+
+            const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            clipRect.id = 'revealRect';
+            clipRect.setAttribute('x', '0');
+            clipRect.setAttribute('y', '0');
+            clipRect.setAttribute('width', '0');
+            clipRect.setAttribute('height', '0');
+            clipRect.setAttribute('rx', '8');
+            clipRect.setAttribute('ry', '8');
+
+            clipPath.appendChild(clipRect);
+            defs.appendChild(clipPath);
+            svg.appendChild(defs);
+
+            // Masked text (revealed progressively)
+            const maskedText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            maskedText.id = 'titleMasked';
+            maskedText.textContent = config.text;
+            maskedText.setAttribute('x', `${viewBoxWidth / 2}`);
+            maskedText.setAttribute('y', `${viewBoxHeight / 2}`);
+            maskedText.setAttribute('clip-path', 'url(#textRevealClip)');
+            svg.appendChild(maskedText);
+
+            // Solid text (final state)
+            const solidText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            solidText.id = 'titleSolid';
+            solidText.textContent = config.text;
+            solidText.setAttribute('x', `${viewBoxWidth / 2}`);
+            solidText.setAttribute('y', `${viewBoxHeight / 2}`);
+            solidText.style.opacity = '0';
+            solidText.style.transition = 'opacity 0.35s ease';
+            svg.appendChild(solidText);
+
+            return { maskedText, solidText, clipRect };
+          }
+
+          /**
+           * Calculate precise geometry for animation paths
+           */
+          async function calculateGeometry() {
+            // Wait for fonts to load
+            try {
+              await document.fonts.ready;
+            } catch (e) {
+              console.log('[Hero] Font loading failed, continuing anyway');
+            }
+
+            const { maskedText, solidText, clipRect } = buildSVGStructure();
+
+            // Force layout and get text metrics
+            maskedText.setAttribute('visibility', 'visible');
+            const textBBox = maskedText.getBBox();
+
+            // Calculate key coordinates
+            const capLineY = textBBox.y; // Top of text
+            const baselineY = textBBox.y + textBBox.height; // Bottom of text
+
+            // Get final 'A' glyph position
+            const lastCharIndex = config.text.trim().length - 1;
+            let lastCharBox;
+
+            try {
+              lastCharBox = maskedText.getExtentOfChar(lastCharIndex);
+            } catch {
+              // Fallback: estimate based on average character width
+              const avgCharWidth = textBBox.width / config.text.trim().length;
+              lastCharBox = {
+                x: textBBox.x + textBBox.width - avgCharWidth,
+                y: textBBox.y,
+                width: avgCharWidth,
+                height: textBBox.height
+              };
+            }
+
+            // Get ball size from CSS variable
+            const ballSize = parseFloat(
+              getComputedStyle(document.documentElement)
+                .getPropertyValue('--ball-size')
+                .trim()
+            ) || config.ballSize;
+
+            const ballRadius = ballSize / 2;
+
+            // Calculate animation coordinates (in SVG space)
+            const startX = textBBox.x - config.revealOvershootLeft;
+            const startY = capLineY - ballRadius - config.capTopGap;
+
+            const rollEndX = lastCharBox.x + lastCharBox.width + config.endGapRight;
+            const rollEndY = startY; // Same Y as start (rolling along cap line)
+
+            const finalX = rollEndX;
+            const finalY = baselineY - ballRadius + config.baselineYOffset;
+
+            // Setup reveal clipPath
+            const clipX = Math.round(textBBox.x - config.revealOvershootLeft);
+            const clipY = Math.round(textBBox.y - 20);
+            const clipHeight = Math.round(textBBox.height + 40);
+            const clipMaxWidth = Math.round(textBBox.width + config.revealOvershootLeft + config.revealOvershootRight);
+
+            clipRect.setAttribute('x', String(clipX));
+            clipRect.setAttribute('y', String(clipY));
+            clipRect.setAttribute('height', String(clipHeight));
+            clipRect.setAttribute('width', '0');
+
             return {
-              x: ctm.a * x + ctm.c * y + ctm.e,
-              y: ctm.b * x + ctm.d * y + ctm.f
+              textBBox,
+              lastCharBox,
+              ballSize,
+              ballRadius,
+              startX,
+              startY,
+              rollEndX,
+              rollEndY,
+              finalX,
+              finalY,
+              clipX,
+              clipY,
+              clipHeight,
+              clipMaxWidth,
+              maskedText,
+              solidText,
+              clipRect
             };
           }
 
-          async function measureAndAnimate() {
-            try { await document.fonts?.ready; } catch {}
+          /**
+           * Convert SVG coordinates to page coordinates
+           */
+          function svgToPageCoords(svgX, svgY) {
+            const ctm = svg.getScreenCTM();
+            if (!ctm) return { x: svgX, y: svgY };
 
-            // Ensure it has layout
-            masked.setAttribute('visibility', 'visible');
+            return {
+              x: ctm.a * svgX + ctm.c * svgY + ctm.e,
+              y: ctm.b * svgX + ctm.d * svgY + ctm.f
+            };
+          }
 
-            // Full text bbox (in SVG user space)
-            const textBox = masked.getBBox(); // {x,y,width,height}
-            const baselineY = textBox.y + textBox.height;  // bottom line
-            const capY      = textBox.y;                   // top line
+          /**
+           * Position a ball element at SVG coordinates
+           */
+          function positionBall(ballElement, svgX, svgY, rotation = 0) {
+            const pageCoords = svgToPageCoords(svgX, svgY);
+            const ballRadius = geometry.ballRadius;
 
-            // Final 'A' glyph extent (precise)
-            const lastIdx = TEXT.trim().length - 1;
-            let aBox;
-            try {
-              aBox = masked.getExtentOfChar(lastIdx);
-            } catch {
-              // Fallback: estimate last glyph box
-              const avg = textBox.width / Math.max(1, TEXT.trim().length);
-              aBox = { x: textBox.x + textBox.width - avg, y: textBox.y, width: avg, height: textBox.height };
-            }
+            ballElement.style.transform =
+              `translate(${pageCoords.x - ballRadius}px, ${pageCoords.y - ballRadius}px) rotate(${rotation}deg)`;
+          }
 
-            // ----- Reveal rect setup -----
-            const rectX   = Math.round(textBox.x - LEFT_GUARD);
-            const rectW   = Math.round(textBox.width + LEFT_GUARD + RIGHT_GUARD);
-            rect.setAttribute('x', rectX);
-            rect.setAttribute('y', Math.floor(textBox.y) - 20);
-            rect.setAttribute('height', Math.ceil(textBox.height) + 40);
-            rect.setAttribute('width', '0');
+          /**
+           * Update reveal progress (0 to 1)
+           */
+          function setRevealProgress(progress) {
+            if (!geometry) return;
 
-            // ----- Path key points (in SVG user space) -----
-            const B = ballSize();
-            const R = B / 2;
+            const clampedProgress = Math.max(0, Math.min(1, progress));
+            const width = Math.round(geometry.clipMaxWidth * clampedProgress);
 
-            // Rolling start (a little before the text)
-            const startX = rectX - R;            // left of reveal rect
-            const startY = capY - R - TOP_GAP;   // sits on top of cap line
+            geometry.clipRect.setAttribute('width', String(width));
 
-            // Rolling end directly over the final A's right edge + GAP_RIGHT
-            const rollEndX = aBox.x + aBox.width + GAP_RIGHT;
-            const rollEndY = startY;
-
-            // Drop destination — baseline hug at A's right
-            const restX = rollEndX;
-            const restY = baselineY - R + OFFSET_Y;
-
-            // ----- Pre-position both balls -----
-            // Rolling ball starts at (startX,startY)
-            const sPage = svgToPage(startX, startY);
-            ball.style.transform = `translate(${sPage.x}px, ${sPage.y}px)`;
-            ball.style.opacity = '1';
-
-            // Idle spinner is pre-placed at final resting coords, but hidden
-            const rPage = svgToPage(restX, restY);
-            idle.style.transform = `translate(${rPage.x}px, ${rPage.y}px)`;
-            idle.style.opacity = '0';
-
-            // ----- Drive the reveal rect width in sync with roll progress -----
-            function setRevealProgress(p) {
-              const clamp = Math.max(0, Math.min(1, p));
-              if (clamp >= 0.98) {
-                rect.setAttribute('width', String(rectW)); // snap to full
-                return;
-              }
-              rect.setAttribute('width', String(Math.round(rectW * clamp)));
-            }
-
-            // ----- Animate (GSAP if available; otherwise RAF) -----
-            const hasGSAP = !!window.gsap;
-            const ROLL_MS = 900;
-            const DROP_MS = 380;
-
-            function placeBall(x, y, rot = 0) {
-              const p = svgToPage(x, y);
-              ball.style.transform = `translate(${p.x}px, ${p.y}px) rotate(${rot}deg)`;
-            }
-
-            function finish() {
-              // solid on, masked off
-              solid.style.opacity = '1';
-              setTimeout(() => masked.remove(), 400);
-
-              // hide rolling, show idle at the exact same spot
-              ball.style.opacity = '0';
-              idle.style.opacity = '1';
-            }
-
-            if (hasGSAP) {
-              const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-              // Roll across cap line
-              tl.to({ t: 0 }, {
-                duration: ROLL_MS / 1000,
-                t: 1,
-                onUpdate(self) {
-                  const t = self.targets()[0].t;
-                  const x = startX + (rollEndX - startX) * t;
-                  const y = rollEndY;
-                  placeBall(x, y, t * 360);
-                  setRevealProgress(t);
-                }
-              });
-
-              // Drop to the baseline hug at A's right
-              tl.to({ y: rollEndY }, {
-                duration: DROP_MS / 1000,
-                y: restY,
-                ease: "bounce.out",
-                onUpdate(self) {
-                  placeBall(rollEndX, self.targets()[0].y, 360);
-                  setRevealProgress(1);
-                },
-                onComplete: finish
-              });
-            } else {
-              // RAF fallback
-              const t0 = performance.now();
-              const tRollEnd = t0 + ROLL_MS;
-              const tDropEnd = tRollEnd + DROP_MS;
-
-              function step(now) {
-                if (now <= tRollEnd) {
-                  const k = (now - t0) / ROLL_MS;
-                  const x = startX + (rollEndX - startX) * k;
-                  placeBall(x, rollEndY, k * 360);
-                  setRevealProgress(k);
-                  requestAnimationFrame(step);
-                } else if (now <= tDropEnd) {
-                  const k = (now - tRollEnd) / DROP_MS;
-                  const y = rollEndY + (restY - rollEndY) * k;
-                  placeBall(rollEndX, y, 360);
-                  setRevealProgress(1);
-                  requestAnimationFrame(step);
-                } else {
-                  placeBall(rollEndX, restY, 360);
-                  setRevealProgress(1);
-                  finish();
-                }
-              }
-              requestAnimationFrame(step);
-            }
-
-            // On resize, recompute everything (debounced)
-            let rid;
-            window.addEventListener('resize', () => {
-              cancelAnimationFrame(rid);
-              rid = requestAnimationFrame(() => {
-                // restart measurement + layout, skip animation for simplicity
-                measureAndPlaceIdleOnly();
-              });
-            });
-
-            // Utility: place only the idle spinner and finalize text (used by resize)
-            function measureAndPlaceIdleOnly() {
-              const box = masked.getBBox();
-              const base = box.y + box.height;
-              let lastBox;
-              try { lastBox = masked.getExtentOfChar(lastIdx); }
-              catch {
-                const avg = box.width / Math.max(1, TEXT.trim().length);
-                lastBox = { x: box.x + box.width - avg, y: box.y, width: avg, height: box.height };
-              }
-              const restX2 = lastBox.x + lastBox.width + GAP_RIGHT;
-              const restY2 = base - R + OFFSET_Y;
-              const r2 = svgToPage(restX2, restY2);
-              idle.style.transform = `translate(${r2.x}px, ${r2.y}px)`;
-              idle.style.opacity = '1';
-              ball.style.opacity = '0';
-              solid.style.opacity = '1';
-              rect.setAttribute('width', String(rectW));
+            // Snap to full width at 98% to prevent clipping
+            if (clampedProgress >= 0.98) {
+              geometry.clipRect.setAttribute('width', String(geometry.clipMaxWidth));
             }
           }
 
-          if (document.readyState !== 'loading') measureAndAnimate();
-          else document.addEventListener('DOMContentLoaded', measureAndAnimate, { once: true });
-        })();
+          /**
+           * Complete animation and show final state
+           */
+          function finishAnimation() {
+            if (!geometry) return;
+
+            // Show solid text
+            geometry.solidText.style.opacity = '1';
+
+            // Hide rolling ball, show idle ball
+            ballRolling.style.opacity = '0';
+            ballIdle.style.opacity = '1';
+
+            // Position idle ball at final coordinates
+            positionBall(ballIdle, geometry.finalX, geometry.finalY);
+
+            // Clean up masked text after transition
+            setTimeout(() => {
+              if (geometry.maskedText.parentNode) {
+                geometry.maskedText.style.display = 'none';
+              }
+            }, 400);
+
+            isAnimating = false;
+          }
+
+          /**
+           * Show final state immediately (for reduced motion or dev toggle)
+           */
+          function showFinalState() {
+            calculateGeometry().then(geom => {
+              geometry = geom;
+
+              // Show solid text
+              geometry.solidText.style.opacity = '1';
+              geometry.maskedText.style.display = 'none';
+
+              // Hide rolling ball, show idle ball at final position
+              ballRolling.style.opacity = '0';
+              ballIdle.style.opacity = '1';
+              positionBall(ballIdle, geometry.finalX, geometry.finalY);
+
+              // Set full reveal
+              setRevealProgress(1);
+            });
+          }
+
+          /**
+           * Run the rolling ball animation
+           */
+          async function runAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            geometry = await calculateGeometry();
+
+            // Position rolling ball at start
+            positionBall(ballRolling, geometry.startX, geometry.startY);
+            ballRolling.style.opacity = '1';
+
+            // Position idle ball at final location (hidden)
+            positionBall(ballIdle, geometry.finalX, geometry.finalY);
+            ballIdle.style.opacity = '0';
+
+            // Animate with GSAP if available, otherwise use RAF
+            if (window.gsap) {
+              animateWithGSAP();
+            } else {
+              animateWithRAF();
+            }
+          }
+
+          /**
+           * GSAP animation implementation
+           */
+          function animateWithGSAP() {
+            const tl = gsap.timeline({
+              defaults: { ease: config.ease }
+            });
+
+            // Rolling phase
+            tl.to({ progress: 0 }, {
+              duration: config.rollDuration / 1000,
+              progress: 1,
+              onUpdate: function() {
+                const t = this.targets()[0].progress;
+                const x = geometry.startX + (geometry.rollEndX - geometry.startX) * t;
+                const rotation = t * 360 * 2; // 2 full rotations during roll
+
+                positionBall(ballRolling, x, geometry.rollEndY, rotation);
+                setRevealProgress(t);
+              }
+            });
+
+            // Dropping phase
+            tl.to({ y: geometry.rollEndY }, {
+              duration: config.dropDuration / 1000,
+              y: geometry.finalY,
+              ease: 'bounce.out',
+              onUpdate: function() {
+                positionBall(ballRolling, geometry.rollEndX, this.targets()[0].y, 720);
+                setRevealProgress(1);
+              },
+              onComplete: finishAnimation
+            });
+          }
+
+          /**
+           * RequestAnimationFrame fallback animation
+           */
+          function animateWithRAF() {
+            const startTime = performance.now();
+            const rollEndTime = startTime + config.rollDuration;
+            const dropEndTime = rollEndTime + config.dropDuration;
+
+            function step(currentTime) {
+              if (currentTime <= rollEndTime) {
+                // Rolling phase
+                const progress = (currentTime - startTime) / config.rollDuration;
+                const easedProgress = easeOutCubic(progress);
+                const x = geometry.startX + (geometry.rollEndX - geometry.startX) * easedProgress;
+                const rotation = easedProgress * 360 * 2;
+
+                positionBall(ballRolling, x, geometry.rollEndY, rotation);
+                setRevealProgress(easedProgress);
+
+                requestAnimationFrame(step);
+              } else if (currentTime <= dropEndTime) {
+                // Dropping phase
+                const dropProgress = (currentTime - rollEndTime) / config.dropDuration;
+                const easedDrop = easeOutBounce(dropProgress);
+                const y = geometry.rollEndY + (geometry.finalY - geometry.rollEndY) * easedDrop;
+
+                positionBall(ballRolling, geometry.rollEndX, y, 720);
+                setRevealProgress(1);
+
+                requestAnimationFrame(step);
+              } else {
+                // Animation complete
+                positionBall(ballRolling, geometry.finalX, geometry.finalY, 720);
+                setRevealProgress(1);
+                finishAnimation();
+              }
+            }
+
+            requestAnimationFrame(step);
+          }
+
+          /**
+           * Cubic ease-out function
+           */
+          function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+          }
+
+          /**
+           * Bounce ease-out function
+           */
+          function easeOutBounce(t) {
+            const n1 = 7.5625;
+            const d1 = 2.75;
+
+            if (t < 1 / d1) {
+              return n1 * t * t;
+            } else if (t < 2 / d1) {
+              return n1 * (t -= 1.5 / d1) * t + 0.75;
+            } else if (t < 2.5 / d1) {
+              return n1 * (t -= 2.25 / d1) * t + 0.9375;
+            } else {
+              return n1 * (t -= 2.625 / d1) * t + 0.984375;
+            }
+          }
+
+          /**
+           * Handle window resize
+           */
+          function handleResize() {
+            if (!geometry) return;
+
+            // Recalculate geometry and reposition idle ball if animation is complete
+            if (!isAnimating) {
+              calculateGeometry().then(newGeometry => {
+                geometry = newGeometry;
+                positionBall(ballIdle, geometry.finalX, geometry.finalY);
+                setRevealProgress(1);
+              });
+            }
+          }
+
+          // Setup resize handler with debouncing
+          let resizeTimeout;
+          window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(handleResize, 150);
+          });
+
+          // Setup intersection observer for initial trigger
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting && !isAnimating) {
+                runAnimation();
+                observer.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.1 });
+
+          observer.observe(heroSection);
+
+          // Expose API for testing and manual control
+          window.__heroAnimation = {
+            run: runAnimation,
+            showFinal: showFinalState,
+            config: config
+          };
+        }
+
+        // Initialize hero animation when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', () => initHero(HERO_CONFIG));
+        } else {
+          initHero(HERO_CONFIG);
+        }
 
         // Replay button functionality
         (() => {

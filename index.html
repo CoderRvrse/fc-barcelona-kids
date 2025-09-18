@@ -113,32 +113,26 @@
                 <!-- Semantic heading for SEO and screen readers -->
                 <h1 class="sr-only">FC BARCELONA</h1>
 
-                <!-- HERO TITLE: ball reveals text as it rolls -->
-                <div class="hero-title">
-                  <!-- Hero Title SVG -->
-                  <svg id="heroTitle" viewBox="0 0 1600 340" width="100%" height="auto" aria-labelledby="heroTitleLbl" role="img">
-                    <title id="heroTitleLbl">FC BARCELONA</title>
+                <!-- HERO TITLE: rolling ball reveal animation -->
+                <section id="hero">
+                  <div class="hero-wrap">
+                    <!-- Main title SVG -->
+                    <svg id="heroTitle" role="img" aria-labelledby="heroTitleLbl">
+                      <title id="heroTitleLbl">FC BARCELONA</title>
+                    </svg>
 
-                    <!-- clipPath in user space -->
-                    <defs>
-                      <clipPath id="titleClip" clipPathUnits="userSpaceOnUse">
-                        <rect id="revealRectPx" x="0" y="0" width="0" height="0" rx="6" ry="6"></rect>
-                      </clipPath>
-                    </defs>
+                    <!-- Rolling ball that animates -->
+                    <div id="heroBall" aria-hidden="true"></div>
 
-                    <!-- masked text (during reveal) -->
-                    <text id="titleMasked" class="hero-title" x="0" y="0" clip-path="url(#titleClip)">FC BARCELONA</text>
+                    <!-- Idle ball visible after animation completes, at same final coords -->
+                    <div id="heroBallIdle" aria-hidden="true"></div>
+                  </div>
 
-                    <!-- solid text (final state) -->
-                    <text id="titleSolid" class="hero-title" x="0" y="0" style="opacity:0; clip-path:none;">FC BARCELONA</text>
-                  </svg>
-
-                  <!-- Rolling ball (animated) -->
-                  <div id="heroBall" aria-hidden="true"></div>
-
-                  <!-- Idle spinner (visible after animation completes) -->
-                  <div id="heroBallIdle" aria-hidden="true"></div>
-                </div>
+                  <!-- No-JS / Reduced-motion fallback -->
+                  <noscript>
+                    <h1 class="hero-fallback">FC BARCELONA</h1>
+                  </noscript>
+                </section>
 
                 <!-- Graceful no-JS fallback: always show text, hide ball -->
                 <noscript>
