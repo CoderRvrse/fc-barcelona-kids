@@ -1714,34 +1714,95 @@ textarea:focus-visible {
   position: relative;
 }
 
-#heroTitle {
+/* Choreographed title container */
+.hero-title-container {
   position: relative;
-  z-index: 6; /* sits above the spinner */
+  z-index: 6;
 }
 
+#heroTitle {
+  position: relative;
+  font-size: clamp(2.5rem, 8vw, 6rem);
+  font-weight: 900;
+  text-align: center;
+  line-height: 1;
+  margin: 0;
+}
+
+/* Text reveal layers */
+.title-outline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.3);
+  text-stroke: 2px rgba(255, 255, 255, 0.3);
+  z-index: 1;
+}
+
+.title-solid {
+  position: relative;
+  color: white;
+  z-index: 2;
+  clip-path: inset(0 100% 0 0); /* initially hidden, revealed by animation */
+}
+
+/* Underline SVG */
+.title-underline {
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  z-index: 3;
+}
+
+/* Ball animation layer */
 #ballLayer {
   position: absolute;
-  /* we will set left/top to the title center & cap line in JS, then translate to anchor */
-  transform: translate(-50%, -100%); /* center horizontally, sit above vertically */
-  z-index: 5;                         /* below title, above background */
+  z-index: 5; /* above title, below any overlays */
   pointer-events: none;
+  /* positioned by JS during animation */
 }
 
 #ballSpinner {
   display: block;
-  width: clamp(120px, 10vw, 220px);
+  width: clamp(60px, 8vw, 120px); /* smaller for animation */
   height: auto;
-  animation: spin 9s linear infinite;
-  filter: drop-shadow(0 10px 20px rgba(0,0,0,.35));
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,.4));
+  /* animation controlled by JS timeline */
 }
 
 @keyframes spin {
   to { transform: rotate(1turn); }
 }
 
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  #ballSpinner {
-    animation: none;
+  /* Show final state immediately for accessibility */
+  .title-solid {
+    clip-path: inset(0 0 0 0) !important;
+  }
+
+  #ballLayer {
+    opacity: 0 !important; /* Hide ball entirely */
+  }
+
+  .title-underline {
+    opacity: 1 !important;
+  }
+
+  #underlinePath {
+    stroke-dasharray: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  /* Disable any animations */
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

@@ -106,18 +106,33 @@
             <div class="container">
                 <p class="hero-kicker" data-animate>Barcelona methodology for future stars</p>
 
-                <!-- Main title with clean display -->
-                <h1 id="heroTitle" class="hero-title" data-animate>FC BARCELONA</h1>
+                <!-- Choreographed title with reveal animation -->
+                <div class="hero-title-container">
+                    <h1 id="heroTitle" class="hero-title" data-animate>
+                        <span class="title-outline">FC BARCELONA</span>
+                        <span class="title-solid">FC BARCELONA</span>
+                        <svg class="title-underline" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="barcaGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#004d98"/>
+                                    <stop offset="50%" style="stop-color:#a50044"/>
+                                    <stop offset="100%" style="stop-color:#004d98"/>
+                                </linearGradient>
+                            </defs>
+                            <path id="underlinePath" stroke="url(#barcaGradient)" stroke-width="3" fill="none"/>
+                        </svg>
+                    </h1>
 
-                <!-- Ball layer positioned above title -->
-                <div id="ballLayer" aria-hidden="true">
-                    <img
-                        id="ballSpinner"
-                        src="assets/soccer-ball.svg"
-                        alt=""
-                        decoding="async"
-                        fetchpriority="high"
-                    />
+                    <!-- Ball layer for kick-reveal animation -->
+                    <div id="ballLayer" aria-hidden="true">
+                        <img
+                            id="ballSpinner"
+                            src="assets/soccer-ball.svg"
+                            alt=""
+                            decoding="async"
+                            fetchpriority="high"
+                        />
+                    </div>
                 </div>
 
                 <!-- Graceful no-JS fallback: always show text, hide ball -->

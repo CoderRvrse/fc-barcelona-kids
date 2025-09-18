@@ -1118,86 +1118,148 @@
   if (spinner) spinner.style.opacity = '1';
 })();
 
-// Robust ball positioning system - auto-repositions on all viewport changes
+// Kick-Reveal + Settle Animation System
 (() => {
-  const hero    = document.getElementById('hero');
+  const hero = document.getElementById('hero');
   const titleEl = document.getElementById('heroTitle');
-  const layer   = document.getElementById('ballLayer');
-  const ball    = document.getElementById('ballSpinner');
+  const titleSolid = document.querySelector('.title-solid');
+  const ballLayer = document.getElementById('ballLayer');
+  const ball = document.getElementById('ballSpinner');
+  const underlinePath = document.getElementById('underlinePath');
 
-  if (!hero || !titleEl || !layer || !ball) {
-    console.warn('[Hero] Required DOM elements not found');
+  if (!hero || !titleEl || !titleSolid || !ballLayer || !ball || !underlinePath) {
+    console.warn('[Hero] Required DOM elements not found for kick-reveal animation');
     return;
   }
 
-  // Gap above title, expressed in ball-heights (tweak 0.08–0.18 to taste)
-  const GAP_BALL_HEIGHTS = 0.14;
+  // Check for reduced motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Debounce with rAF (fast + jank-free)
-  let rafId = 0;
-  const schedule = (fn) => {
-    cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(fn);
-  };
+  function showFinalState() {
+    // Show final state instantly for reduced motion users
+    titleSolid.style.clipPath = 'inset(0 0 0 0)';
+    ballLayer.style.opacity = '0'; // Hide ball entirely for reduced motion
 
-  function placeBall() {
-    // ensure fonts/layout are in final state
-    const heroBox  = hero.getBoundingClientRect();
+    // Show underline immediately
     const titleBox = titleEl.getBoundingClientRect();
-    const ballBox  = ball.getBoundingClientRect(); // current rendered size
+    const heroBox = hero.getBoundingClientRect();
+    const underlineY = titleBox.bottom - heroBox.top + 10;
+    underlinePath.setAttribute('d', `M 0 ${underlineY} L ${titleBox.width} ${underlineY}`);
+    underlinePath.style.strokeDasharray = 'none';
+  }
 
-    const ballSize = ballBox.width; // square
-    const gapPx = ballSize * GAP_BALL_HEIGHTS;
+  function runKickRevealAnimation() {
+    if (!window.gsap) {
+      console.warn('GSAP not available, showing final state');
+      showFinalState();
+      return;
+    }
 
-    // Title center X in page coords
-    const titleCenterX = titleBox.left + titleBox.width / 2;
+    // Get positioning measurements
+    const heroBox = hero.getBoundingClientRect();
+    const titleBox = titleEl.getBoundingClientRect();
 
-    // We want the ball's anchor to sit on the "cap line" – for block caps, using top is fine.
-    const capLineY = titleBox.top;
+    const ballSize = 80; // Fixed size for animation
+    const startX = heroBox.width + ballSize; // Start off-screen right
+    const startY = titleBox.top - heroBox.top - ballSize * 0.3; // Above title
+    const endX = titleBox.left + titleBox.width - heroBox.left; // End at title right
+    const endY = titleBox.top - heroBox.top - ballSize * 0.5; // Above title
 
-    // Convert to hero-local coordinates for absolute positioning
-    const left = titleCenterX - heroBox.left;
-    const top  = capLineY     - heroBox.top - gapPx;
+    // Set initial ball position
+    ballLayer.style.left = `${startX}px`;
+    ballLayer.style.top = `${startY}px`;
+    ballLayer.style.opacity = '1';
 
-    // Because we use translate(-50%, -100%), set anchor to the title center/cap line
-    layer.style.left = `${Math.round(left)}px`;
-    layer.style.top  = `${Math.round(top)}px`;
+    // Create master timeline
+    const tl = window.gsap.timeline({
+      onComplete: () => {
+        // Start gentle idle spin after animation
+        window.gsap.to(ball, {
+          rotation: 360,
+          duration: 9,
+          ease: 'none',
+          repeat: -1
+        });
+      }
+    });
+
+    // 1. Ball arcs in from right (0.8s)
+    tl.to(ballLayer, {
+      x: endX - startX,
+      y: endY - startY,
+      duration: 0.8,
+      ease: 'power2.out'
+    })
+
+    // 2. Text reveal follows ball (0.6s, starts 0.2s into ball motion)
+    .to(titleSolid, {
+      clipPath: 'inset(0 0 0 0)',
+      duration: 0.6,
+      ease: 'power2.out'
+    }, 0.2)
+
+    // 3. Ball settles with micro-bounce (0.4s)
+    .to(ballLayer, {
+      y: `+=${ballSize * 0.1}`, // Small drop
+      duration: 0.2,
+      ease: 'power2.in'
+    })
+    .to(ballLayer, {
+      y: `-=${ballSize * 0.05}`, // Tiny bounce up
+      duration: 0.1,
+      ease: 'power2.out'
+    })
+    .to(ballLayer, {
+      y: `+=${ballSize * 0.05}`, // Settle
+      duration: 0.1,
+      ease: 'power2.in'
+    })
+
+    // 4. Underline draws in (0.5s, starts with ball settle)
+    .call(() => {
+      const underlineY = titleBox.bottom - heroBox.top + 10;
+      const pathLength = titleBox.width;
+      underlinePath.setAttribute('d', `M 0 ${underlineY} L ${pathLength} ${underlineY}`);
+      underlinePath.style.strokeDasharray = pathLength;
+      underlinePath.style.strokeDashoffset = pathLength;
+    }, null, 0.8)
+    .to(underlinePath, {
+      strokeDashoffset: 0,
+      duration: 0.5,
+      ease: 'power2.out'
+    }, 0.8);
+
+    return tl;
   }
 
   async function init() {
-    try { await document.fonts?.ready; } catch (e) {
+    try {
+      await document.fonts?.ready;
+    } catch (e) {
       console.warn('Font loading failed:', e);
     }
-    schedule(placeBall);
+
+    // Wait a frame for layout
+    requestAnimationFrame(() => {
+      if (prefersReducedMotion) {
+        showFinalState();
+      } else {
+        runKickRevealAnimation();
+      }
+    });
   }
 
-  // Recalc triggers
-  const recalc = () => schedule(placeBall);
-
-  // Title/hero content changes (line-wrap, font substitution, etc.)
-  const ro = new ResizeObserver(recalc);
-  ro.observe(titleEl);
-  ro.observe(hero);
-
-  // Window & viewport changes
-  window.addEventListener('resize', recalc, { passive: true });
-  window.addEventListener('orientationchange', recalc, { passive: true });
-  window.addEventListener('scroll', recalc, { passive: true }); // mobile URL bar show/hide
-  document.addEventListener('visibilitychange', recalc, { passive: true });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', recalc, { passive: true });
-  }
-
-  // Run when hero enters view (lazy) or immediately if visible
+  // Initialize when hero comes into view
   const io = new IntersectionObserver((entries) => {
     if (entries.some(e => e.isIntersecting)) {
       io.disconnect();
       init();
     }
-  }, { rootMargin: '200px' });
+  }, { rootMargin: '100px' });
+
   io.observe(hero);
 
-  // Fallback: in case IO never fires (e.g., SSR prerender or some browsers)
+  // Fallback initialization
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(init, 0);
   } else {
