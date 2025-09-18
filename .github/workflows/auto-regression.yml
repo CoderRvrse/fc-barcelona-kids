@@ -36,7 +36,9 @@ jobs:
         run: |
           echo '${{ toJson(github.event.workflow_run) }}' > event.json
           jq . event.json || cat event.json
+
       - name: Upload debug payload
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: auto-regression-debug-${{ github.event.workflow_run.id }}
@@ -48,64 +50,58 @@ jobs:
         with:
           script: |
             const run = context.payload.workflow_run;
-            const title = `🚨 Regression: ${run.name} #${run.id} failed`;
-            const body = [
-              `**Conclusion:** ${run.conclusion}`,
-              `**Branch:** ${run.head_branch}`,
-              `**Commit:** ${run.head_sha}`,
-              `**Actor:** @${run.actor.login}`,
-              `**Run URL:** ${run.html_url}`,
-              '',
-              'Auto-created because Deploy→Pages or post-deploy smoke failed.',
-              'Acceptance:',
-              '- Deploy job is green',
-              '- Smoke probes pass (/, sw.js, offline.html, assets/soccer-ball.svg)',
-              '- Console has no parse errors'
-            ].join('\n');
             await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title,
-              body,
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `🚨 Regression: ${run.name} #${run.id} failed`,
+              body: `**Conclusion:** ${run.conclusion}
+**Branch:** ${run.head_branch}
+**Commit:** ${run.head_sha}
+**Actor:** @${run.actor.login}
+**Run URL:** ${run.html_url}`,
               labels: ['regression','ci']
             });
 
-      # OPTIONAL: open a revert PR against main; this will safely no-op if nothing to revert
+      # Best-effort revert branch & PR (never fail job)
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+
       - name: Configure bot identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Create revert branch
+
+      - name: Try to revert failing commit (best-effort)
+        continue-on-error: true
         run: |
           set -e
           BR="ci/revert-${{ github.event.workflow_run.id }}"
           git checkout -b "$BR"
-          # Try to revert the failing head SHA; if merge base is unrelated, just skip.
-          git revert --no-edit "${{ github.event.workflow_run.head_sha }}" || echo "Nothing to revert or already reverted"
-          git push -u origin "$BR"
-      - name: Open revert PR
+          git revert --no-edit "${{ github.event.workflow_run.head_sha }}" || echo "Nothing to revert"
+          if ! git diff --quiet origin/main...HEAD; then
+            git push -u origin "$BR" || true
+          else
+            echo "No changes to push"
+          fi
+
+      - name: Open revert PR (best-effort)
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
             const head = `ci/revert-${context.payload.workflow_run.id}`;
-            const base = 'main';
-            const title = `chore(ci): revert failing commit ${context.payload.workflow_run.head_sha.substring(0,7)}`;
-            const body = 'Auto-opened by Auto Regression Guard because Deploy/Smoke failed. Merge to restore last good state.';
             try {
               await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title,
-                head,
-                base,
-                body,
-                maintainer_can_modify: true
+                owner: context.repo.owner, repo: context.repo.repo,
+                head, base: 'main',
+                title: `chore(ci): revert ${context.payload.workflow_run.head_sha.substring(0,7)} (auto)`,
+                body: 'Auto-opened when Deploy pipeline failed.'
               });
             } catch (e) {
               core.warning(`PR open skipped: ${e.message}`);
             }
+
+      - name: Mark handled
+        run: echo "failure handled"
