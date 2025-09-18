@@ -451,4 +451,60 @@
 
         requestAnimationFrame(trackFPS);
     }
+
+    // Back-to-top control functionality
+    function initBackToTop() {
+        const backToTopBtn = document.getElementById('backToTop');
+        const sentinel = document.getElementById('back-to-top-sentinel');
+
+        if (!backToTopBtn || !sentinel) return;
+
+        // IntersectionObserver for performance-optimized visibility detection
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const [entry] = entries;
+                // Show button when sentinel is NOT visible (user has scrolled past viewport height)
+                if (entry.isIntersecting) {
+                    backToTopBtn.classList.remove('visible');
+                } else {
+                    backToTopBtn.classList.add('visible');
+                }
+            },
+            { threshold: 0 }
+        );
+
+        observer.observe(sentinel);
+
+        // Smooth scroll to top with bullet-proof kick animation
+        backToTopBtn.addEventListener('click', () => {
+            // Smooth scroll to top
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+
+            // Handle kick animation with reduced motion check
+            if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+
+            backToTopBtn.classList.remove('kick');
+            // Force reflow so the animation retriggers
+            // eslint-disable-next-line no-unused-expressions
+            backToTopBtn.offsetWidth;
+            backToTopBtn.classList.add('kick');
+        });
+
+        // Clean up animation class when animation ends
+        backToTopBtn.addEventListener('animationend', (e) => {
+            if (e.target === backToTopBtn.querySelector('img')) {
+                backToTopBtn.classList.remove('kick');
+            }
+        }, { passive: true });
+    }
+
+    // Initialize back-to-top after DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBackToTop);
+    } else {
+        initBackToTop();
+    }
 })();

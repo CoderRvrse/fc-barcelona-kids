@@ -117,6 +117,9 @@ jobs:
             # body sanity: allow XML prolog or <svg on first few lines
             curl -fsSL "$ROOT/assets/soccer-ball.svg" \
               | tr -d '\r' | head -n 5 | grep -Eqi '<svg|<\?xml'
+
+            # verify back-to-top button exists
+            curl -fsSL "$ROOT/" | tr -d '\r' | grep -Eq 'id="backToTop"|id="back-to-top"'
           } | tee smoke.log
       - name: Upload smoke logs
         if: ${{ always() }}

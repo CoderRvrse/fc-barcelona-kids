@@ -39,12 +39,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet" />
+    <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
-    <link rel="stylesheet" href="styles/main.css?v=v7" />
+    <link rel="stylesheet" href="styles/main.css?v=v8" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script defer src="scripts/main.js?v=v7"></script>
+    <script defer src="scripts/main.js?v=v8"></script>
 </head>
 <body>
+    <div id="top-sentinel"></div>
     <script>
     /* Loader guard: guarantees the page becomes visible even if main.js fails */
     (function () {
@@ -471,7 +473,7 @@
         if (!refreshing) { refreshing = true; location.reload(); }
       });
 
-      const SW_VERSION = 'v7';
+      const SW_VERSION = 'v8';
       const swUrl = `sw.js?v=${SW_VERSION}`;
 
       navigator.serviceWorker.register(swUrl, { scope: '/fc-barcelona-kids/' }).then((reg) => {
@@ -490,5 +492,19 @@
       }).catch(console.error);
     })();
     </script>
+
+    <!-- Back-to-top control -->
+    <div id="back-to-top-sentinel" style="position: absolute; top: 100vh; height: 1px; pointer-events: none;"></div>
+    <button id="backToTop" class="back-to-top" aria-label="Back to top">
+        <img src="assets/soccer-ball.svg" alt="Soccer ball" width="50" height="50">
+    </button>
+
+    <!-- No-JS graceful fallback -->
+    <noscript>
+        <a href="#top-sentinel" class="back-to-top" aria-label="Back to top">
+            <img src="assets/soccer-ball.svg" alt="">
+            <span class="bt-shadow" aria-hidden="true"></span>
+        </a>
+    </noscript>
 </body>
 </html>
