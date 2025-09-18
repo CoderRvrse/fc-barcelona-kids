@@ -190,16 +190,52 @@
             function animateBallSequence() {
                 if (!textBBox) return;
 
-                // Compute target position beside the 'A'
+                // Get precise position of last character 'A' using getExtentOfChar
+                let lastIdx = TEXT.length - 1;
+                while (lastIdx > 0 && /\s/.test(TEXT[lastIdx])) lastIdx--; // skip trailing spaces
+
+                let charBox;
+                try {
+                    // getExtentOfChar is precise: x,y,width,height in **SVG coords**
+                    charBox = titleMasked.getExtentOfChar(lastIdx);
+                } catch {
+                    // estimate last glyph box from the full bbox
+                    const bb = titleMasked.getBBox();
+                    const avgChar = bb.width / Math.max(1, TEXT.trim().length);
+                    charBox = {
+                        x: bb.x + bb.width - avgChar,
+                        y: bb.y,
+                        width: avgChar,
+                        height: bb.height
+                    };
+                }
+
+                // Bottom-right of that last glyph (in SVG coords)
+                const gapPx = 16; // space to the right of the A
+                const targetSvgX = charBox.x + charBox.width + gapPx;
+                const targetSvgY = charBox.y + charBox.height; // bottom edge of the A
+
+                // Convert SVG coords → page pixels (so we can place the <img> ball)
+                const svgRect = svg.getBoundingClientRect();
                 const vb = svg.viewBox.baseVal;
-                const cx = vb.x + vb.width / 2;
-                const cy = vb.y + vb.height / 2;
+                const scaleX = svgRect.width / vb.width;
+                const scaleY = svgRect.height / vb.height;
+
+                // Helper: map a point from svg space into page px
+                const toPage = (sx, sy) => ({
+                    x: svgRect.left + (sx - vb.x) * scaleX,
+                    y: svgRect.top + (sy - vb.y) * scaleY
+                });
+
+                const targetPage = toPage(targetSvgX, targetSvgY);
+
+                // Land the ball with a slight visual offset (down a touch to hug baseline)
+                const OFFSET_X = 0;     // push right(+) / left(-)
+                const OFFSET_Y = 4;     // push down(+) / up(-) to hug the A baseline perfectly
 
                 const r = 56; // ball radius
-                const BALL_GAP = 24; // space between A and ball
-                const targetXpx = Math.round(textBBox.x + textBBox.width + BALL_GAP + r);
-                const baselineY = Math.round(cy + textBBox.height * 0.10); // visually nice baseline
-                const targetYpx = Math.round(baselineY);
+                const targetXpx = Math.round(targetPage.x + OFFSET_X);
+                const targetYpx = Math.round(targetPage.y + OFFSET_Y);
 
                 // Position ball for start of animation
                 if (ball) {
@@ -305,7 +341,7 @@
             let rectX = 0;
             let totalWidth = 0;
             const LEFT_GUARD = 120;  // generous margin before centered 'F'
-            const RIGHT_GUARD = 120; // extra generous overshoot past 'A' to eliminate any clipping
+            const RIGHT_GUARD = 140; // extra generous overshoot past 'A' to eliminate any clipping
             const TOP_GUARD = 24;    // vertical padding above text
             const BOT_GUARD = 24;    // vertical padding below text
 
@@ -387,7 +423,8 @@
                         totalWidth: totalWidth,
                         leftGuard: LEFT_GUARD,
                         rightGuard: RIGHT_GUARD,
-                        svgViewBox: '0 0 1200 220'
+                        svgViewBox: '0 0 1200 220',
+                        overshoot: '+2px for complete A reveal'
                     });
                 }
 
@@ -411,8 +448,9 @@
                 animateBallSequence();
             }
 
-            // Expose for replay functionality
+            // Expose for replay functionality and testing
             window.runHeroReveal = runHeroReveal;
+            window.__heroRevealSetProgress = setProgress;
 
             // Intersection observer for initial trigger
             let playedOnce = false;
