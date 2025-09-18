@@ -154,7 +154,7 @@
 
         // ClipPath hero text reveal with ball animation
         (() => {
-            const TEXT = 'FCB';
+            const TEXT = 'FC BARCELONA';
             const svg = document.querySelector('.hero-svg');
             const maskedGroup = document.getElementById('maskedGroup');
             const revealRect = document.getElementById('revealRect');
@@ -225,8 +225,8 @@
             let textBBox = null;
             let rectX = 0;
             let totalWidth = 0;
-            const LEFT_GUARD = 120;  // generous margin before centered 'F'
-            const RIGHT_GUARD = 80;  // generous overshoot past 'B'
+            const LEFT_GUARD = 140;  // generous margin before centered 'F' in longer text
+            const RIGHT_GUARD = 100; // generous overshoot past 'A' in longer text
 
             function setProgress(progress) {
                 if (!textBBox) return false;
@@ -315,7 +315,7 @@
                     revealRect.setAttribute('height', String(Math.ceil(textBBox.height) + 60));
                     revealRect.setAttribute('width', '0');
 
-                    console.log('[hero-reveal] Centered FCB bounds:', {
+                    console.log('[hero-reveal] Centered FC BARCELONA bounds:', {
                         text: TEXT,
                         centered: 'text-anchor=middle',
                         bboxX: textBBox.x,

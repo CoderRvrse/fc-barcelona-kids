@@ -1678,10 +1678,10 @@ textarea:focus-visible {
   height: 100%;
   display: block;
 }
-/* FCB typography - tuned for 3 letters, bold and clean */
+/* FC BARCELONA typography - centered and responsive */
 .hero-title {
-  /* Plenty large, but bounded. 3 chars ≈ width factor ~3.2 with spacing */
-  font: 900 clamp(56px, 16vw, 180px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Responsive sizing for full brand name, centered with text-anchor=middle */
+  font: 900 clamp(36px, 8vw, 120px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   letter-spacing: 0.02em;
 }
 
@@ -1702,7 +1702,7 @@ textarea:focus-visible {
 /* Fallback for noscript */
 .hero-title-fallback{
   display: none;
-  font: 900 clamp(56px, 16vw, 180px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 900 clamp(36px, 8vw, 120px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   letter-spacing: 0.02em;
   color: #fff;
   text-align: center;
