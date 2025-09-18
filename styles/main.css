@@ -1668,50 +1668,67 @@ textarea:focus-visible {
 
 /* =====[ ROLLING BALL HERO ]=========================== */
 
-.hero-title{
+/* Ball size (adjust as needed) */
+:root {
+  --ball-size: 120px;
+}
+
+.hero-title {
   position: relative;
   height: clamp(140px, 24vw, 260px);
   margin-block: 18px 8px;
 }
-#heroTitleSvg{
+
+.hero-title {
+  font: 900 clamp(48px, min(12vw, (100vw - 160px - 2rem)/11), 120px) "Inter", system-ui, sans-serif;
+  fill: #fff;
+  paint-order: stroke fill;
+  letter-spacing: 0.02em;
+}
+
+#heroTitle {
   width: 100%;
   height: 100%;
   display: block;
 }
-/* FC BARCELONA typography - centered and responsive */
-.hero-title {
-  /* Responsive sizing for full brand name, centered with text-anchor=middle */
-  font: 900 clamp(36px, 8vw, 120px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: 0.02em;
-}
 
-.hero-title text {
-  fill: #ffffff;
-  paint-order: stroke fill; /* crisp edges */
-  font: inherit; /* inherit from container */
-}
-
-/* Only the solid text has transition - masked group is clipped */
 #titleSolid {
-  opacity: 0;
-  transition: opacity .35s ease;
-  /* Ensure solid text is NEVER clipped */
   clip-path: none !important;
+  transition: opacity .35s ease;
+}
+
+/* Rolling ball (absolutely positioned via JS) */
+#heroBall,
+#heroBallIdle {
+  position: absolute;
+  width: var(--ball-size);
+  height: var(--ball-size);
+  background: url('assets/soccer-ball.svg') center/contain no-repeat;
+  will-change: transform;
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,.35));
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+
+/* Idle (spinning) ball is invisible until the end */
+#heroBallIdle {
+  opacity: 0;
+  transition: opacity .25s ease;
 }
 
 /* Fallback for noscript */
 .hero-title-fallback{
   display: none;
-  font: 900 clamp(36px, 8vw, 120px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 900 clamp(48px, min(12vw, (100vw - 160px - 2rem)/11), 120px) "Inter", system-ui, sans-serif;
   letter-spacing: 0.02em;
   color: #fff;
   text-align: center;
-  margin: 1rem 0;
+  margin-block: 18px 8px;
 }
 
 /* Prefers-reduced-motion: skip animation entirely */
 @media (prefers-reduced-motion: reduce) {
-  #maskedGroup {
+  #titleMasked {
     display: none !important;
   }
   #titleSolid {
@@ -1721,26 +1738,13 @@ textarea:focus-visible {
   .hero-title-fallback {
     display: block;
   }
-  #heroTitleSvg {
+  #heroTitle {
     display: none;
   }
-  #heroBall {
+  #heroBall,
+  #heroBallIdle {
     display: none !important;
   }
-}
-#heroBall{
-  position: absolute;
-  left: 0; top: 0;
-  width: 112px; height: 112px;
-  will-change: transform, left, top;
-  filter: drop-shadow(0 22px 36px rgba(0,0,0,.42));
-  pointer-events: none;
-  user-select: none;
-}
-
-@media (prefers-reduced-motion: reduce){
-  #revealMask rect{fill:#fff}
-  #heroBall{display:none}
 }
 
 /* =====[ HERO REPLAY BUTTON ]=========================== */

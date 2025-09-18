@@ -115,26 +115,29 @@
 
                 <!-- HERO TITLE: ball reveals text as it rolls -->
                 <div class="hero-title">
-                  <svg class="hero-svg" id="heroTitleSvg" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-labelledby="heroTitle">
-                    <title id="heroTitle">FC BARCELONA</title>
+                  <!-- Hero Title SVG -->
+                  <svg id="heroTitle" viewBox="0 0 1600 340" width="100%" height="auto" aria-labelledby="heroTitleLbl" role="img">
+                    <title id="heroTitleLbl">FC BARCELONA</title>
+
+                    <!-- clipPath in user space -->
                     <defs>
-                      <!-- ClipPath for smooth rounded rectangle reveal - using userSpaceOnUse for pixel precision -->
-                      <clipPath id="revealClip" clipPathUnits="userSpaceOnUse">
-                        <rect id="revealRect" x="0" y="0" width="0" height="220" rx="8" ry="12"/>
+                      <clipPath id="titleClip" clipPathUnits="userSpaceOnUse">
+                        <rect id="revealRectPx" x="0" y="0" width="0" height="0" rx="6" ry="6"></rect>
                       </clipPath>
                     </defs>
 
-                    <!-- Masked text - visible during animation -->
-                    <g id="maskedGroup" clip-path="url(#revealClip)">
-                      <text id="titleMasked" x="600" y="165" text-anchor="middle" class="hero-title">FC BARCELONA</text>
-                    </g>
+                    <!-- masked text (during reveal) -->
+                    <text id="titleMasked" class="hero-title" x="0" y="0" clip-path="url(#titleClip)">FC BARCELONA</text>
 
-                    <!-- Solid text - shown after animation -->
-                    <text id="titleSolid" x="600" y="165" text-anchor="middle" class="hero-title">FC BARCELONA</text>
+                    <!-- solid text (final state) -->
+                    <text id="titleSolid" class="hero-title" x="0" y="0" style="opacity:0; clip-path:none;">FC BARCELONA</text>
                   </svg>
 
-                  <!-- Rolling ball -->
-                  <img id="heroBall" src="assets/soccer-ball.svg" alt="" width="112" height="112" decoding="async" />
+                  <!-- Rolling ball (animated) -->
+                  <div id="heroBall" aria-hidden="true"></div>
+
+                  <!-- Idle spinner (visible after animation completes) -->
+                  <div id="heroBallIdle" aria-hidden="true"></div>
                 </div>
 
                 <!-- Graceful no-JS fallback: always show text, hide ball -->
