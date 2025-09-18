@@ -2,8 +2,7 @@
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const reduceMotion = prefersReducedMotion.matches;
 
-    // Ultra-defensive GSAP guard
-    const gsapSafe = (...args) => (window.gsap?.to ? window.gsap.to(...args) : null);
+    // Ultra-defensive GSAP guard (removed unused variable)
 
     // Production error telemetry (console-based, no external deps)
     window.addEventListener("error", e => {
@@ -471,7 +470,7 @@
            * GSAP animation implementation
            */
           function animateWithGSAP() {
-            const tl = gsap.timeline({
+            const tl = window.gsap.timeline({
               defaults: { ease: config.ease }
             });
 
