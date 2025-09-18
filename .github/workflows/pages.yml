@@ -107,7 +107,7 @@ jobs:
           # 1) index reachable
           curl -fsSL "$ROOT/" -o /tmp/index.html
           # 2) hero markers present
-          grep -E 'id="heroTitleSvg"|id="hero-title"' /tmp/index.html >/dev/null
+          grep -E 'id="heroTitle"|id="hero-title"' /tmp/index.html >/dev/null
 
       - name: Smoke - solid hero title present & correct
         shell: bash
