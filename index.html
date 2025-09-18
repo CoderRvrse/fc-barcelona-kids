@@ -118,9 +118,9 @@
                   <svg class="hero-svg" id="heroTitleSvg" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-labelledby="heroTitle">
                     <title id="heroTitle">FC BARCELONA</title>
                     <defs>
-                      <!-- ClipPath for smooth rounded rectangle reveal -->
-                      <clipPath id="revealClip" clipPathUnits="objectBoundingBox">
-                        <rect id="revealRect" x="0" y="0" width="0" height="1" rx="0.02" ry="0.05"/>
+                      <!-- ClipPath for smooth rounded rectangle reveal - using userSpaceOnUse for pixel precision -->
+                      <clipPath id="revealClip" clipPathUnits="userSpaceOnUse">
+                        <rect id="revealRect" x="0" y="0" width="0" height="220" rx="8" ry="12"/>
                       </clipPath>
                     </defs>
 

@@ -1678,12 +1678,24 @@ textarea:focus-visible {
   height: 100%;
   display: block;
 }
-/* Bulletproof typography - same style for both masked and solid */
+/* Auto-fit typography - reserves space for ball, prevents overflow */
 .hero-title text {
-  font: 900 clamp(48px, 10vw, 132px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 900 1em/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   letter-spacing: 0.02em;
   fill: #ffffff;
   paint-order: stroke fill; /* crisp edges */
+}
+
+/* Dynamic font sizing that fits available width */
+.hero-title {
+  /* Reserve 140px for ball on right + margins */
+  --available-width: calc(100vw - 140px - 2rem);
+  --ideal-size: min(12vw, var(--available-width) / 11); /* ~11 chars in "FC BARCELONA" */
+  font-size: clamp(48px, var(--ideal-size), 120px);
+}
+
+.hero-title text {
+  font-size: inherit; /* inherit from container */
 }
 
 /* Only the solid text has transition - masked group is clipped */

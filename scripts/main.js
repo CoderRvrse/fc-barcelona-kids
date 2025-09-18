@@ -225,30 +225,32 @@
             let textBBox = null;
             let startXText = 0;
             let endXText = 0;
-            let REVEAL_PAD_PX = 16; // cushion for first glyph
-            let padNorm = 0;
+            let textWidthPx = 0;
+            const REVEAL_PAD_LEFT = 16; // cushion for first glyph
+            const REVEAL_PAD_RIGHT = 24; // overshoot for last glyph
 
             function setRevealByBallX(ballCenterX) {
                 if (!textBBox) return;
 
-                // Normalize progress to [0,1] using actual text bounds
-                let progress = (ballCenterX - startXText) / (endXText - startXText) + padNorm;
+                // Calculate reveal width in pixels (not normalized)
+                const progress = (ballCenterX - startXText + REVEAL_PAD_LEFT) / (endXText - startXText);
+                let revealWidthPx = Math.max(0, progress * textWidthPx + REVEAL_PAD_RIGHT);
 
-                if (progress >= 0.999) {
-                    // Snap to exactly 1.0 so the first glyph (F) cannot be clipped
-                    revealRect.setAttribute('width', '1');
+                if (progress >= 0.98) {
+                    // Final state: overshoot past text end to ensure no clipping
+                    revealWidthPx = textWidthPx + REVEAL_PAD_RIGHT + 20; // extra safety margin
                     finishReveal();
                     return true; // Signal completion
                 } else {
-                    // Clamp and set with 4 decimals (helps avoid oscillating)
-                    progress = Math.max(0, Math.min(0.999, progress));
-                    revealRect.setAttribute('width', progress.toFixed(4));
+                    // Set pixel width directly
+                    revealRect.setAttribute('width', Math.round(revealWidthPx).toString());
                     return false;
                 }
             }
 
             function finishReveal() {
-                revealRect.setAttribute('width', '1');
+                // Overshoot past text end with generous margin
+                revealRect.setAttribute('width', (textWidthPx + REVEAL_PAD_RIGHT + 20).toString());
                 titleSolid.style.opacity = '1';
                 setTimeout(() => maskedGroup?.setAttribute('display', 'none'), 350);
                 cancelAnimationFrame(rafId);
@@ -271,7 +273,7 @@
                 if (!textBBox) return false;
                 const ballBounds = ball.getBoundingClientRect();
                 const ballCenterX = (ballBounds.left + ballBounds.right) / 2;
-                return ballCenterX >= endXText;
+                return ballCenterX >= (endXText + 50); // extra margin for safety
             }
 
             async function runHeroReveal(replay = false) {
@@ -289,8 +291,12 @@
                     textBBox = titleMasked.getBBox();
                     startXText = textBBox.x;
                     endXText = textBBox.x + textBBox.width;
-                    const widthPx = textBBox.width;
-                    padNorm = Math.max(0, Math.min(1, REVEAL_PAD_PX / widthPx));
+                    textWidthPx = textBBox.width;
+                    console.log('[hero-reveal] Text bounds:', {
+                        startX: startXText,
+                        endX: endXText,
+                        width: textWidthPx
+                    });
                 }
 
                 // Reset for replay
