@@ -1710,18 +1710,13 @@ textarea:focus-visible {
 }
 
 /* Hero positioning and layering */
-#hero {
+.hero {
   position: relative;
 }
 
-/* Choreographed title container */
-.hero-title-container {
+.hero-title {
   position: relative;
   z-index: 6;
-}
-
-#heroTitle {
-  position: relative;
   font-size: clamp(2.5rem, 8vw, 6rem);
   font-weight: 900;
   text-align: center;
@@ -1729,8 +1724,13 @@ textarea:focus-visible {
   margin: 0;
 }
 
+.hero-underline {
+  position: relative;
+  z-index: 6;
+}
+
 /* Text reveal layers */
-.title-outline {
+#heroTitleOutline {
   position: absolute;
   top: 0;
   left: 0;
@@ -1741,37 +1741,30 @@ textarea:focus-visible {
   z-index: 1;
 }
 
-.title-solid {
+#heroTitleSolid {
   position: relative;
   color: white;
   z-index: 2;
   clip-path: inset(0 100% 0 0); /* initially hidden, revealed by animation */
 }
 
-/* Underline SVG */
-.title-underline {
+.hero-ball {
   position: absolute;
-  bottom: -10px;
-  left: 0;
-  width: 100%;
-  height: 8px;
-  z-index: 3;
-}
-
-/* Ball animation layer */
-#ballLayer {
-  position: absolute;
-  z-index: 5; /* above title, below any overlays */
+  width: clamp(100px, 12vw, 160px);
+  aspect-ratio: 1/1;
+  right: clamp(16px, 6vw, 80px);
+  top: calc(50% - 3.5rem);              /* initial safe position; JS repositions */
+  background: url('../assets/soccer-ball.svg') center/contain no-repeat;
+  filter: drop-shadow(0 10px 16px rgba(0,0,0,.35));
   pointer-events: none;
-  /* positioned by JS during animation */
+  z-index: 5;
+  opacity: 1;                           /* ensure visible even if JS bails */
+  transform: translateZ(0);
+  animation: heroBallIdleSpin 9s linear infinite paused; /* JS will unpause */
 }
 
-#ballSpinner {
-  display: block;
-  width: clamp(60px, 8vw, 120px); /* smaller for animation */
-  height: auto;
-  filter: drop-shadow(0 8px 16px rgba(0,0,0,.4));
-  /* animation controlled by JS timeline */
+@keyframes heroBallIdleSpin {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes spin {

@@ -1118,18 +1118,56 @@
   if (spinner) spinner.style.opacity = '1';
 })();
 
-// Kick-Reveal + Settle Animation System
+// Bulletproof Hero Animation System
 (() => {
-  const hero = document.getElementById('hero');
-  const titleEl = document.getElementById('heroTitle');
-  const titleSolid = document.querySelector('.title-solid');
-  const ballLayer = document.getElementById('ballLayer');
-  const ball = document.getElementById('ballSpinner');
-  const underlinePath = document.getElementById('underlinePath');
+  const HERO_SEL = {
+    hero:       '#hero',
+    title:      '#heroTitle',
+    outline:    '#heroTitleOutline',
+    solid:      '#heroTitleSolid',
+    underline:  '#heroUnderline',
+    ball:       '#heroBall',
+  };
 
-  if (!hero || !titleEl || !titleSolid || !ballLayer || !ball || !underlinePath) {
-    console.warn('[Hero] Required DOM elements not found for kick-reveal animation');
-    return;
+  function q(sel) { return document.querySelector(sel); }
+
+  function ensureHeroDom(TEXT = 'FC BARCELONA') {
+    let hero = q(HERO_SEL.hero);
+    if (!hero) {
+      hero = document.createElement('section');
+      hero.id = 'hero';
+      hero.className = 'hero';
+      (document.querySelector('main') || document.body).prepend(hero);
+    }
+
+    const need = (id, tag, cls = '') => {
+      let el = q(`#${id}`);
+      if (!el) {
+        el = document.createElement(tag);
+        el.id = id;
+        if (cls) el.className = cls;
+        hero.appendChild(el);
+      }
+      return el;
+    };
+
+    const title = need('heroTitle', 'h1', 'hero-title');
+    if (!q('#heroTitleOutline')) {
+      const s = document.createElement('span');
+      s.id = 'heroTitleOutline';
+      s.textContent = TEXT;
+      s.setAttribute('aria-hidden', 'true');
+      title.appendChild(s);
+    }
+    if (!q('#heroTitleSolid')) {
+      const s = document.createElement('span');
+      s.id = 'heroTitleSolid';
+      s.textContent = TEXT;
+      s.setAttribute('aria-hidden', 'true');
+      title.appendChild(s);
+    }
+    need('heroUnderline', 'div', 'hero-underline');
+    need('heroBall', 'div', 'hero-ball');
   }
 
   // Director's Panel Config
@@ -1149,16 +1187,12 @@
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function showFinalState() {
-    // Show final state instantly for reduced motion users
-    titleSolid.style.clipPath = 'inset(0 0 0 0)';
-    ballLayer.style.opacity = '0'; // Hide ball entirely for reduced motion
+    const solid = q(HERO_SEL.solid);
+    const ball = q(HERO_SEL.ball);
 
-    // Show underline immediately
-    const titleBox = titleEl.getBoundingClientRect();
-    const heroBox = hero.getBoundingClientRect();
-    const underlineY = titleBox.bottom - heroBox.top + 10;
-    underlinePath.setAttribute('d', `M 0 ${underlineY} L ${titleBox.width} ${underlineY}`);
-    underlinePath.style.strokeDasharray = 'none';
+    // Show final state instantly for reduced motion users
+    if (solid) solid.style.clipPath = 'inset(0 0 0 0)';
+    if (ball) ball.style.opacity = '0'; // Hide ball entirely for reduced motion
   }
 
   function runKickRevealAnimation() {
@@ -1169,10 +1203,23 @@
     }
 
     const config = window.__heroConfig;
+    const hero = q(HERO_SEL.hero);
+    const title = q(HERO_SEL.title);
+    const solid = q(HERO_SEL.solid);
+    const ball = q(HERO_SEL.ball);
+
+    if (!hero || !title || !solid || !ball) {
+      console.warn('[Hero] Missing elements after scaffold, showing fallback');
+      if (ball) {
+        ball.style.opacity = '1';
+        ball.style.animationPlayState = 'running';
+      }
+      return;
+    }
 
     // Get positioning measurements
     const heroBox = hero.getBoundingClientRect();
-    const titleBox = titleEl.getBoundingClientRect();
+    const titleBox = title.getBoundingClientRect();
 
     const ballSize = 80; // Fixed size for animation
     const startX = heroBox.width + ballSize; // Start off-screen right
@@ -1181,25 +1228,20 @@
     const endY = titleBox.top - heroBox.top - config.capTopGapPx; // Above title
 
     // Set initial ball position
-    ballLayer.style.left = `${startX}px`;
-    ballLayer.style.top = `${startY}px`;
-    ballLayer.style.opacity = '1';
+    ball.style.left = `${startX}px`;
+    ball.style.top = `${startY}px`;
+    ball.style.opacity = '1';
 
     // Create master timeline
     const tl = window.gsap.timeline({
       onComplete: () => {
         // Start gentle idle spin after animation
-        window.gsap.to(ball, {
-          rotation: 360,
-          duration: config.idleSpin,
-          ease: 'none',
-          repeat: -1
-        });
+        ball.style.animationPlayState = 'running';
       }
     });
 
     // 1. Ball arcs in from right
-    tl.to(ballLayer, {
+    tl.to(ball, {
       x: endX - startX,
       y: endY - startY,
       duration: config.rollDuration,
@@ -1207,64 +1249,68 @@
     })
 
     // 2. Text reveal follows ball
-    .to(titleSolid, {
+    .to(solid, {
       clipPath: 'inset(0 0 0 0)',
       duration: config.rollDuration - config.revealLag,
       ease: config.ease
     }, config.revealLag)
 
     // 3. Ball settles with micro-bounce
-    .to(ballLayer, {
+    .to(ball, {
       y: `+=${ballSize * 0.1}`, // Small drop
       duration: config.bounce.drop,
       ease: 'power2.in'
     })
-    .to(ballLayer, {
+    .to(ball, {
       y: `-=${ballSize * 0.05}`, // Tiny bounce up
       duration: config.bounce.rebound1,
       ease: 'power2.out'
     })
-    .to(ballLayer, {
+    .to(ball, {
       y: `+=${ballSize * 0.05}`, // Settle
       duration: config.bounce.rebound2,
       ease: 'power2.in'
     });
 
     // 4. Final "A" letter pop (if enabled)
-    if (config.letterPop && titleSolid.textContent) {
+    if (config.letterPop && solid.textContent) {
       const finalATime = config.rollDuration + config.bounce.drop + config.bounce.rebound1;
-      tl.to(titleSolid, {
+      tl.to(solid, {
         scale: 1.02,
         duration: 0.07,
         ease: 'power2.out',
         transformOrigin: 'center bottom'
       }, finalATime)
-      .to(titleSolid, {
+      .to(solid, {
         scale: 1,
         duration: 0.07,
         ease: 'power2.in'
       });
     }
 
-    // 5. Underline draws in
-    const underlineStart = config.rollDuration;
-    tl.call(() => {
-      const underlineY = titleBox.bottom - heroBox.top + 10;
-      const pathLength = titleBox.width;
-      underlinePath.setAttribute('d', `M 0 ${underlineY} L ${pathLength} ${underlineY}`);
-      underlinePath.style.strokeDasharray = pathLength;
-      underlinePath.style.strokeDashoffset = pathLength;
-    }, null, underlineStart)
-    .to(underlinePath, {
-      strokeDashoffset: 0,
-      duration: config.underlineSpeed,
-      ease: 'power2.out'
-    }, underlineStart);
-
     return tl;
   }
 
-  async function init() {
+  async function initHero() {
+    ensureHeroDom('FC BARCELONA'); // Guarantees nodes exist
+
+    const hero      = q(HERO_SEL.hero);
+    const title     = q(HERO_SEL.title);
+    const outline   = q(HERO_SEL.outline);
+    const solid     = q(HERO_SEL.solid);
+    const underline = q(HERO_SEL.underline);
+    const ball      = q(HERO_SEL.ball);
+
+    // If any are still missing, show a visible fallback spinner instead of aborting
+    if (!hero || !title || !solid || !ball) {
+      console.warn('[Hero] Missing nodes after scaffold; showing fallback spinner');
+      if (ball) {
+        ball.style.opacity = '1';
+        ball.style.animationPlayState = 'running';
+      }
+      return;
+    }
+
     try {
       await document.fonts?.ready;
     } catch (e) {
@@ -1281,23 +1327,27 @@
     });
   }
 
-  // Initialize when hero comes into view
-  const io = new IntersectionObserver((entries) => {
-    if (entries.some(e => e.isIntersecting)) {
-      io.disconnect();
-      init();
+  // Safe startup order
+  (async function startHero() {
+    try { await document.fonts?.ready; } catch {}
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initHero();
+    } else {
+      addEventListener('DOMContentLoaded', initHero, { once: true });
     }
-  }, { rootMargin: '100px' });
-
-  io.observe(hero);
+  })();
 
   // Debug hooks for live tuning
   window.__hero = {
     layout() {
       // Recompute anchors after CSS tweaks
-      const heroBox = hero.getBoundingClientRect();
-      const titleBox = titleEl.getBoundingClientRect();
-      console.log('Hero layout:', { heroBox, titleBox });
+      const hero = q(HERO_SEL.hero);
+      const title = q(HERO_SEL.title);
+      if (hero && title) {
+        const heroBox = hero.getBoundingClientRect();
+        const titleBox = title.getBoundingClientRect();
+        console.log('Hero layout:', { heroBox, titleBox });
+      }
     },
     run() {
       // Replay the full sequence
@@ -1309,15 +1359,8 @@
     },
     init() {
       // Full reset: fonts → layout → run
-      init();
+      initHero();
     },
     config: () => window.__heroConfig
   };
-
-  // Fallback initialization
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setTimeout(init, 0);
-  } else {
-    document.addEventListener('DOMContentLoaded', init, { once: true });
-  }
 })();
