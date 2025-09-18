@@ -1132,6 +1132,19 @@
     return;
   }
 
+  // Director's Panel Config
+  window.__heroConfig = window.__heroConfig || {
+    rollDuration: 0.8,        // s – sweep-in time
+    revealLag: 0.12,          // s – when text starts after ball moves
+    bounce: { drop: 0.38, rebound1: 0.18, rebound2: 0.12 },
+    idleSpin: 9,              // s per rotation
+    capTopGapPx: 12,          // px gap above letter caps during roll
+    endGapRightPx: 16,        // px space between ball & last "A"
+    underlineSpeed: 0.6,      // s – Barça underline draw
+    ease: 'power3.out',       // GSAP ease curve
+    letterPop: true           // enable final "A" pop effect
+  };
+
   // Check for reduced motion preference
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1155,15 +1168,17 @@
       return;
     }
 
+    const config = window.__heroConfig;
+
     // Get positioning measurements
     const heroBox = hero.getBoundingClientRect();
     const titleBox = titleEl.getBoundingClientRect();
 
     const ballSize = 80; // Fixed size for animation
     const startX = heroBox.width + ballSize; // Start off-screen right
-    const startY = titleBox.top - heroBox.top - ballSize * 0.3; // Above title
-    const endX = titleBox.left + titleBox.width - heroBox.left; // End at title right
-    const endY = titleBox.top - heroBox.top - ballSize * 0.5; // Above title
+    const startY = titleBox.top - heroBox.top - config.capTopGapPx; // Above title
+    const endX = titleBox.left + titleBox.width - heroBox.left - config.endGapRightPx; // End position
+    const endY = titleBox.top - heroBox.top - config.capTopGapPx; // Above title
 
     // Set initial ball position
     ballLayer.style.left = `${startX}px`;
@@ -1176,58 +1191,75 @@
         // Start gentle idle spin after animation
         window.gsap.to(ball, {
           rotation: 360,
-          duration: 9,
+          duration: config.idleSpin,
           ease: 'none',
           repeat: -1
         });
       }
     });
 
-    // 1. Ball arcs in from right (0.8s)
+    // 1. Ball arcs in from right
     tl.to(ballLayer, {
       x: endX - startX,
       y: endY - startY,
-      duration: 0.8,
-      ease: 'power2.out'
+      duration: config.rollDuration,
+      ease: config.ease
     })
 
-    // 2. Text reveal follows ball (0.6s, starts 0.2s into ball motion)
+    // 2. Text reveal follows ball
     .to(titleSolid, {
       clipPath: 'inset(0 0 0 0)',
-      duration: 0.6,
-      ease: 'power2.out'
-    }, 0.2)
+      duration: config.rollDuration - config.revealLag,
+      ease: config.ease
+    }, config.revealLag)
 
-    // 3. Ball settles with micro-bounce (0.4s)
+    // 3. Ball settles with micro-bounce
     .to(ballLayer, {
       y: `+=${ballSize * 0.1}`, // Small drop
-      duration: 0.2,
+      duration: config.bounce.drop,
       ease: 'power2.in'
     })
     .to(ballLayer, {
       y: `-=${ballSize * 0.05}`, // Tiny bounce up
-      duration: 0.1,
+      duration: config.bounce.rebound1,
       ease: 'power2.out'
     })
     .to(ballLayer, {
       y: `+=${ballSize * 0.05}`, // Settle
-      duration: 0.1,
+      duration: config.bounce.rebound2,
       ease: 'power2.in'
-    })
+    });
 
-    // 4. Underline draws in (0.5s, starts with ball settle)
-    .call(() => {
+    // 4. Final "A" letter pop (if enabled)
+    if (config.letterPop && titleSolid.textContent) {
+      const finalATime = config.rollDuration + config.bounce.drop + config.bounce.rebound1;
+      tl.to(titleSolid, {
+        scale: 1.02,
+        duration: 0.07,
+        ease: 'power2.out',
+        transformOrigin: 'center bottom'
+      }, finalATime)
+      .to(titleSolid, {
+        scale: 1,
+        duration: 0.07,
+        ease: 'power2.in'
+      });
+    }
+
+    // 5. Underline draws in
+    const underlineStart = config.rollDuration;
+    tl.call(() => {
       const underlineY = titleBox.bottom - heroBox.top + 10;
       const pathLength = titleBox.width;
       underlinePath.setAttribute('d', `M 0 ${underlineY} L ${pathLength} ${underlineY}`);
       underlinePath.style.strokeDasharray = pathLength;
       underlinePath.style.strokeDashoffset = pathLength;
-    }, null, 0.8)
+    }, null, underlineStart)
     .to(underlinePath, {
       strokeDashoffset: 0,
-      duration: 0.5,
+      duration: config.underlineSpeed,
       ease: 'power2.out'
-    }, 0.8);
+    }, underlineStart);
 
     return tl;
   }
@@ -1258,6 +1290,29 @@
   }, { rootMargin: '100px' });
 
   io.observe(hero);
+
+  // Debug hooks for live tuning
+  window.__hero = {
+    layout() {
+      // Recompute anchors after CSS tweaks
+      const heroBox = hero.getBoundingClientRect();
+      const titleBox = titleEl.getBoundingClientRect();
+      console.log('Hero layout:', { heroBox, titleBox });
+    },
+    run() {
+      // Replay the full sequence
+      if (prefersReducedMotion) {
+        showFinalState();
+      } else {
+        runKickRevealAnimation();
+      }
+    },
+    init() {
+      // Full reset: fonts → layout → run
+      init();
+    },
+    config: () => window.__heroConfig
+  };
 
   // Fallback initialization
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
