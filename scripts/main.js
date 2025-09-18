@@ -225,8 +225,8 @@
             let textBBox = null;
             let rectX = 0;
             let totalWidth = 0;
-            const LEFT_GUARD = 80;   // start well before 'F' (modest for 3 glyphs)
-            const RIGHT_GUARD = 50;  // overshoot past 'B'
+            const LEFT_GUARD = 120;  // generous margin before centered 'F'
+            const RIGHT_GUARD = 80;  // generous overshoot past 'B'
 
             function setProgress(progress) {
                 if (!textBBox) return false;
@@ -301,26 +301,30 @@
                     // Force layout and ensure text is visible for measurement
                     titleMasked.setAttribute('visibility', 'visible');
 
+                    // Get bbox of centered text
                     textBBox = titleMasked.getBBox();
 
-                    // Position the reveal rect to start BEFORE the text
+                    // For centered text with text-anchor="middle", start the reveal well before left edge
+                    // The bbox.x is already the left edge of the centered text
                     rectX = Math.round(textBBox.x - LEFT_GUARD);
                     totalWidth = Math.round(textBBox.width + LEFT_GUARD + RIGHT_GUARD);
 
-                    // Set initial rect position and dimensions
+                    // Set initial rect position and dimensions with extra vertical padding
                     revealRect.setAttribute('x', String(rectX));
-                    revealRect.setAttribute('y', String(Math.floor(textBBox.y) - 20));
-                    revealRect.setAttribute('height', String(Math.ceil(textBBox.height) + 40));
+                    revealRect.setAttribute('y', String(Math.floor(textBBox.y) - 30));
+                    revealRect.setAttribute('height', String(Math.ceil(textBBox.height) + 60));
                     revealRect.setAttribute('width', '0');
 
-                    console.log('[hero-reveal] FCB text bounds:', {
+                    console.log('[hero-reveal] Centered FCB bounds:', {
                         text: TEXT,
+                        centered: 'text-anchor=middle',
                         bboxX: textBBox.x,
                         bboxWidth: textBBox.width,
                         rectX: rectX,
                         totalWidth: totalWidth,
                         leftGuard: LEFT_GUARD,
-                        rightGuard: RIGHT_GUARD
+                        rightGuard: RIGHT_GUARD,
+                        svgViewBox: '0 0 1200 220'
                     });
                 }
 
