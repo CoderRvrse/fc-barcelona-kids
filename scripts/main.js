@@ -1117,3 +1117,51 @@
   const spinner = document.getElementById('ballSpinner');
   if (spinner) spinner.style.opacity = '1';
 })();
+
+// Ball positioning system - places ball below title and above CTAs
+(function () {
+  const title = document.getElementById('heroTitle');
+  const ball  = document.getElementById('ballSpinner');
+  const cta   = document.querySelector('.hero-cta');
+  if (!title || !ball) return;
+
+  const GAP_BELOW_TITLE = 0.12;  // 12% of ball size gap under title
+  const CTA_CLEAR_RATIO  = 0.85; // CTA starts this much lower than ball size
+
+  function placeBall() {
+    // ensure fonts have rendered so the title size is correct
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(_place);
+    } else {
+      _place();
+    }
+  }
+
+  function _place() {
+    const titleRect = title.getBoundingClientRect();
+    const scrollY   = window.scrollY || document.documentElement.scrollTop;
+
+    // compute current rendered ball size
+    const ballRect  = ball.getBoundingClientRect();
+    const ballSize  = ballRect.width || 160;
+
+    // target top = title bottom + small gap + half ball (because translateY(-50%))
+    const topPx = titleRect.bottom + scrollY + (ballSize * GAP_BELOW_TITLE) + (ballSize * 0.5);
+    ball.style.top = `${topPx}px`;
+
+    // push CTA block far enough to never overlap the ball
+    if (cta) {
+      cta.style.setProperty('--hero-cta-offset', `${ballSize * CTA_CLEAR_RATIO}px`);
+    }
+  }
+
+  // simple debounce
+  let t;
+  function onResize() {
+    clearTimeout(t);
+    t = setTimeout(placeBall, 120);
+  }
+
+  window.addEventListener('load', placeBall, { once: true });
+  window.addEventListener('resize', onResize);
+})();

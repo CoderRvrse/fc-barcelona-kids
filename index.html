@@ -103,24 +103,22 @@
         <section id="hero" class="hero" data-section>
             <div class="hero-parallax hero-parallax--field" data-parallax data-speed="0.15" aria-hidden="true"></div>
             <div class="hero-parallax hero-parallax--stadium" data-parallax data-speed="0.25" aria-hidden="true"></div>
-            <!-- Centered spinning ball (the only ball) -->
-            <div class="hero-ball-center" aria-hidden="true">
-                <img
-                    id="ballSpinner"
-                    src="assets/soccer-ball.svg"
-                    width="256"
-                    height="256"
-                    alt=""
-                    decoding="async"
-                    fetchpriority="high"
-                />
-            </div>
-
             <div class="container">
                 <p class="hero-kicker" data-animate>Barcelona methodology for future stars</p>
 
                 <!-- Main title with clean display -->
-                <h1 class="hero-title" data-animate>FC BARCELONA</h1>
+                <h1 id="heroTitle" class="hero-title" data-animate>FC BARCELONA</h1>
+
+                <!-- Centered spinning ball positioned after title -->
+                <img
+                    id="ballSpinner"
+                    class="hero-ball-center"
+                    src="assets/soccer-ball.svg"
+                    alt=""
+                    decoding="async"
+                    fetchpriority="high"
+                    aria-hidden="true"
+                />
 
                 <!-- Graceful no-JS fallback: always show text, hide ball -->
                 <noscript>
