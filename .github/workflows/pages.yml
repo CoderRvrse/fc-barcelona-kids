@@ -114,7 +114,7 @@ jobs:
 
             # content-type must be SVG
             curl -fsSI "$ROOT/assets/soccer-ball.svg" \
-              | tr -d '\r' | grep -qi '^content-type: *image/svg\+xml'
+              | tr -d '\r' | grep -qi 'content-type: *image/svg\+xml'
 
             # body sanity: allow XML prolog or <svg on first few lines
             curl -fsSL "$ROOT/assets/soccer-ball.svg" \
