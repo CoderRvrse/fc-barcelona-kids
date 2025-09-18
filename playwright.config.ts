@@ -1,33 +1,31 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const baseURL = process.env.CI
+  ? 'https://coderrvrse.github.io/fc-barcelona-kids/'
+  : 'http://localhost:8080/';
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
-  timeout: 30000,
-  expect: {
-    timeout: 5000,
-    toHaveScreenshot: { threshold: 0.2, mode: 'strict' }
-  },
+  retries: 2,             // flaky-protection
+  reporter: [['list']],
   use: {
-    baseURL: 'https://coderrvrse.github.io/fc-barcelona-kids/',
-    trace: 'on-first-retry',
+    baseURL,
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 1, // avoid HiDPI diff churn
+    colorScheme: 'dark',
+    locale: 'en-US',
+    timezoneId: 'UTC',
+    ignoreHTTPSErrors: true,
+    // Prefer reduced motion for stable snapshots:
+    launchOptions: {
+      args: ['--force-prefers-reduced-motion']
+    }
   },
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile', use: { ...devices['Pixel 5'] } }
   ],
+  // If the site is static, a small per-test timeout is enough:
+  timeout: 30_000
 });

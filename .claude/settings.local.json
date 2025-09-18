@@ -32,7 +32,8 @@
       "Bash(ROOT=\"https://coderrvrse.github.io/fc-barcelona-kids\")",
       "Bash(chmod:*)",
       "Bash(bash:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(gh workflow run:*)"
     ],
     "deny": [],
     "ask": []

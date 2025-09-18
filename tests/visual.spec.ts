@@ -1,19 +1,40 @@
 import { test, expect } from '@playwright/test';
+import { stabilizeUI } from './utils/stableUI';
 
-test('hero visual desktop', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto('https://coderrvrse.github.io/fc-barcelona-kids/');
-  await page.waitForSelector('#heroTitleSvg', { timeout: 15000 });
-  await expect(page.locator('#heroTitleSvg')).toHaveScreenshot('hero-desktop.png', {
+test('hero renders consistently (desktop)', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  await stabilizeUI(page);
+
+  // Ensure hero is visible:
+  const hero = page.locator('#hero, .hero, [data-hero]');
+  await expect(hero).toBeVisible();
+
+  // Fixed viewport already in config; scroll to a known position:
+  await page.evaluate(() => window.scrollTo(0, 0));
+
+  // Snapshot with deterministic conditions:
+  expect(await hero.screenshot()).toMatchSnapshot('hero-desktop.png', {
     maxDiffPixelRatio: 0.002
   });
 });
 
-test('hero visual mobile', async ({ page }) => {
+test('hero renders consistently (mobile)', async ({ page }) => {
+  // Override viewport for mobile test
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('https://coderrvrse.github.io/fc-barcelona-kids/');
-  await page.waitForSelector('#heroTitleSvg', { timeout: 15000 });
-  await expect(page.locator('#heroTitleSvg')).toHaveScreenshot('hero-mobile.png', {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  await stabilizeUI(page);
+
+  // Ensure hero is visible:
+  const hero = page.locator('#hero, .hero, [data-hero]');
+  await expect(hero).toBeVisible();
+
+  // Fixed position for mobile:
+  await page.evaluate(() => window.scrollTo(0, 0));
+
+  // Snapshot with deterministic conditions:
+  expect(await hero.screenshot()).toMatchSnapshot('hero-mobile.png', {
     maxDiffPixelRatio: 0.002
   });
 });
