@@ -22,7 +22,17 @@
       "Bash([ -f \".eslintrc.json\" ])",
       "Bash(git checkout:*)",
       "Bash(git pull:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(ROOT=\"https://coderrvse.github.io/fc-barcelona-kids\")",
+      "Bash(npm run dev:*)",
+      "Bash(npm install)",
+      "WebFetch(domain:coderrvrse.github.io)",
+      "Bash(ROOT=\"https://coderrvrse.github.io/fc-barcelona-kids\")",
+      "Bash(chmod:*)",
+      "Bash(bash:*)",
+      "Bash(gh api:*)"
     ],
     "deny": [],
     "ask": []

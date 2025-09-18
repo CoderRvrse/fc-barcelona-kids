@@ -5,6 +5,14 @@
     // Ultra-defensive GSAP guard
     const gsapSafe = (...args) => (window.gsap?.to ? window.gsap.to(...args) : null);
 
+    // Production error telemetry (console-based, no external deps)
+    window.addEventListener("error", e => {
+        console.log("[prod-error]", e.message, e.filename, e.lineno);
+    });
+    window.addEventListener("unhandledrejection", e => {
+        console.log("[prod-rejection]", e.reason?.message || String(e.reason));
+    });
+
     const onReady = (callback) => {
         if (document.readyState !== 'loading') {
             callback();
