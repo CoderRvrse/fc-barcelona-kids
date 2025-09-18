@@ -150,7 +150,7 @@ jobs:
           {
             echo "ROOT=$ROOT"
             echo "-- index markers --"
-            grep -Eo 'id="heroTitleSvg"|id="hero-title"' /tmp/index.html | sort -u
+            grep -Eo 'id="heroTitle"|id="hero-title"' /tmp/index.html | sort -u
             echo "-- assets --"
             curl -fsSI "$ROOT/assets/soccer-ball.svg" | head -n 10
             curl -fsSI "$ROOT/assets/FC_Barcelona_logo.svg" | head -n 10
