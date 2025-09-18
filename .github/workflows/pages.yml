@@ -118,8 +118,8 @@ jobs:
             ROOT="https://coderrvrse.github.io/fc-barcelona-kids"
           fi
           html="$(curl -fsSL "$ROOT/")"
-          # 1) final solid node exists
-          echo "$html" | grep -q 'id="titleSolid"'
+          # 1) hero section exists with new structure
+          echo "$html" | grep -q 'id="hero"'
           # 2) text content is correct - FC BARCELONA
           echo "$html" | grep -q 'FC BARCELONA'
           # 3) guard against missing 'F' regression (would show "C BARCELONA")
