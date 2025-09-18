@@ -1,5 +1,5 @@
 // File: sw.js
-const VERSION = 'v9';
+const VERSION = 'v8';
 const CACHE_NAME = `fcb-kids-${VERSION}`;
 const OFFLINE_URL = '/fc-barcelona-kids/offline.html';
 
@@ -28,7 +28,6 @@ self.addEventListener('install', (event) => {
       cache.addAll([
         '/fc-barcelona-kids/',
         '/fc-barcelona-kids/assets/soccer-ball.svg',
-        '/fc-barcelona-kids/assets/FC_Barcelona_logo.svg',
         OFFLINE_URL
       ])
     )

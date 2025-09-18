@@ -499,45 +499,6 @@
                 backToTopBtn.classList.remove('kick');
             }
         }, { passive: true });
-
-        // Touch-friendly tooltip behavior
-        const tip = backToTopBtn.querySelector('.bt-tip');
-        if (tip) {
-            let tipTimer = null;
-            const showTipBriefly = () => {
-                if (window.matchMedia('(pointer: coarse)').matches) {
-                    tip.classList.add('is-touch');
-                    clearTimeout(tipTimer);
-                    tipTimer = setTimeout(() => tip.classList.remove('is-touch'), 900);
-                }
-            };
-            backToTopBtn.addEventListener('touchstart', showTipBriefly, { passive: true });
-        }
-
-        // Pulse ring on click
-        backToTopBtn.addEventListener('click', () => {
-            if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
-            backToTopBtn.classList.remove('pulse');
-            // eslint-disable-next-line no-unused-expressions
-            backToTopBtn.offsetWidth;
-            backToTopBtn.classList.add('pulse');
-        });
-
-        // Auto-position tooltip when visible
-        if (tip) {
-            const flipIfNeeded = () => {
-                const rBtn = backToTopBtn.getBoundingClientRect();
-                const rTip = tip.getBoundingClientRect();
-                // if tooltip would overflow left edge, flip to the other side
-                const needsFlip = rTip.left < 6;
-                tip.classList.toggle('flip', needsFlip);
-            };
-
-            // run when showing via hover/focus/touch
-            ['mouseenter', 'focus', 'touchstart'].forEach(ev =>
-                backToTopBtn.addEventListener(ev, () => window.requestAnimationFrame(flipIfNeeded), { passive: true })
-            );
-        }
     }
 
     // Initialize back-to-top after DOM is ready
