@@ -120,14 +120,14 @@ jobs:
           html="$(curl -fsSL "$ROOT/")"
           # 1) final solid node exists
           echo "$html" | grep -q 'id="titleSolid"'
-          # 2) text content is correct - full phrase
-          echo "$html" | grep -q 'FC BARCELONA'
-          # 3) guard against missing 'F' regression (would show "C BARCELONA")
-          ! echo "$html" | grep -q '>C BARCELONA<' || {
-            echo "❌ Missing 'F' detected - found 'C BARCELONA' instead of 'FC BARCELONA'"
+          # 2) text content is correct - FCB
+          echo "$html" | grep -q 'FCB'
+          # 3) guard against missing 'F' regression (would show "CB")
+          ! echo "$html" | grep -q '>CB<' || {
+            echo "❌ Missing 'F' detected - found 'CB' instead of 'FCB'"
             exit 1
           }
-          echo "✅ Solid title present and correct"
+          echo "✅ Solid title FCB present and correct"
 
       - name: Curl checks continued
         shell: bash

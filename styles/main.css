@@ -1678,24 +1678,17 @@ textarea:focus-visible {
   height: 100%;
   display: block;
 }
-/* Auto-fit typography - reserves space for ball, prevents overflow */
-.hero-title text {
-  font: 900 1em/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+/* FCB typography - tuned for 3 letters, bold and clean */
+.hero-title {
+  /* Plenty large, but bounded. 3 chars ≈ width factor ~3.2 with spacing */
+  font: 900 clamp(56px, 16vw, 180px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   letter-spacing: 0.02em;
+}
+
+.hero-title text {
   fill: #ffffff;
   paint-order: stroke fill; /* crisp edges */
-}
-
-/* Dynamic font sizing that fits available width */
-.hero-title {
-  /* Reserve 140px for ball on right + margins */
-  --available-width: calc(100vw - 140px - 2rem);
-  --ideal-size: min(12vw, var(--available-width) / 11); /* ~11 chars in "FC BARCELONA" */
-  font-size: clamp(48px, var(--ideal-size), 120px);
-}
-
-.hero-title text {
-  font-size: inherit; /* inherit from container */
+  font: inherit; /* inherit from container */
 }
 
 /* Only the solid text has transition - masked group is clipped */
@@ -1709,7 +1702,7 @@ textarea:focus-visible {
 /* Fallback for noscript */
 .hero-title-fallback{
   display: none;
-  font: 800 clamp(36px, 9vw, 96px)/1.05 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 900 clamp(56px, 16vw, 180px)/1 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   letter-spacing: 0.02em;
   color: #fff;
   text-align: center;
