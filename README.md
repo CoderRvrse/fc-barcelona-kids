@@ -2,8 +2,8 @@
 
 [![Deploy](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/pages.yml/badge.svg)](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/pages.yml)
 [![Lint](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/lint.yml/badge.svg)](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/lint.yml)
-[![Links](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/links.yml/badge.svg)](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/links.yml)
-[![Live Monitor](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/live-monitor.yml/badge.svg)](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/live-monitor.yml)
+[![Link Check](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/links.yml/badge.svg)](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/links.yml)
+[![Live Monitor](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/monitor.yml/badge.svg)](https://github.com/CoderRvrse/fc-barcelona-kids/actions/workflows/monitor.yml)
 
 A playful, family-friendly soccer website for FC Barcelona's junior kids program.
 
