@@ -73,9 +73,10 @@
             <!-- Brand -->
             <a href="#hero" class="brand" id="brand" aria-label="FC Barcelona Juniors home">
               <img
+                id="brandLogo"
+                class="brand-logo"
                 src="assets/FC_Barcelona_logo.svg"
                 alt="FC Barcelona Juniors logo"
-                class="brand-logo"
                 width="36" height="36"
                 decoding="async"
                 fetchpriority="high"
@@ -497,27 +498,13 @@
     </script>
 
     <!-- Back-to-top control -->
-    <div id="back-to-top-sentinel" style="position: absolute; top: 100vh; height: 1px; pointer-events: none;"></div>
-    <!-- Back to top (soccer ball) -->
-    <button
-      id="backToTop"
-      class="back-to-top"
-      aria-label="Back to top"
-      title="Back to top"
-    >
-      <img src="assets/soccer-ball.svg" alt="" aria-hidden="true" />
+    <button id="backToTop" class="bt" aria-label="Back to top" title="Back to top">
+      <img class="bt-ball" src="assets/soccer-ball.svg" alt="" aria-hidden="true" width="40" height="40" />
       <span class="bt-arrow" aria-hidden="true">↑</span>
-      <span class="bt-shadow" aria-hidden="true"></span>
       <span class="bt-tip" role="tooltip">Back to top</span>
     </button>
-
-    <!-- No-JS graceful fallback -->
-    <noscript>
-        <a href="#top-sentinel" class="back-to-top" aria-label="Back to top">
-            <img src="assets/soccer-ball.svg" alt="">
-            <span class="bt-shadow" aria-hidden="true"></span>
-        </a>
-    </noscript>
+    <div id="top-sentinel" hidden></div>
+    <noscript><a class="bt bt-noscript" href="#top-sentinel">Back to top</a></noscript>
 
     <script>
     (() => {

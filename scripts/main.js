@@ -227,15 +227,30 @@
                 .from('.hero-cta .btn', { opacity: 0, y: 24, duration: 0.45, stagger: 0.1, ease: 'power2.out' }, '-=0.2')
                 .from('.hero-statistics .stat-card', { opacity: 0, y: 30, duration: 0.4, stagger: 0.08, ease: 'power2.out' }, '-=0.3');
 
-            const brand = document.querySelector('.brand');
-            if (brand) {
-                const crestAnimation = window.gsap.timeline({ paused: true });
-                crestAnimation
-                    .to('.crest', { rotate: 6, y: -4, duration: 0.25, ease: 'power2.out' })
-                    .to('.crest', { rotate: 0, y: 0, duration: 0.25, ease: 'power2.in' });
-                brand.addEventListener('mouseenter', () => crestAnimation.restart());
-                brand.addEventListener('focus', () => crestAnimation.restart());
-            }
+            // Animate new brand logo
+            (function animateBrandLogo() {
+                const el = document.getElementById("brandLogo");
+                if (!el || !window.gsap) return;
+
+                // subtle entrance
+                window.gsap.set(el, { transformOrigin: "50% 50%", y: 2, scale: 0.94, opacity: 0 });
+                window.gsap.to(el, {
+                    y: 0,
+                    scale: 1,
+                    opacity: 1,
+                    duration: 0.6,
+                    ease: "power2.out",
+                    overwrite: "auto"
+                });
+
+                // micro hover polish
+                el.addEventListener("mouseenter", () => {
+                    window.gsap.to(el, { y: -1, scale: 1.02, duration: 0.18, ease: "power1.out" });
+                });
+                el.addEventListener("mouseleave", () => {
+                    window.gsap.to(el, { y: 0, scale: 1.0, duration: 0.2, ease: "power1.inOut" });
+                });
+            })();
         }
     });
 
@@ -453,97 +468,55 @@
     }
 
     // Back-to-top control functionality
-    function initBackToTop() {
-        const backToTopBtn = document.getElementById('backToTop');
-        const sentinel = document.getElementById('back-to-top-sentinel');
+    (function backToTopControl() {
+        const btn = document.getElementById("backToTop");
+        const topSentinel = document.getElementById("top-sentinel");
+        if (!btn || !topSentinel) return;
 
-        if (!backToTopBtn || !sentinel) return;
+        // show/hide with IntersectionObserver
+        const show = () => btn.style.opacity = "1";
+        const hide = () => btn.style.opacity = "0";
+        btn.style.opacity = "0";
 
-        // IntersectionObserver for performance-optimized visibility detection
-        const observer = new IntersectionObserver(
-            (entries) => {
-                const [entry] = entries;
-                // Show button when sentinel is NOT visible (user has scrolled past viewport height)
-                if (entry.isIntersecting) {
-                    backToTopBtn.classList.remove('visible');
-                } else {
-                    backToTopBtn.classList.add('visible');
-                }
-            },
-            { threshold: 0 }
-        );
+        if ("IntersectionObserver" in window) {
+            new IntersectionObserver(([e]) => e.isIntersecting ? hide() : show(), { threshold: 0.01 })
+                .observe(topSentinel);
+        } else {
+            // fallback
+            const onScroll = () => (window.scrollY > window.innerHeight) ? show() : hide();
+            window.addEventListener("scroll", onScroll, { passive: true });
+            onScroll();
+        }
 
-        observer.observe(sentinel);
+        // click smooth-scroll + fun kick
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            try { window.scrollTo({ top: 0, behavior: "smooth" }); }
+            catch { window.scrollTo(0, 0); }
 
-        // Smooth scroll to top with bullet-proof kick animation
-        backToTopBtn.addEventListener('click', () => {
-            // Smooth scroll to top
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-
-            // Handle kick animation with reduced motion check
-            if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
-
-            backToTopBtn.classList.remove('kick');
-            // Force reflow so the animation retriggers
-            // eslint-disable-next-line no-unused-expressions
-            backToTopBtn.offsetWidth;
-            backToTopBtn.classList.add('kick');
-        });
-
-        // Clean up animation class when animation ends
-        backToTopBtn.addEventListener('animationend', (e) => {
-            if (e.target === backToTopBtn.querySelector('img')) {
-                backToTopBtn.classList.remove('kick');
+            // little kick if GSAP present
+            if (window.gsap) {
+                window.gsap.fromTo(".bt-ball", { rotate: 0, scale: 1 }, { rotate: -18, scale: 1.06, duration: 0.18, ease: "power2.out" })
+                    .then(() => window.gsap.to(".bt-ball", { rotate: 0, scale: 1, duration: 0.2, ease: "power2.inOut" }));
             }
-        }, { passive: true });
-
-        // Touch-friendly tooltip behavior
-        const tip = backToTopBtn.querySelector('.bt-tip');
-        if (tip) {
-            let tipTimer = null;
-            const showTipBriefly = () => {
-                if (window.matchMedia('(pointer: coarse)').matches) {
-                    tip.classList.add('is-touch');
-                    clearTimeout(tipTimer);
-                    tipTimer = setTimeout(() => tip.classList.remove('is-touch'), 900);
-                }
-            };
-            backToTopBtn.addEventListener('touchstart', showTipBriefly, { passive: true });
-        }
-
-        // Pulse ring on click
-        backToTopBtn.addEventListener('click', () => {
-            if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
-            backToTopBtn.classList.remove('pulse');
-            // eslint-disable-next-line no-unused-expressions
-            backToTopBtn.offsetWidth;
-            backToTopBtn.classList.add('pulse');
         });
 
-        // Auto-position tooltip when visible
-        if (tip) {
-            const flipIfNeeded = () => {
-                const rBtn = backToTopBtn.getBoundingClientRect();
-                const rTip = tip.getBoundingClientRect();
-                // if tooltip would overflow left edge, flip to the other side
-                const needsFlip = rTip.left < 6;
-                tip.classList.toggle('flip', needsFlip);
-            };
-
-            // run when showing via hover/focus/touch
-            ['mouseenter', 'focus', 'touchstart'].forEach(ev =>
-                backToTopBtn.addEventListener(ev, () => window.requestAnimationFrame(flipIfNeeded), { passive: true })
-            );
-        }
-    }
-
-    // Initialize back-to-top after DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initBackToTop);
-    } else {
-        initBackToTop();
-    }
+        // JS cleanup of stray orbs in bottom-right ~160x160 area
+        const KEEP = new Set([btn, ...btn.querySelectorAll("*")]);
+        const kill = (el) => {
+            if (KEEP.has(el)) return false;
+            const cs = getComputedStyle(el);
+            const fixed = cs.position === "fixed";
+            if (!fixed) return false;
+            const r = el.getBoundingClientRect();
+            const nearBR = (window.innerWidth - r.right <= 160) && (window.innerHeight - r.bottom <= 160);
+            const smallish = (r.width * r.height) <= 40000; // ~200x200
+            if (nearBR && smallish) { el.dataset.hiddenBy = "bt-cleanup"; el.style.display = "none"; return true; }
+            return false;
+        };
+        // sweep a few frames after load
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            [...document.body.querySelectorAll("*")].forEach(kill);
+        }));
+    })();
 })();
