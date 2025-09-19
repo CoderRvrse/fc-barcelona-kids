@@ -357,12 +357,11 @@
            * Convert SVG coordinates to page coordinates
            */
           function svgToPageCoords(svgX, svgY) {
-            const ctm = svg.getScreenCTM();
-            if (!ctm) return { x: svgX, y: svgY };
-
+            // Use getBoundingClientRect instead of getScreenCTM for reliability
+            const rect = svg.getBoundingClientRect();
             return {
-              x: ctm.a * svgX + ctm.c * svgY + ctm.e,
-              y: ctm.b * svgX + ctm.d * svgY + ctm.f
+              x: rect.left + svgX + window.scrollX,
+              y: rect.top + svgY + window.scrollY
             };
           }
 
@@ -709,8 +708,8 @@
           window.addEventListener('load', () => {
             setTimeout(() => {
               // if we never ran (e.g., both gates failed), try one more time
-              if (rollBall && +getComputedStyle(rollBall).opacity === 0 &&
-                  idleBall && +getComputedStyle(idleBall).opacity === 0) {
+              if (rollBall && +getComputedStyle(rollBall).opacity === 0) {
+                // idleBall check removed - using new hero system
                 whenVisible(runOnce);
               }
             }, 500);
@@ -1101,46 +1100,126 @@
     })();
     })(); // Close backToTopControl function
 
-// Minimal Hero Animation System
+// Reliable Hero System - No SVG matrices, no undefined vars
 /* eslint-env browser */
+/* globals gsap */
+
 (() => {
-  'use strict';
+  // ----- Config you can tweak from DevTools via window.__heroConfig
+  const CONFIG = window.__heroConfig = Object.assign({
+    spinSeconds: 9,       // idle spin speed
+    offsetRight: 16,      // px gap to the right of the title
+    offsetAbove: 10,      // px above the cap line
+    gsapRollMs: 800,      // if GSAP present: roll duration
+    bounceMs: 280         // small settle bounce
+  }, window.__heroConfig || {});
 
-  const $ = (s, r=document) => r.querySelector(s);
-  const hero  = $('#hero');
-  const title = $('#heroTitle');
-  const ball  = $('#heroBall');
+  // ----- DOM
+  const hero      = document.getElementById('hero');
+  const title     = document.getElementById('heroTitle');
+  const idleBall  = document.getElementById('heroBallIdle');   // <— always defined
+  const rollBall  = document.getElementById('heroBall');       // optional (GSAP)
 
-  // Hard stop if the minimal 3 elements aren't there
-  if (!hero || !title || !ball) return;
+  if (!hero || !title || !idleBall) {
+    console.warn('[Hero] Required elements missing; showing nothing.');
+    return;
+  }
 
-  // Safe spacing so ball never overlays CTAs
-  const layout = () => {
-    const r = title.getBoundingClientRect();
-    hero.style.setProperty('--gap-after-title', Math.round(r.height * 0.30) + 'px');
-  };
+  // helper to get page-space box
+  function pageBox(el) {
+    const r = el.getBoundingClientRect();
+    return {
+      x: r.left + window.scrollX,
+      y: r.top  + window.scrollY,
+      w: r.width,
+      h: r.height
+    };
+  }
 
-  // Flip a single attribute to trigger CSS reveal + spin
-  const enable = () => { hero.dataset.anim = 'on'; };
+  // place the idle ball relative to the title using pixels (no matrices)
+  function layoutIdle() {
+    const tb = pageBox(title);
+    const size = idleBall.offsetWidth || 160;
 
-  // Font readiness (with timeout so we never stall)
-  const FONT_TIMEOUT = 1500;
-  const init = async () => {
-    layout();
-    let armed = false;
-    const t = setTimeout(() => { if (!armed) enable(); }, FONT_TIMEOUT);
-    try { await document.fonts?.ready; armed = true; clearTimeout(t); enable(); }
-    catch { armed = true; clearTimeout(t); enable(); }
-  };
+    const x = tb.x + tb.w + CONFIG.offsetRight;   // to the right of title
+    const y = tb.y - CONFIG.offsetAbove - size * 0.35; // slightly above cap line
 
-  // Kickoff & resize
-  init();
-  let raf = 0;
-  addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }, { passive:true });
+    // store as CSS vars so spin keyframes use the same translate
+    idleBall.style.setProperty('--x', `${x}px`);
+    idleBall.style.setProperty('--y', `${y}px`);
+    idleBall.style.setProperty('--spin', `${CONFIG.spinSeconds}s`);
+    idleBall.style.opacity = '1';
+  }
 
-  // Dev helpers
+  // optional: little entrance if GSAP is available
+  function runGsapSequence() {
+    const hasGSAP = !!window.gsap && !!rollBall;
+    if (!hasGSAP) return;
+
+    const tb = pageBox(title);
+    const size = idleBall.offsetWidth || 160;
+    const endX = tb.x + tb.w + CONFIG.offsetRight;
+    const endY = tb.y - CONFIG.offsetAbove - size * 0.35;
+
+    // start roll ball offscreen right
+    rollBall.style.opacity = '1';
+    idleBall.style.opacity = '0';
+
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+    tl.fromTo(rollBall, {
+      x: window.innerWidth + size,
+      y: endY - size * 0.25,
+      rotation: 0
+    }, {
+      duration: CONFIG.gsapRollMs / 1000,
+      x: endX, y: endY, rotation: 420
+    });
+
+    tl.to(rollBall, {
+      duration: CONFIG.bounceMs / 1000,
+      y: endY + size * 0.09,
+      yoyo: true, repeat: 1, ease: 'power2.out'
+    }, '-=0.1');
+
+    // hand off to idle spinner at same location
+    tl.add(() => {
+      layoutIdle();
+      rollBall.style.opacity = '0';
+      idleBall.style.opacity = '1';
+    });
+  }
+
+  // init + resize handling
+  function init() {
+    try { /* wait for fonts so title size is stable */
+      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
+        .catch(() => {
+          console.warn('[Hero] Font loading failed, proceeding anyway');
+        })
+        .finally(() => {
+          layoutIdle();
+          runGsapSequence(); // harmless if GSAP missing
+        });
+    } catch (e) {
+      console.warn('[Hero] init error:', e);
+      layoutIdle(); // fallback
+    }
+  }
+
+  let rAF;
+  function onResize() {
+    cancelAnimationFrame(rAF);
+    rAF = requestAnimationFrame(() => layoutIdle());
+  }
+
+  window.addEventListener('resize', onResize, { passive: true });
+  document.addEventListener('DOMContentLoaded', init, { once: true });
+
+  // expose small control panel
   window.__hero = {
-    layout,
-    rerun: () => { hero.dataset.anim=''; requestAnimationFrame(() => hero.dataset.anim='on'); }
+    layout: layoutIdle,
+    run: () => { layoutIdle(); runGsapSequence(); },
+    init
   };
 })();

@@ -1704,55 +1704,45 @@ textarea:focus-visible {
   dominant-baseline: central;
 }
 
-/* Minimal Hero CSS */
-.hero{
-  position:relative;
-  display:grid;
-  place-items:center;
-  min-height:clamp(48vh,58vh,66vh);
-  padding:clamp(24px,4vw,48px) 16px;
-  text-align:center;
-  isolation:isolate;
-  --gap-after-title: clamp(10px, 3vh, 28px);
+/* Reliable Hero CSS */
+.hero { position: relative; padding: clamp(56px, 10vw, 120px) 16px 0; }
+
+.hero-title {
+  font: 900 clamp(40px, 6vw, 96px) "Inter", system-ui, sans-serif;
+  line-height: 1.08;
+  color: #fff;
+  text-align: left;
+  margin: 0;
 }
 
-.hero-title{
-  margin:0 0 clamp(16px, 4vh, 32px);
-  font: 900 clamp(2.25rem,5vw + 1rem,4.75rem)/1.05 Inter, system-ui, sans-serif;
-  letter-spacing:.01em;
-  color:#fff;
+.hero-ball {
+  --size: clamp(100px, 11vw, 200px);
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  top: 0;
+  left: 0;
+  transform: translate3d(0,0,0);
+  pointer-events: none;     /* never blocks clicks */
+  filter: drop-shadow(0 16px 22px rgba(0,0,0,.35));
+  z-index: 4;
 }
 
-.title-reveal{
-  display:inline-block;
-  opacity:0;
-  clip-path: inset(0 100% 0 0 round 2px);
-  transition: clip-path .65s cubic-bezier(.2,.8,.2,1), opacity .2s ease-out;
+.hero-ball.idle {
+  animation: ball-spin linear var(--spin, 9s) infinite;
+  opacity: 1;
 }
 
-.hero-ball{
-  width:clamp(108px, 13vw, 176px);
-  height:auto;
-  margin-top: var(--gap-after-title);
-  pointer-events:none;
-  filter: drop-shadow(0 14px 24px rgba(0,0,0,.35));
+.hero-ball.rolling { opacity: 0; }  /* we show it only during GSAP sequence */
+
+@keyframes ball-spin {
+  from { transform: translate3d(var(--x,0), var(--y,0), 0) rotate(0deg) }
+  to   { transform: translate3d(var(--x,0), var(--y,0), 0) rotate(360deg) }
 }
 
-@media (prefers-reduced-motion: no-preference){
-  .hero[data-anim="on"] .title-reveal{
-    opacity:1;
-    clip-path: inset(0 0 0 0 round 2px);
-  }
-  .hero[data-anim="on"] .hero-ball{
-    animation: hero-spin 9s linear infinite;
-    transform-origin:50% 50%;
-  }
-  @keyframes hero-spin { to { transform: rotate(360deg); } }
-}
-
-@media (prefers-reduced-motion: reduce){
-  .title-reveal{ opacity:1; clip-path:none; }
-  .hero-ball{ animation:none; }
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .hero-ball.idle { animation: none; }
 }
 
 /* =====[ HERO REPLAY BUTTON ]=========================== */
