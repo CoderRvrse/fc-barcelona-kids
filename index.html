@@ -42,11 +42,11 @@
     <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
     <!-- Version pin to keep HTML/CSS/JS in sync -->
-    <script>window.__VER__='12';</script>
+    <script>window.__VER__='13';</script>
 
-    <link rel="stylesheet" href="styles/main.css?v=12" />
+    <link rel="stylesheet" href="styles/main.css?v=13" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="scripts/main.js?v=12" defer></script>
+    <script src="scripts/main.js?v=13" defer></script>
 
     <noscript>
         <style>
@@ -174,7 +174,13 @@
                 <div class="coach-grid">
                     <article class="coach-card" tabindex="0" data-animate>
                         <figure class="coach-media">
-                            <img src="https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf?auto=format&amp;fit=crop&amp;w=600&amp;q=80" alt="Coach Marta leading a training session" loading="lazy" />
+                            <img
+                              src="assets/placeholder-coach.svg"
+                              alt="Coach Marta leading a training session"
+                              loading="lazy"
+                              decoding="async"
+                              onerror="this.onerror=null;this.src='assets/placeholder-coach.svg';"
+                            />
                             <span class="photo-frame" aria-hidden="true"></span>
                         </figure>
                         <div class="coach-content">
@@ -197,7 +203,13 @@
                     </article>
                     <article class="coach-card" tabindex="0" data-animate>
                         <figure class="coach-media">
-                            <img src="https://images.unsplash.com/photo-1530989811438-3c95327ee46d?auto=format&amp;fit=crop&amp;w=600&amp;q=80" alt="Coach Luis giving instructions" loading="lazy" />
+                            <img
+                              src="assets/placeholder-coach.svg"
+                              alt="Coach Luis giving instructions"
+                              loading="lazy"
+                              decoding="async"
+                              onerror="this.onerror=null;this.src='assets/placeholder-coach.svg';"
+                            />
                             <span class="photo-frame" aria-hidden="true"></span>
                         </figure>
                         <div class="coach-content">
@@ -220,7 +232,13 @@
                     </article>
                     <article class="coach-card" tabindex="0" data-animate>
                         <figure class="coach-media">
-                            <img src="https://images.unsplash.com/photo-1517832207067-4db24a2ae47c?auto=format&amp;fit=crop&amp;w=600&amp;q=80" alt="Coach Amir assisting a goalkeeper" loading="lazy" />
+                            <img
+                              src="assets/placeholder-coach.svg"
+                              alt="Coach Amir assisting a goalkeeper"
+                              loading="lazy"
+                              decoding="async"
+                              onerror="this.onerror=null;this.src='assets/placeholder-coach.svg';"
+                            />
                             <span class="photo-frame" aria-hidden="true"></span>
                         </figure>
                         <div class="coach-content">
@@ -322,7 +340,13 @@
                         <article class="testimonial-slide is-active" data-animate>
                             <figure>
                                 <div class="parent-photo">
-                                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&amp;fit=crop&amp;w=200&amp;q=80" alt="Parent Ana smiling" loading="lazy" />
+                                    <img
+                                      src="assets/placeholder-coach.svg"
+                                      alt="Parent Ana smiling"
+                                      loading="lazy"
+                                      decoding="async"
+                                      onerror="this.onerror=null;this.src='assets/placeholder-coach.svg';"
+                                    />
                                 </div>
                                 <blockquote>
                                     <span class="quote-mark" aria-hidden="true">“</span>
@@ -334,7 +358,13 @@
                         <article class="testimonial-slide" data-animate>
                             <figure>
                                 <div class="parent-photo">
-                                    <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&amp;fit=crop&amp;w=200&amp;q=80" alt="Parent Jordi cheering" loading="lazy" />
+                                    <img
+                                      src="assets/placeholder-coach.svg"
+                                      alt="Parent Jordi cheering"
+                                      loading="lazy"
+                                      decoding="async"
+                                      onerror="this.onerror=null;this.src='assets/placeholder-coach.svg';"
+                                    />
                                 </div>
                                 <blockquote>
                                     <span class="quote-mark" aria-hidden="true">“</span>
@@ -346,7 +376,13 @@
                         <article class="testimonial-slide" data-animate>
                             <figure>
                                 <div class="parent-photo">
-                                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&amp;fit=crop&amp;w=200&amp;q=80" alt="Parent Sara celebrating a goal" loading="lazy" />
+                                    <img
+                                      src="assets/placeholder-coach.svg"
+                                      alt="Parent Sara celebrating a goal"
+                                      loading="lazy"
+                                      decoding="async"
+                                      onerror="this.onerror=null;this.src='assets/placeholder-coach.svg';"
+                                    />
                                 </div>
                                 <blockquote>
                                     <span class="quote-mark" aria-hidden="true">“</span>
@@ -459,7 +495,7 @@
         if (!refreshing) { refreshing = true; location.reload(); }
       });
 
-      const SW_VERSION = 'v12';
+      const SW_VERSION = 'v13';
       const swUrl = `sw.js?v=${SW_VERSION}`;
 
       navigator.serviceWorker.register(swUrl, { scope: '/fc-barcelona-kids/' }).then((reg) => {

@@ -38,7 +38,9 @@
       "Bash(curl:*)",
       "Bash(git grep:*)",
       "Bash(grep:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(gh run watch:*)",
+      "Bash(SITE_URL=\"https://coderrvrse.github.io/fc-barcelona-kids\")"
     ],
     "deny": [],
     "ask": []
