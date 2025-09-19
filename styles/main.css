@@ -18,6 +18,12 @@
     --transition: 0.3s ease;
     --gradient-barca: linear-gradient(135deg, #a50044 0%, #004d98 100%);
     --gradient-dynamic: linear-gradient(115deg, rgba(165, 0, 68, 0.9), rgba(0, 77, 152, 0.85));
+    --vipspot-bg: rgba(255, 255, 255, 0.06);
+    --vipspot-border: rgba(255, 255, 255, 0.14);
+    --vipspot-text: #e8ecf8;
+    --vipspot-kicker: #b9c2db;
+    --vipspot-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    --vipspot-sheen: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.6) 45%, transparent 60%);
 }
 
 @font-face {
@@ -1322,9 +1328,87 @@ textarea:focus-visible {
 
 .credit {
     margin-top: 2rem;
-    text-align: center;
     font-size: 0.95rem;
     color: rgba(255, 255, 255, 0.65);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    text-align: center;
+}
+
+.site-footer .vipspot-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.75rem 0.5rem 0.6rem;
+    border-radius: 999px;
+    background: var(--vipspot-bg);
+    border: 1px solid var(--vipspot-border);
+    color: var(--vipspot-text);
+    text-decoration: none;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: var(--vipspot-shadow);
+    position: relative;
+    isolation: isolate;
+    backdrop-filter: saturate(140%) blur(2px);
+    transition: border-color 0.25s ease, box-shadow 0.3s ease;
+}
+
+.site-footer .vipspot-badge .vipspot-kicker {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--vipspot-kicker);
+    letter-spacing: 0.08em;
+}
+
+.site-footer .vipspot-badge .vipspot-logo {
+    display: block;
+    width: auto;
+    height: 20px;
+}
+
+.site-footer .vipspot-badge::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: var(--vipspot-sheen);
+    transform: translateX(-120%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.site-footer .vipspot-badge:hover::before,
+.site-footer .vipspot-badge:focus-visible::before {
+    animation: vipspot-sheen 1200ms cubic-bezier(.2, .8, .2, 1) forwards;
+    opacity: 0.9;
+}
+
+.site-footer .vipspot-badge:hover,
+.site-footer .vipspot-badge:focus-visible {
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+.site-footer .vipspot-badge:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.65);
+    outline-offset: 3px;
+}
+
+:root[data-whitelabel="true"] .vipspot-badge {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    .site-footer .vipspot-badge {
+        margin-top: 1rem;
+    }
 }
 
 .floating-mascot {
@@ -1758,6 +1842,11 @@ textarea:focus-visible {
   100% { opacity: 1; transform: translateX(-50%) scaleX(1); }
 }
 
+@keyframes vipspot-sheen {
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(120%) skewX(-12deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-ball { animation: none; }
   .hero-title {
@@ -1769,6 +1858,10 @@ textarea:focus-visible {
     animation: none;
     opacity: 1;
     transform: translateX(-50%) scaleX(1);
+  }
+  .site-footer .vipspot-badge::before {
+    animation: none !important;
+    opacity: 0 !important;
   }
 }
 
@@ -1794,6 +1887,10 @@ textarea:focus-visible {
     background: linear-gradient(90deg, #4b6bd6 0%, #ff5a7a 50%, #4b6bd6 100%);
     opacity: .95;
   }
+  .site-footer .vipspot-badge {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
 }
 
 @media (prefers-contrast: more) {
@@ -1802,6 +1899,13 @@ textarea:focus-visible {
   }
   .hero-title::after {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, .65) inset;
+  }
+  .site-footer .vipspot-badge {
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
+  }
+  .site-footer .vipspot-badge::before {
+    opacity: 0;
   }
 }
 
