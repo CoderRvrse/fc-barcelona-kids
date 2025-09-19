@@ -35,7 +35,9 @@
       "Bash(gh api:*)",
       "Bash(gh workflow run:*)",
       "Bash(npm install:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git grep:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

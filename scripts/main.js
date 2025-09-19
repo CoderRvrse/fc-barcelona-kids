@@ -151,6 +151,7 @@
             applyParallax();
         }
 
+        /*
         // ========= HERO ROLLING BALL ANIMATION (Greenfield Rebuild) =========
 
         /**
@@ -1100,6 +1101,7 @@
     })();
     })(); // Close backToTopControl function
 
+*/
 // Reliable Hero System - No SVG matrices, no undefined vars
 /* eslint-env browser */
 /* globals gsap */
