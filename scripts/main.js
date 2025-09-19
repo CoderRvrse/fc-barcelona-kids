@@ -1,5 +1,4 @@
 /* eslint-env browser */
-/* globals gsap */
 
 (() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -153,16 +152,6 @@
             }, { passive: true });
             applyParallax();
         }
-
-        // Replay button functionality
-        (() => {
-            const replayBtn = document.querySelector('.hero-replay');
-            if (!replayBtn || reduceMotion) return;
-
-            replayBtn.addEventListener('click', () => {
-                window.__hero?.run?.();
-            });
-        })();
 
         const countObserver = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
@@ -538,100 +527,5 @@ const kill = (el) => {
 
 
 
-(() => {
-  const CONFIG = window.__heroConfig = Object.assign({
-    spinSeconds: 9,
-    offsetRight: 16,
-    offsetAbove: 10,
-    gsapRollMs: 800,
-    bounceMs: 280
-  }, window.__heroConfig || {});
-
-  const heroEl = document.getElementById('hero');
-  const titleEl = document.getElementById('heroTitle');
-  const idleBallEl = document.getElementById('heroBallIdle');
-
-  if (!heroEl || !titleEl || !idleBallEl) {
-    console.warn('[Hero] Required hero elements missing; skipping init.');
-    return;
-  }
-
-  function layout() {
-    const titleRect = titleEl.getBoundingClientRect();
-    const heroRect = heroEl.getBoundingClientRect();
-    const size = idleBallEl.offsetWidth || 160;
-
-    const x = (titleRect.right - heroRect.left) + CONFIG.offsetRight;
-    const y = (titleRect.top - heroRect.top) - CONFIG.offsetAbove - size * 0.35;
-
-    idleBallEl.style.setProperty('--ball-x', `${x}px`);
-    idleBallEl.style.setProperty('--ball-y', `${y}px`);
-    idleBallEl.style.setProperty('--spin', `${CONFIG.spinSeconds}s`);
-    idleBallEl.style.opacity = '1';
-  }
-
-  function runChoreo() {
-    if (!heroEl || !titleEl || !idleBallEl) return;
-
-    layout();
-
-    if (!window.gsap) return;
-
-    const rollDuration = (CONFIG.gsapRollMs || 800) / 1000;
-    const bounceDuration = (CONFIG.bounceMs || 280) / 1000;
-
-    gsap.killTweensOf(idleBallEl);
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-
-    tl.fromTo(idleBallEl, {
-      xPercent: 50,
-      yPercent: -40,
-      opacity: 0
-    }, {
-      xPercent: 0,
-      yPercent: 0,
-      opacity: 1,
-      duration: rollDuration
-    });
-
-    tl.to(idleBallEl, {
-      yPercent: -6,
-      duration: Math.max(bounceDuration * 0.45, 0.12),
-      ease: 'power2.out'
-    }).to(idleBallEl, {
-      yPercent: 0,
-      duration: Math.max(bounceDuration * 0.35, 0.12),
-      ease: 'power2.inOut'
-    });
-
-    return tl;
-  }
-
-  function init() {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const ready = document.fonts?.ready ?? Promise.resolve();
-
-    ready.catch(() => {}).finally(() => {
-      layout();
-      if (!prefersReducedMotion) {
-        requestAnimationFrame(runChoreo);
-      }
-    });
-  }
-
-  function handleResize() {
-    clearTimeout(window.__heroRaf);
-    window.__heroRaf = setTimeout(layout, 120);
-  }
-
-  window.__hero = {
-    init,
-    layout,
-    run: runChoreo
-  };
-
-  document.addEventListener('DOMContentLoaded', init, { once: true });
-  window.addEventListener('resize', handleResize, { passive: true });
-})();
 
 

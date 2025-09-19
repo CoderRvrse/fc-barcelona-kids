@@ -1663,54 +1663,47 @@ textarea:focus-visible {
   white-space:nowrap;border:0
 }
 
-/* =====[ HERO ROLLING BALL ANIMATION ]=========================== */
-
-/* CSS Variables for configuration */
-#hero {
+/* --- HERO (CSS-only) --- */
+.hero {
   position: relative;
-  padding: clamp(56px, 10vw, 120px) 16px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(12px, 2.4vh, 24px);
+  min-height: clamp(360px, 52vh, 640px);
+  padding-top: clamp(56px, 8vh, 112px);
+  isolation: isolate;
 }
 
-#heroTitle,
 .hero-title {
-  position: relative;
-  z-index: 5;
-  font: 900 clamp(40px, 6vw, 96px) "Inter", system-ui, sans-serif;
-  line-height: 1.08;
-  color: #fff;
   margin: 0;
-  text-align: left;
+  text-align: center;
+  font: 900 clamp(2.4rem, 6vw, 6rem) "Inter", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  color: #fff;
+  line-height: 1.05;
+  z-index: 2;
 }
 
-#heroBallIdle.ball {
-  position: absolute;
-  left: var(--ball-x, 60vw);
-  top: var(--ball-y, 18vh);
-  width: clamp(100px, 12vw, 200px);
-  height: clamp(100px, 12vw, 200px);
+.hero-ball {
+  width: clamp(96px, 12vw, 164px);
+  aspect-ratio: 1;
+  background: url("../assets/soccer-ball.svg") center/contain no-repeat;
+  animation: hero-spin 9s linear infinite;
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,.25));
+  will-change: transform;
   pointer-events: none;
-  z-index: 4;
-  transform: translateZ(0);
+  z-index: 2;
 }
 
-#heroBallIdle.ball::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url('../assets/soccer-ball.svg') center/contain no-repeat;
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
-  transform-origin: 50% 50%;
-  animation: spin var(--spin, 9s) linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes hero-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #heroBallIdle.ball::before {
-    animation: none;
-  }
+  .hero-ball { animation: none; }
 }
 
 /* =====[ HERO REPLAY BUTTON ]=========================== */
@@ -1729,4 +1722,5 @@ textarea:focus-visible {
 }
 .hero-replay:hover{ transform:scale(1.04); opacity:1 }
 @media (prefers-reduced-motion:reduce){ .hero-replay{display:none} }
+
 
