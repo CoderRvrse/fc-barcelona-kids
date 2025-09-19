@@ -1666,83 +1666,51 @@ textarea:focus-visible {
 /* =====[ HERO ROLLING BALL ANIMATION ]=========================== */
 
 /* CSS Variables for configuration */
-:root {
-  --ball-size: 120px;
-  --hero-title-font-size: clamp(48px, min(12vw, (100vw - 160px - 2rem)/11), 120px);
-  --hero-title-font: 900 var(--hero-title-font-size) "Inter", system-ui, -apple-system, sans-serif;
-}
-
-/* Hero section layout */
 #hero {
   position: relative;
-  width: 100%;
-  margin-block: 18px 8px;
+  padding: clamp(56px, 10vw, 120px) 16px 0;
 }
 
-.hero-wrap {
-  position: relative;
-  height: clamp(140px, 24vw, 260px);
-  width: 100%;
-  overflow: visible;
-}
-
-/* Main SVG title */
-#heroTitle {
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: visible;
-}
-
-/* Text styling for SVG elements */
-#heroTitle text {
-  font: var(--hero-title-font);
-  fill: #ffffff;
-  paint-order: stroke fill;
-  letter-spacing: 0.02em;
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-
-/* Reliable Hero CSS */
-.hero { position: relative; padding: clamp(56px, 10vw, 120px) 16px 0; }
-
+#heroTitle,
 .hero-title {
+  position: relative;
+  z-index: 5;
   font: 900 clamp(40px, 6vw, 96px) "Inter", system-ui, sans-serif;
   line-height: 1.08;
   color: #fff;
-  text-align: left;
   margin: 0;
+  text-align: left;
 }
 
-.hero-ball {
-  --size: clamp(100px, 11vw, 200px);
+#heroBallIdle.ball {
   position: absolute;
-  width: var(--size);
-  height: var(--size);
-  top: 0;
-  left: 0;
-  transform: translate3d(0,0,0);
-  pointer-events: none;     /* never blocks clicks */
-  filter: drop-shadow(0 16px 22px rgba(0,0,0,.35));
+  left: var(--ball-x, 60vw);
+  top: var(--ball-y, 18vh);
+  width: clamp(100px, 12vw, 200px);
+  height: clamp(100px, 12vw, 200px);
+  pointer-events: none;
   z-index: 4;
+  transform: translateZ(0);
 }
 
-.hero-ball.idle {
-  animation: ball-spin linear var(--spin, 9s) infinite;
-  opacity: 1;
+#heroBallIdle.ball::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('../assets/soccer-ball.svg') center/contain no-repeat;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
+  transform-origin: 50% 50%;
+  animation: spin var(--spin, 9s) linear infinite;
 }
 
-.hero-ball.rolling { opacity: 0; }  /* we show it only during GSAP sequence */
-
-@keyframes ball-spin {
-  from { transform: translate3d(var(--x,0), var(--y,0), 0) rotate(0deg) }
-  to   { transform: translate3d(var(--x,0), var(--y,0), 0) rotate(360deg) }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
-  .hero-ball.idle { animation: none; }
+  #heroBallIdle.ball::before {
+    animation: none;
+  }
 }
 
 /* =====[ HERO REPLAY BUTTON ]=========================== */

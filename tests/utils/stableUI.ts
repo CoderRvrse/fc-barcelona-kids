@@ -15,6 +15,8 @@ export async function stabilizeUI(page: Page) {
       #titleSolid { opacity: 1 !important; }
       #maskedGroup { display: none !important; }
       #heroBall { display: none !important; }
+      #heroBallIdle { animation: none !important; }
+      #heroBallIdle::before { animation: none !important; opacity: 1 !important; }
 
       /* Override reduced motion media query */
       @media (prefers-reduced-motion: reduce) {

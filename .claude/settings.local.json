@@ -37,7 +37,8 @@
       "Bash(npm install:*)",
       "Bash(curl:*)",
       "Bash(git grep:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

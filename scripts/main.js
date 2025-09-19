@@ -1,3 +1,6 @@
+/* eslint-env browser */
+/* globals gsap */
+
 (() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const reduceMotion = prefersReducedMotion.matches;
@@ -151,581 +154,13 @@
             applyParallax();
         }
 
-        /*
-        // ========= HERO ROLLING BALL ANIMATION (Greenfield Rebuild) =========
-
-        /**
-         * Configuration object for precise control of animation behavior
-         */
-        const HERO_CONFIG = {
-          text: 'FC BARCELONA',
-          ballSize: 120,            // px
-          capTopGap: 8,             // px gap above cap line during roll
-          endGapRight: 16,          // px between A's right edge and ball
-          baselineYOffset: 4,       // small +Y after drop to sit on baseline
-          rollDuration: 900,        // ms
-          dropDuration: 380,        // ms
-          ease: 'power3.out',       // if using GSAP; otherwise implement cubic
-          revealOvershootLeft: 100, // px
-          revealOvershootRight: 160 // px
-        };
-
-        /**
-         * Initialize hero animation system
-         */
-        function initHero(config = HERO_CONFIG) {
-          // DOM elements
-          const heroSection = document.getElementById('hero');
-          const svg = document.getElementById('heroTitle');
-          const ballRolling = document.getElementById('heroBall');
-          // ballIdle removed - using minimal hero system instead
-
-          if (!heroSection || !svg || !ballRolling) {
-            console.warn('[Hero] Required DOM elements not found');
-            return;
-          }
-
-          // Check for reduced motion preference
-          const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-          if (prefersReducedMotion) {
-            showFinalState();
-            return;
-          }
-
-          // State variables
-          let isAnimating = false;
-          let geometry = null;
-
-          // Dev toggle for testing (set window.__heroSkipAnimation = true to skip to final state)
-          if (window.__heroSkipAnimation) {
-            showFinalState();
-            return;
-          }
-
-          /**
-           * Build SVG structure with text and reveal mask
-           */
-          function buildSVGStructure() {
-            // Get container dimensions
-            const rect = svg.getBoundingClientRect();
-            const viewBoxWidth = Math.max(1200, rect.width);
-            const viewBoxHeight = Math.max(200, rect.height);
-
-            svg.setAttribute('viewBox', `0 0 ${viewBoxWidth} ${viewBoxHeight}`);
-            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-
-            // Clear existing content
-            svg.innerHTML = '';
-
-            // Add title element
-            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-            title.textContent = config.text;
-            title.id = 'heroTitleLbl';
-            svg.appendChild(title);
-
-            // Create defs for clipPath
-            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-            const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
-            clipPath.id = 'textRevealClip';
-            clipPath.setAttribute('clipPathUnits', 'userSpaceOnUse');
-
-            const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            clipRect.id = 'revealRect';
-            clipRect.setAttribute('x', '0');
-            clipRect.setAttribute('y', '0');
-            clipRect.setAttribute('width', '0');
-            clipRect.setAttribute('height', '0');
-            clipRect.setAttribute('rx', '8');
-            clipRect.setAttribute('ry', '8');
-
-            clipPath.appendChild(clipRect);
-            defs.appendChild(clipPath);
-            svg.appendChild(defs);
-
-            // Masked text (revealed progressively)
-            const maskedText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            maskedText.id = 'titleMasked';
-            maskedText.textContent = config.text;
-            maskedText.setAttribute('x', `${viewBoxWidth / 2}`);
-            maskedText.setAttribute('y', `${viewBoxHeight / 2}`);
-            maskedText.setAttribute('clip-path', 'url(#textRevealClip)');
-            svg.appendChild(maskedText);
-
-            // Solid text (final state)
-            const solidText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            solidText.id = 'titleSolid';
-            solidText.textContent = config.text;
-            solidText.setAttribute('x', `${viewBoxWidth / 2}`);
-            solidText.setAttribute('y', `${viewBoxHeight / 2}`);
-            solidText.style.opacity = '0';
-            solidText.style.transition = 'opacity 0.35s ease';
-            svg.appendChild(solidText);
-
-            return { maskedText, solidText, clipRect };
-          }
-
-          /**
-           * Calculate precise geometry for animation paths
-           */
-          async function calculateGeometry() {
-            // Wait for fonts to load
-            try {
-              await document.fonts.ready;
-            } catch (e) {
-              console.log('[Hero] Font loading failed, continuing anyway');
-            }
-
-            const { maskedText, solidText, clipRect } = buildSVGStructure();
-
-            // Force layout and get text metrics
-            maskedText.setAttribute('visibility', 'visible');
-            const textBBox = maskedText.getBBox();
-
-            // Calculate key coordinates
-            const capLineY = textBBox.y; // Top of text
-            const baselineY = textBBox.y + textBBox.height; // Bottom of text
-
-            // Get final 'A' glyph position
-            const lastCharIndex = config.text.trim().length - 1;
-            let lastCharBox;
-
-            try {
-              lastCharBox = maskedText.getExtentOfChar(lastCharIndex);
-            } catch {
-              // Fallback: estimate based on average character width
-              const avgCharWidth = textBBox.width / config.text.trim().length;
-              lastCharBox = {
-                x: textBBox.x + textBBox.width - avgCharWidth,
-                y: textBBox.y,
-                width: avgCharWidth,
-                height: textBBox.height
-              };
-            }
-
-            // Get ball size from CSS variable
-            const ballSize = parseFloat(
-              getComputedStyle(document.documentElement)
-                .getPropertyValue('--ball-size')
-                .trim()
-            ) || config.ballSize;
-
-            const ballRadius = ballSize / 2;
-
-            // Calculate animation coordinates (in SVG space)
-            const startX = textBBox.x - config.revealOvershootLeft;
-            const startY = capLineY - ballRadius - config.capTopGap;
-
-            const rollEndX = lastCharBox.x + lastCharBox.width + config.endGapRight;
-            const rollEndY = startY; // Same Y as start (rolling along cap line)
-
-            const finalX = rollEndX;
-            const finalY = baselineY - ballRadius + config.baselineYOffset;
-
-            // Setup reveal clipPath
-            const clipX = Math.round(textBBox.x - config.revealOvershootLeft);
-            const clipY = Math.round(textBBox.y - 20);
-            const clipHeight = Math.round(textBBox.height + 40);
-            const clipMaxWidth = Math.round(textBBox.width + config.revealOvershootLeft + config.revealOvershootRight);
-
-            clipRect.setAttribute('x', String(clipX));
-            clipRect.setAttribute('y', String(clipY));
-            clipRect.setAttribute('height', String(clipHeight));
-            clipRect.setAttribute('width', '0');
-
-            return {
-              textBBox,
-              lastCharBox,
-              ballSize,
-              ballRadius,
-              startX,
-              startY,
-              rollEndX,
-              rollEndY,
-              finalX,
-              finalY,
-              clipX,
-              clipY,
-              clipHeight,
-              clipMaxWidth,
-              maskedText,
-              solidText,
-              clipRect
-            };
-          }
-
-          /**
-           * Convert SVG coordinates to page coordinates
-           */
-          function svgToPageCoords(svgX, svgY) {
-            // Use getBoundingClientRect instead of getScreenCTM for reliability
-            const rect = svg.getBoundingClientRect();
-            return {
-              x: rect.left + svgX + window.scrollX,
-              y: rect.top + svgY + window.scrollY
-            };
-          }
-
-          /**
-           * Position a ball element at SVG coordinates
-           */
-          function positionBall(ballElement, svgX, svgY, rotation = 0) {
-            const pageCoords = svgToPageCoords(svgX, svgY);
-            const ballRadius = geometry.ballRadius;
-
-            ballElement.style.transform =
-              `translate(${pageCoords.x - ballRadius}px, ${pageCoords.y - ballRadius}px) rotate(${rotation}deg)`;
-          }
-
-          /**
-           * Update reveal progress (0 to 1)
-           */
-          function setRevealProgress(progress) {
-            if (!geometry) return;
-
-            const clampedProgress = Math.max(0, Math.min(1, progress));
-            const width = Math.round(geometry.clipMaxWidth * clampedProgress);
-
-            geometry.clipRect.setAttribute('width', String(width));
-
-            // Snap to full width at 98% to prevent clipping
-            if (clampedProgress >= 0.98) {
-              geometry.clipRect.setAttribute('width', String(geometry.clipMaxWidth));
-            }
-          }
-
-          /**
-           * Complete animation and show final state
-           */
-          function finishAnimation() {
-            if (!geometry) return;
-
-            // Show solid text
-            geometry.solidText.style.opacity = '1';
-
-            // Hide rolling ball, show idle ball
-            ballRolling.style.opacity = '0';
-            ballIdle.style.opacity = '1';
-
-            // Position idle ball at final coordinates
-            positionBall(ballIdle, geometry.finalX, geometry.finalY);
-
-            // Clean up masked text after transition
-            setTimeout(() => {
-              if (geometry.maskedText.parentNode) {
-                geometry.maskedText.style.display = 'none';
-              }
-            }, 400);
-
-            isAnimating = false;
-          }
-
-          /**
-           * Show final state immediately (for reduced motion or dev toggle)
-           */
-          function showFinalState() {
-            calculateGeometry().then(geom => {
-              geometry = geom;
-
-              // Show solid text
-              geometry.solidText.style.opacity = '1';
-              geometry.maskedText.style.display = 'none';
-
-              // Hide rolling ball, show idle ball at final position
-              ballRolling.style.opacity = '0';
-              ballIdle.style.opacity = '1';
-              positionBall(ballIdle, geometry.finalX, geometry.finalY);
-
-              // Set full reveal
-              setRevealProgress(1);
-            });
-          }
-
-          /**
-           * Run the rolling ball animation
-           */
-          async function runAnimation() {
-            if (isAnimating) return;
-            isAnimating = true;
-
-            geometry = await calculateGeometry();
-
-            // Position rolling ball at start
-            positionBall(ballRolling, geometry.startX, geometry.startY);
-            ballRolling.style.opacity = '1';
-
-            // Position idle ball at final location (hidden)
-            positionBall(ballIdle, geometry.finalX, geometry.finalY);
-            ballIdle.style.opacity = '0';
-
-            // Animate with GSAP if available, otherwise use RAF
-            if (window.gsap) {
-              animateWithGSAP();
-            } else {
-              animateWithRAF();
-            }
-          }
-
-          /**
-           * GSAP animation implementation
-           */
-          function animateWithGSAP() {
-            const tl = window.gsap.timeline({
-              defaults: { ease: config.ease }
-            });
-
-            // Rolling phase
-            tl.to({ progress: 0 }, {
-              duration: config.rollDuration / 1000,
-              progress: 1,
-              onUpdate: function() {
-                const t = this.targets()[0].progress;
-                const x = geometry.startX + (geometry.rollEndX - geometry.startX) * t;
-                const rotation = t * 360 * 2; // 2 full rotations during roll
-
-                positionBall(ballRolling, x, geometry.rollEndY, rotation);
-                setRevealProgress(t);
-              }
-            });
-
-            // Dropping phase
-            tl.to({ y: geometry.rollEndY }, {
-              duration: config.dropDuration / 1000,
-              y: geometry.finalY,
-              ease: 'bounce.out',
-              onUpdate: function() {
-                positionBall(ballRolling, geometry.rollEndX, this.targets()[0].y, 720);
-                setRevealProgress(1);
-              },
-              onComplete: finishAnimation
-            });
-          }
-
-          /**
-           * RequestAnimationFrame fallback animation
-           */
-          function animateWithRAF() {
-            const startTime = performance.now();
-            const rollEndTime = startTime + config.rollDuration;
-            const dropEndTime = rollEndTime + config.dropDuration;
-
-            function step(currentTime) {
-              if (currentTime <= rollEndTime) {
-                // Rolling phase
-                const progress = (currentTime - startTime) / config.rollDuration;
-                const easedProgress = easeOutCubic(progress);
-                const x = geometry.startX + (geometry.rollEndX - geometry.startX) * easedProgress;
-                const rotation = easedProgress * 360 * 2;
-
-                positionBall(ballRolling, x, geometry.rollEndY, rotation);
-                setRevealProgress(easedProgress);
-
-                requestAnimationFrame(step);
-              } else if (currentTime <= dropEndTime) {
-                // Dropping phase
-                const dropProgress = (currentTime - rollEndTime) / config.dropDuration;
-                const easedDrop = easeOutBounce(dropProgress);
-                const y = geometry.rollEndY + (geometry.finalY - geometry.rollEndY) * easedDrop;
-
-                positionBall(ballRolling, geometry.rollEndX, y, 720);
-                setRevealProgress(1);
-
-                requestAnimationFrame(step);
-              } else {
-                // Animation complete
-                positionBall(ballRolling, geometry.finalX, geometry.finalY, 720);
-                setRevealProgress(1);
-                finishAnimation();
-              }
-            }
-
-            requestAnimationFrame(step);
-          }
-
-          /**
-           * Cubic ease-out function
-           */
-          function easeOutCubic(t) {
-            return 1 - Math.pow(1 - t, 3);
-          }
-
-          /**
-           * Bounce ease-out function
-           */
-          function easeOutBounce(t) {
-            const n1 = 7.5625;
-            const d1 = 2.75;
-
-            if (t < 1 / d1) {
-              return n1 * t * t;
-            } else if (t < 2 / d1) {
-              return n1 * (t -= 1.5 / d1) * t + 0.75;
-            } else if (t < 2.5 / d1) {
-              return n1 * (t -= 2.25 / d1) * t + 0.9375;
-            } else {
-              return n1 * (t -= 2.625 / d1) * t + 0.984375;
-            }
-          }
-
-          /**
-           * Handle window resize
-           */
-          function handleResize() {
-            if (!geometry) return;
-
-            // Recalculate geometry and reposition idle ball if animation is complete
-            if (!isAnimating) {
-              calculateGeometry().then(newGeometry => {
-                geometry = newGeometry;
-                positionBall(ballIdle, geometry.finalX, geometry.finalY);
-                setRevealProgress(1);
-              });
-            }
-          }
-
-          // Setup resize handler with debouncing
-          let resizeTimeout;
-          window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(handleResize, 150);
-          });
-
-          // Setup intersection observer for initial trigger
-          const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting && !isAnimating) {
-                runAnimation();
-                observer.unobserve(entry.target);
-              }
-            });
-          }, { threshold: 0.1 });
-
-          observer.observe(heroSection);
-
-          // Expose API for testing and manual control
-          window.__heroAnimation = {
-            run: runAnimation,
-            showFinal: showFinalState,
-            config: config
-          };
-        }
-
-        // Initialize hero animation when DOM is ready
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', () => initHero(HERO_CONFIG));
-        } else {
-          initHero(HERO_CONFIG);
-        }
-
-        // ========= SAFE AUTOPLAY PATCH =========
-        // Ensures animation runs reliably even if gates fail
-        (() => {
-          // ---- knobs ----
-          const AUTOPLAY = true;          // force a run on first view
-          const IO_THRESHOLD = 0.15;      // 15% of hero visible
-          const IO_ROOT_MARGIN = '0px 0px -20% 0px'; // trigger slightly before fully in view
-          const AUTORUN_TIMEOUT_MS = 1800; // fallback if IO never fires
-          // ----------------
-
-          const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-
-          // guard: API must exist
-          if (!window.__heroAnimation) return;
-
-          // if we intentionally skip, bail early
-          if (window.__heroSkipAnimation === true) return;
-
-          // ensure idle/rolling balls have the intended initial vis
-          const rollBall = document.getElementById('heroBall');
-          // idleBall removed - using minimal hero system instead
-          if (rollBall) rollBall.style.opacity = '0'; // will be shown on run()
-          // idleBall handling removed
-
-          const runOnce = () => {
-            if (prefersReduced) {
-              window.__heroAnimation.showFinal?.();
-              return;
-            }
-            window.__heroAnimation.run?.();
-            // clean up any observers/timeouts when we do run
-            obs?.disconnect?.();
-            if (autorunTimer) clearTimeout(autorunTimer);
-          };
-
-          let autorunTimer = null;
-          let obs = null;
-
-          // fall back if visibility was hidden on load (e.g., background tab)
-          const whenVisible = (fn) => {
-            if (document.visibilityState === 'visible') fn();
-            else {
-              const onVis = () => {
-                if (document.visibilityState === 'visible') {
-                  document.removeEventListener('visibilitychange', onVis);
-                  fn();
-                }
-              };
-              document.addEventListener('visibilitychange', onVis);
-            }
-          };
-
-          // Fonts gate — only if your hero waits on fonts. If not, you can remove.
-          const onFontsReady = async () => {
-            try {
-              await document.fonts?.ready;
-            } catch (e) {
-              // Font loading failed, continue anyway
-              console.warn('Font loading failed:', e);
-            }
-          };
-
-          const bootstrap = async () => {
-            await onFontsReady();
-
-            // IntersectionObserver gating (preferred)
-            const hero = document.getElementById('hero') || document.getElementById('heroTitle') || document.body;
-            if ('IntersectionObserver' in window) {
-              obs = new IntersectionObserver((entries) => {
-                const e = entries[0];
-                if (e?.isIntersecting && e.intersectionRatio >= IO_THRESHOLD) runOnce();
-              }, { root: null, threshold: IO_THRESHOLD, rootMargin: IO_ROOT_MARGIN });
-              obs.observe(hero);
-            }
-
-            // Fallback autorun: if IO never fires (layout/position quirks), run anyway
-            if (AUTOPLAY) {
-              autorunTimer = setTimeout(() => whenVisible(runOnce), AUTORUN_TIMEOUT_MS);
-            }
-          };
-
-          // Kick it off
-          if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            bootstrap();
-          } else {
-            window.addEventListener('DOMContentLoaded', bootstrap, { once: true });
-          }
-
-          // last-chance safety: if still nothing by full load, run
-          window.addEventListener('load', () => {
-            setTimeout(() => {
-              // if we never ran (e.g., both gates failed), try one more time
-              if (rollBall && +getComputedStyle(rollBall).opacity === 0) {
-                // idleBall check removed - using new hero system
-                whenVisible(runOnce);
-              }
-            }, 500);
-          });
-        })();
-
         // Replay button functionality
         (() => {
             const replayBtn = document.querySelector('.hero-replay');
             if (!replayBtn || reduceMotion) return;
 
             replayBtn.addEventListener('click', () => {
-                if (typeof window.runHeroReveal === 'function') {
-                    window.runHeroReveal(true);
-                }
+                window.__hero?.run?.();
             });
         })();
 
@@ -1082,12 +517,12 @@
         });
 
         // JS cleanup of stray orbs in bottom-right ~160x160 area
-        const KEEP = new Set([btn, ...btn.querySelectorAll("*")]);
-        const kill = (el) => {
-            if (KEEP.has(el)) return false;
-            const cs = getComputedStyle(el);
-            const fixed = cs.position === "fixed";
-            if (!fixed) return false;
+const KEEP = new Set([btn, ...btn.querySelectorAll("*")]);
+const kill = (el) => {
+    if (KEEP.has(el)) return false;
+    const cs = getComputedStyle(el);
+    const fixed = cs.position === "fixed";
+    if (!fixed) return false;
             const r = el.getBoundingClientRect();
             const nearBR = (window.innerWidth - r.right <= 160) && (window.innerHeight - r.bottom <= 160);
             const smallish = (r.width * r.height) <= 40000; // ~200x200
@@ -1098,130 +533,105 @@
         requestAnimationFrame(() => requestAnimationFrame(() => {
             [...document.body.querySelectorAll("*")].forEach(kill);
         }));
-    })();
-    })(); // Close backToTopControl function
+})();
+})(); // Close backToTopControl function
 
-*/
-// Reliable Hero System - No SVG matrices, no undefined vars
-/* eslint-env browser */
-/* globals gsap */
+
 
 (() => {
-  // ----- Config you can tweak from DevTools via window.__heroConfig
   const CONFIG = window.__heroConfig = Object.assign({
-    spinSeconds: 9,       // idle spin speed
-    offsetRight: 16,      // px gap to the right of the title
-    offsetAbove: 10,      // px above the cap line
-    gsapRollMs: 800,      // if GSAP present: roll duration
-    bounceMs: 280         // small settle bounce
+    spinSeconds: 9,
+    offsetRight: 16,
+    offsetAbove: 10,
+    gsapRollMs: 800,
+    bounceMs: 280
   }, window.__heroConfig || {});
 
-  // ----- DOM
-  const hero      = document.getElementById('hero');
-  const title     = document.getElementById('heroTitle');
-  const idleBall  = document.getElementById('heroBallIdle');   // <— always defined
-  const rollBall  = document.getElementById('heroBall');       // optional (GSAP)
+  const heroEl = document.getElementById('hero');
+  const titleEl = document.getElementById('heroTitle');
+  const idleBallEl = document.getElementById('heroBallIdle');
 
-  if (!hero || !title || !idleBall) {
-    console.warn('[Hero] Required elements missing; showing nothing.');
+  if (!heroEl || !titleEl || !idleBallEl) {
+    console.warn('[Hero] Required hero elements missing; skipping init.');
     return;
   }
 
-  // helper to get page-space box
-  function pageBox(el) {
-    const r = el.getBoundingClientRect();
-    return {
-      x: r.left + window.scrollX,
-      y: r.top  + window.scrollY,
-      w: r.width,
-      h: r.height
-    };
+  function layout() {
+    const titleRect = titleEl.getBoundingClientRect();
+    const heroRect = heroEl.getBoundingClientRect();
+    const size = idleBallEl.offsetWidth || 160;
+
+    const x = (titleRect.right - heroRect.left) + CONFIG.offsetRight;
+    const y = (titleRect.top - heroRect.top) - CONFIG.offsetAbove - size * 0.35;
+
+    idleBallEl.style.setProperty('--ball-x', `${x}px`);
+    idleBallEl.style.setProperty('--ball-y', `${y}px`);
+    idleBallEl.style.setProperty('--spin', `${CONFIG.spinSeconds}s`);
+    idleBallEl.style.opacity = '1';
   }
 
-  // place the idle ball relative to the title using pixels (no matrices)
-  function layoutIdle() {
-    const tb = pageBox(title);
-    const size = idleBall.offsetWidth || 160;
+  function runChoreo() {
+    if (!heroEl || !titleEl || !idleBallEl) return;
 
-    const x = tb.x + tb.w + CONFIG.offsetRight;   // to the right of title
-    const y = tb.y - CONFIG.offsetAbove - size * 0.35; // slightly above cap line
+    layout();
 
-    // store as CSS vars so spin keyframes use the same translate
-    idleBall.style.setProperty('--x', `${x}px`);
-    idleBall.style.setProperty('--y', `${y}px`);
-    idleBall.style.setProperty('--spin', `${CONFIG.spinSeconds}s`);
-    idleBall.style.opacity = '1';
-  }
+    if (!window.gsap) return;
 
-  // optional: little entrance if GSAP is available
-  function runGsapSequence() {
-    const hasGSAP = !!window.gsap && !!rollBall;
-    if (!hasGSAP) return;
+    const rollDuration = (CONFIG.gsapRollMs || 800) / 1000;
+    const bounceDuration = (CONFIG.bounceMs || 280) / 1000;
 
-    const tb = pageBox(title);
-    const size = idleBall.offsetWidth || 160;
-    const endX = tb.x + tb.w + CONFIG.offsetRight;
-    const endY = tb.y - CONFIG.offsetAbove - size * 0.35;
-
-    // start roll ball offscreen right
-    rollBall.style.opacity = '1';
-    idleBall.style.opacity = '0';
-
+    gsap.killTweensOf(idleBallEl);
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-    tl.fromTo(rollBall, {
-      x: window.innerWidth + size,
-      y: endY - size * 0.25,
-      rotation: 0
+    tl.fromTo(idleBallEl, {
+      xPercent: 50,
+      yPercent: -40,
+      opacity: 0
     }, {
-      duration: CONFIG.gsapRollMs / 1000,
-      x: endX, y: endY, rotation: 420
+      xPercent: 0,
+      yPercent: 0,
+      opacity: 1,
+      duration: rollDuration
     });
 
-    tl.to(rollBall, {
-      duration: CONFIG.bounceMs / 1000,
-      y: endY + size * 0.09,
-      yoyo: true, repeat: 1, ease: 'power2.out'
-    }, '-=0.1');
-
-    // hand off to idle spinner at same location
-    tl.add(() => {
-      layoutIdle();
-      rollBall.style.opacity = '0';
-      idleBall.style.opacity = '1';
+    tl.to(idleBallEl, {
+      yPercent: -6,
+      duration: Math.max(bounceDuration * 0.45, 0.12),
+      ease: 'power2.out'
+    }).to(idleBallEl, {
+      yPercent: 0,
+      duration: Math.max(bounceDuration * 0.35, 0.12),
+      ease: 'power2.inOut'
     });
+
+    return tl;
   }
 
-  // init + resize handling
   function init() {
-    try { /* wait for fonts so title size is stable */
-      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
-        .catch(() => {
-          console.warn('[Hero] Font loading failed, proceeding anyway');
-        })
-        .finally(() => {
-          layoutIdle();
-          runGsapSequence(); // harmless if GSAP missing
-        });
-    } catch (e) {
-      console.warn('[Hero] init error:', e);
-      layoutIdle(); // fallback
-    }
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ready = document.fonts?.ready ?? Promise.resolve();
+
+    ready.catch(() => {}).finally(() => {
+      layout();
+      if (!prefersReducedMotion) {
+        requestAnimationFrame(runChoreo);
+      }
+    });
   }
 
-  let rAF;
-  function onResize() {
-    cancelAnimationFrame(rAF);
-    rAF = requestAnimationFrame(() => layoutIdle());
+  function handleResize() {
+    clearTimeout(window.__heroRaf);
+    window.__heroRaf = setTimeout(layout, 120);
   }
 
-  window.addEventListener('resize', onResize, { passive: true });
-  document.addEventListener('DOMContentLoaded', init, { once: true });
-
-  // expose small control panel
   window.__hero = {
-    layout: layoutIdle,
-    run: () => { layoutIdle(); runGsapSequence(); },
-    init
+    init,
+    layout,
+    run: runChoreo
   };
+
+  document.addEventListener('DOMContentLoaded', init, { once: true });
+  window.addEventListener('resize', handleResize, { passive: true });
 })();
+
+
