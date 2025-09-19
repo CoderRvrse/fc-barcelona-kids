@@ -114,21 +114,7 @@
         <section id="hero" class="hero">
             <h1 id="heroTitle" class="hero-title">FC BARCELONA</h1>
 
-            <!-- idle spinning ball (visible by default) -->
-            <img id="heroBallIdle"
-                 class="hero-ball idle"
-                 src="assets/soccer-ball.svg"
-                 alt=""
-                 width="220" height="220"
-                 decoding="async" fetchpriority="high" />
-
-            <!-- optional rolling ball used ONLY when GSAP is available -->
-            <img id="heroBall"
-                 class="hero-ball rolling"
-                 src="assets/soccer-ball.svg"
-                 alt=""
-                 width="220" height="220"
-                 decoding="async" />
+            <div id="heroBallIdle" class="ball" aria-hidden="true"></div>
         </section>
 
         <section id="about" class="about" data-section>
