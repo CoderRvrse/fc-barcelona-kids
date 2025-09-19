@@ -120,14 +120,19 @@ jobs:
           html="$(curl -fsSL "$ROOT/")"
           # 1) hero section exists with new structure
           echo "$html" | grep -q 'id="hero"'
+          echo "$html" | grep -q 'class="hero-ball"'
+          echo "$html" | grep -q 'id="heroTitle"'
           # 2) text content is correct - FC BARCELONA
           echo "$html" | grep -q 'FC BARCELONA'
-          # 3) guard against missing 'F' regression (would show "C BARCELONA")
           ! echo "$html" | grep -q '>C BARCELONA<' || {
             echo "❌ Missing 'F' detected - found 'C BARCELONA' instead of 'FC BARCELONA'"
             exit 1
           }
-          echo "✅ Solid title FC BARCELONA present and correct"
+          # 3) versioned CSS reference is correct
+          echo "$html" | grep -q 'styles/main.css?v=14'
+          # 4) accessibility prefix present
+          echo "$html" | grep -q '<span class="sr-only">Welcome to </span>'
+          echo "✅ Hero structure, version pin, and accessibility prefix verified"
 
       - name: Curl checks continued
         shell: bash
