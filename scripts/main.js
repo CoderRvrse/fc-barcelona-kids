@@ -1101,266 +1101,57 @@
     })();
     })(); // Close backToTopControl function
 
-// Clean ball spinner - disable old animation and show centered spinner
+// CSS-First Hero Animation System
+/* eslint-env browser */
 (() => {
-  // Hard-disable any legacy rolling/idle logic if it still exists:
-  try {
-    window.__heroAnimation = {
-      run() {},        // no-op
-      showFinal() {}   // no-op
-    };
-  } catch (e) {
-    // Silently ignore any errors when overriding hero animation
+  'use strict';
+
+  const $ = (s, r=document) => r.querySelector(s);
+  const hero   = $('#hero');
+  const title  = $('#heroTitle');
+  const text   = $('.title-reveal', title);
+  const ball   = $('#heroBall');
+
+  if (!hero || !title || !text || !ball) {
+    console.warn('[Hero] minimal DOM missing; safe exit');
+    return;
   }
 
-  // Ensure the centered spinner is visible (in case CSS was toggled by old code)
-  const spinner = document.getElementById('ballSpinner');
-  if (spinner) spinner.style.opacity = '1';
-})();
+  // 1) Fonts: switch to animation state only after fonts are ready (or timeout)
+  const FONT_TIMEOUT = 1500;
+  const enableAnim = () => hero.dataset.anim = 'on';
 
-// Bulletproof Hero Animation System
-(() => {
-  const HERO_SEL = {
-    hero:       '#hero',
-    title:      '#heroTitle',
-    outline:    '#heroTitleOutline',
-    solid:      '#heroTitleSolid',
-    underline:  '#heroUnderline',
-    ball:       '#heroBall',
-  };
-
-  function q(sel) { return document.querySelector(sel); }
-
-  function ensureHeroDom(TEXT = 'FC BARCELONA') {
-    let hero = q(HERO_SEL.hero);
-    if (!hero) {
-      hero = document.createElement('section');
-      hero.id = 'hero';
-      hero.className = 'hero';
-      (document.querySelector('main') || document.body).prepend(hero);
-    }
-
-    const need = (id, tag, cls = '') => {
-      let el = q(`#${id}`);
-      if (!el) {
-        el = document.createElement(tag);
-        el.id = id;
-        if (cls) el.className = cls;
-        hero.appendChild(el);
-      }
-      return el;
-    };
-
-    const title = need('heroTitle', 'h1', 'hero-title');
-    if (!q('#heroTitleOutline')) {
-      const s = document.createElement('span');
-      s.id = 'heroTitleOutline';
-      s.textContent = TEXT;
-      s.setAttribute('aria-hidden', 'true');
-      title.appendChild(s);
-    }
-    if (!q('#heroTitleSolid')) {
-      const s = document.createElement('span');
-      s.id = 'heroTitleSolid';
-      s.textContent = TEXT;
-      s.setAttribute('aria-hidden', 'true');
-      title.appendChild(s);
-    }
-    need('heroUnderline', 'div', 'hero-underline');
-    need('heroBall', 'div', 'hero-ball');
-  }
-
-  // Director's Panel Config
-  window.__heroConfig = window.__heroConfig || {
-    rollDuration: 0.8,        // s – sweep-in time
-    revealLag: 0.12,          // s – when text starts after ball moves
-    bounce: { drop: 0.38, rebound1: 0.18, rebound2: 0.12 },
-    idleSpin: 9,              // s per rotation
-    capTopGapPx: 12,          // px gap above letter caps during roll
-    endGapRightPx: 16,        // px space between ball & last "A"
-    underlineSpeed: 0.6,      // s – Barça underline draw
-    ease: 'power3.out',       // GSAP ease curve
-    letterPop: true           // enable final "A" pop effect
-  };
-
-  // Check for reduced motion preference
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function showFinalState() {
-    const solid = q(HERO_SEL.solid);
-    const ball = q(HERO_SEL.ball);
-
-    // Show final state instantly for reduced motion users
-    if (solid) solid.style.clipPath = 'inset(0 0 0 0)';
-    if (ball) ball.style.opacity = '0'; // Hide ball entirely for reduced motion
-  }
-
-  function runKickRevealAnimation() {
-    if (!window.gsap) {
-      console.warn('GSAP not available, showing final state');
-      showFinalState();
-      return;
-    }
-
-    const config = window.__heroConfig;
-    const hero = q(HERO_SEL.hero);
-    const title = q(HERO_SEL.title);
-    const solid = q(HERO_SEL.solid);
-    const ball = q(HERO_SEL.ball);
-
-    if (!hero || !title || !solid || !ball) {
-      console.warn('[Hero] Missing elements after scaffold, showing fallback');
-      if (ball) {
-        ball.style.opacity = '1';
-        ball.style.animationPlayState = 'running';
-      }
-      return;
-    }
-
-    // Get positioning measurements
-    const heroBox = hero.getBoundingClientRect();
-    const titleBox = title.getBoundingClientRect();
-
-    const ballSize = 80; // Fixed size for animation
-    const startX = heroBox.width + ballSize; // Start off-screen right
-    const startY = titleBox.top - heroBox.top - config.capTopGapPx; // Above title
-    const endX = titleBox.left + titleBox.width - heroBox.left - config.endGapRightPx; // End position
-    const endY = titleBox.top - heroBox.top - config.capTopGapPx; // Above title
-
-    // Set initial ball position
-    ball.style.left = `${startX}px`;
-    ball.style.top = `${startY}px`;
-    ball.style.opacity = '1';
-
-    // Create master timeline
-    const tl = window.gsap.timeline({
-      onComplete: () => {
-        // Start gentle idle spin after animation
-        ball.style.animationPlayState = 'running';
-      }
-    });
-
-    // 1. Ball arcs in from right
-    tl.to(ball, {
-      x: endX - startX,
-      y: endY - startY,
-      duration: config.rollDuration,
-      ease: config.ease
-    })
-
-    // 2. Text reveal follows ball
-    .to(solid, {
-      clipPath: 'inset(0 0 0 0)',
-      duration: config.rollDuration - config.revealLag,
-      ease: config.ease
-    }, config.revealLag)
-
-    // 3. Ball settles with micro-bounce
-    .to(ball, {
-      y: `+=${ballSize * 0.1}`, // Small drop
-      duration: config.bounce.drop,
-      ease: 'power2.in'
-    })
-    .to(ball, {
-      y: `-=${ballSize * 0.05}`, // Tiny bounce up
-      duration: config.bounce.rebound1,
-      ease: 'power2.out'
-    })
-    .to(ball, {
-      y: `+=${ballSize * 0.05}`, // Settle
-      duration: config.bounce.rebound2,
-      ease: 'power2.in'
-    });
-
-    // 4. Final "A" letter pop (if enabled)
-    if (config.letterPop && solid.textContent) {
-      const finalATime = config.rollDuration + config.bounce.drop + config.bounce.rebound1;
-      tl.to(solid, {
-        scale: 1.02,
-        duration: 0.07,
-        ease: 'power2.out',
-        transformOrigin: 'center bottom'
-      }, finalATime)
-      .to(solid, {
-        scale: 1,
-        duration: 0.07,
-        ease: 'power2.in'
-      });
-    }
-
-    return tl;
-  }
-
-  async function initHero() {
-    ensureHeroDom('FC BARCELONA'); // Guarantees nodes exist
-
-    const hero      = q(HERO_SEL.hero);
-    const title     = q(HERO_SEL.title);
-    const outline   = q(HERO_SEL.outline);
-    const solid     = q(HERO_SEL.solid);
-    const underline = q(HERO_SEL.underline);
-    const ball      = q(HERO_SEL.ball);
-
-    // If any are still missing, show a visible fallback spinner instead of aborting
-    if (!hero || !title || !solid || !ball) {
-      console.warn('[Hero] Missing nodes after scaffold; showing fallback spinner');
-      if (ball) {
-        ball.style.opacity = '1';
-        ball.style.animationPlayState = 'running';
-      }
-      return;
-    }
-
+  const prepFonts = async () => {
+    let done = false;
+    const t = setTimeout(() => { if (!done) enableAnim(); }, FONT_TIMEOUT);
     try {
       await document.fonts?.ready;
-    } catch (e) {
-      console.warn('Font loading failed:', e);
+      done = true; clearTimeout(t);
+      enableAnim();
+    } catch {
+      done = true; clearTimeout(t);
+      enableAnim();
     }
+  };
 
-    // Wait a frame for layout
-    requestAnimationFrame(() => {
-      if (prefersReducedMotion) {
-        showFinalState();
-      } else {
-        runKickRevealAnimation();
-      }
-    });
-  }
+  // 2) Safe spacing below title to avoid ball/CTA overlap
+  const computeGap = () => {
+    const r = title.getBoundingClientRect();
+    hero.style.setProperty('--gap-after-title', Math.round(r.height * 0.30) + 'px');
+  };
 
-  // Safe startup order
-  (async function startHero() {
-    try { await document.fonts?.ready; } catch {}
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      initHero();
-    } else {
-      addEventListener('DOMContentLoaded', initHero, { once: true });
-    }
-  })();
+  let raf = 0;
+  const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(computeGap); };
 
-  // Debug hooks for live tuning
+  // Kickoff
+  computeGap();
+  prepFonts();
+  addEventListener('resize', onResize, { passive:true });
+
+  // Dev hooks
   window.__hero = {
-    layout() {
-      // Recompute anchors after CSS tweaks
-      const hero = q(HERO_SEL.hero);
-      const title = q(HERO_SEL.title);
-      if (hero && title) {
-        const heroBox = hero.getBoundingClientRect();
-        const titleBox = title.getBoundingClientRect();
-        console.log('Hero layout:', { heroBox, titleBox });
-      }
-    },
-    run() {
-      // Replay the full sequence
-      if (prefersReducedMotion) {
-        showFinalState();
-      } else {
-        runKickRevealAnimation();
-      }
-    },
-    init() {
-      // Full reset: fonts → layout → run
-      initHero();
-    },
-    config: () => window.__heroConfig
+    rerun: () => { hero.dataset.anim=''; requestAnimationFrame(() => (hero.dataset.anim='on')); },
+    layout: computeGap,
+    spin: (on=true) => on ? (hero.dataset.anim='on') : (hero.dataset.anim=''),
   };
 })();

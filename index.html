@@ -41,9 +41,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet" />
     <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
-    <link rel="stylesheet" href="styles/main.css?v=12" />
+    <!-- Version pin to keep HTML/CSS/JS in sync -->
+    <script>window.__VER__='13';</script>
+
+    <link rel="stylesheet" href="styles/main.css?v=13" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script defer src="scripts/main.js?v=12"></script>
+    <script src="scripts/main.js?v=13" defer></script>
+
+    <noscript>
+        <style>
+            /* Show final title and static ball with JS disabled */
+            .title-reveal{clip-path:none; opacity:1}
+            .hero-ball{animation:none}
+        </style>
+    </noscript>
 </head>
 <body>
     <div id="top-sentinel"></div>
@@ -106,24 +117,21 @@
             <div class="container">
                 <p class="hero-kicker" data-animate>Barcelona methodology for future stars</p>
 
-                <!-- Hero title with standardized structure -->
-                <h1 id="heroTitle" class="hero-title" data-animate>
-                    <span id="heroTitleOutline" aria-hidden="true">FC BARCELONA</span>
-                    <span id="heroTitleSolid" aria-hidden="true">FC BARCELONA</span>
+                <!-- Clean hero title with reveal animation -->
+                <h1 id="heroTitle" class="hero-title" aria-live="polite">
+                    <span class="title-reveal" aria-hidden="true">FC BARCELONA</span>
                 </h1>
 
-                <div id="heroUnderline" class="hero-underline" aria-hidden="true"></div>
-
-                <!-- The spinning ball -->
-                <div id="heroBall" class="hero-ball" role="img" aria-label="Soccer ball"></div>
-
-                <!-- Graceful no-JS fallback: always show text, hide ball -->
-                <noscript>
-                  <style>
-                    #titleSolid{opacity:1} #titleMasked{display:none} #heroBall{display:none}
-                  </style>
-                  <div class="hero-title-fallback">FC BARCELONA</div>
-                </noscript>
+                <!-- Decorative spinning ball (never blocks clicks) -->
+                <img
+                    id="heroBall"
+                    class="hero-ball"
+                    src="assets/soccer-ball.svg"
+                    alt=""
+                    aria-hidden="true"
+                    decoding="async"
+                    fetchpriority="high"
+                />
                 <p class="hero-subtitle" data-animate>Inspiring the next generation of champions with teamwork, creativity, and respect on and off the pitch.</p>
                 <div class="hero-cta">
                     <a class="btn primary pulse" href="#join" data-btn="primary">Join the Team</a>

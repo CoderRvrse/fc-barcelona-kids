@@ -1704,150 +1704,70 @@ textarea:focus-visible {
   dominant-baseline: central;
 }
 
-/* Kill any legacy balls to avoid double renders */
-#ballRolling, #ballIdle, .hero-balls, .ball--top-right, #heroBall, #heroBallIdle, .floating-ball {
-  display: none !important;
+/* CSS-First Hero Layout & Animation */
+
+/* Hero layout */
+.hero{
+  position:relative;
+  display:grid;
+  place-items:center;
+  min-height:clamp(48vh, 58vh, 66vh);
+  padding:clamp(24px,4vw,48px) 16px;
+  text-align:center;
+  isolation:isolate;
 }
 
-/* Hero positioning and layering */
-.hero {
-  position: relative;
+/* Title */
+.hero-title{
+  margin:0 0 clamp(16px, 4vh, 32px);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-weight:900;
+  letter-spacing:.01em;
+  line-height:1.05;
+  color:#fff;
+  font-size:clamp(2.25rem, 5vw + 1rem, 4.75rem);
 }
 
-.hero-title {
-  position: relative;
-  z-index: 6;
-  font-size: clamp(2.5rem, 8vw, 6rem);
-  font-weight: 900;
-  text-align: center;
-  line-height: 1;
-  margin: 0;
+/* Reveal: start hidden, wipe to visible */
+.title-reveal{
+  display:inline-block;
+  opacity:0;
+  clip-path: inset(0 100% 0 0 round 2px);
+  transition: clip-path .65s cubic-bezier(.2,.8,.2,1), opacity .2s ease-out;
 }
 
-.hero-underline {
-  position: relative;
-  z-index: 6;
+/* Ball */
+.hero-ball{
+  width:clamp(108px, 13vw, 176px);
+  height:auto;
+  filter: drop-shadow(0 14px 24px rgba(0,0,0,.35));
+  pointer-events:none;
 }
 
-/* Text reveal layers */
-#heroTitleOutline {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  color: transparent;
-  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.3);
-  text-stroke: 2px rgba(255, 255, 255, 0.3);
-  z-index: 1;
-}
-
-#heroTitleSolid {
-  position: relative;
-  color: white;
-  z-index: 2;
-  clip-path: inset(0 100% 0 0); /* initially hidden, revealed by animation */
-}
-
-.hero-ball {
-  position: absolute;
-  width: clamp(100px, 12vw, 160px);
-  aspect-ratio: 1/1;
-  right: clamp(16px, 6vw, 80px);
-  top: calc(50% - 3.5rem);              /* initial safe position; JS repositions */
-  background: url('../assets/soccer-ball.svg') center/contain no-repeat;
-  filter: drop-shadow(0 10px 16px rgba(0,0,0,.35));
-  pointer-events: none;
-  z-index: 5;
-  opacity: 1;                           /* ensure visible even if JS bails */
-  transform: translateZ(0);
-  animation: heroBallIdleSpin 9s linear infinite paused; /* JS will unpause */
-}
-
-@keyframes heroBallIdleSpin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes spin {
-  to { transform: rotate(1turn); }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  /* Show final state immediately for accessibility */
-  .title-solid {
-    clip-path: inset(0 0 0 0) !important;
+/* Spin (CSS only) */
+@media (prefers-reduced-motion: no-preference){
+  .hero[data-anim="on"] .hero-ball{
+    animation: hero-spin 9s linear infinite;
+    transform-origin:50% 50%;
   }
-
-  #ballLayer {
-    opacity: 0 !important; /* Hide ball entirely */
-  }
-
-  .title-underline {
-    opacity: 1 !important;
-  }
-
-  #underlinePath {
-    stroke-dasharray: none !important;
-    stroke-dashoffset: 0 !important;
-  }
-
-  /* Disable any animations */
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  @keyframes hero-spin { to { transform: rotate(360deg); } }
 }
 
-/* Rolling ball - hidden initially, shown during animation */
-#heroBall {
-  opacity: 0;
-  transition: opacity 0.15s ease;
+/* Reveal trigger */
+.hero[data-anim="on"] .title-reveal{
+  opacity:1;
+  clip-path: inset(0 0 0 0 round 2px);
 }
 
-/* Idle ball - hidden initially, shown after animation */
-#heroBallIdle {
-  opacity: 0;
-  transition: opacity 0.15s ease;
+/* Reduced motion = everything static */
+@media (prefers-reduced-motion: reduce){
+  .hero .title-reveal{ opacity:1; clip-path:none; }
+  .hero .hero-ball{ animation:none; }
 }
 
-/* No-JS fallback */
-.hero-fallback {
-  display: none;
-  font: var(--hero-title-font);
-  color: #ffffff;
-  text-align: center;
-  margin: 0;
-  letter-spacing: 0.02em;
-}
-
-noscript .hero-fallback {
-  display: block;
-}
-
-/* Accessibility - reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  #heroBall {
-    display: none !important;
-  }
-  .hero-fallback {
-    display: block;
-  }
-  #heroTitle {
-    display: none;
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 720px) {
-  :root {
-    --ball-size: 100px;
-  }
-
-  .hero-wrap {
-    height: clamp(120px, 20vw, 180px);
-  }
-}
+/* simple guard if fonts shift metrics; JS sets this var */
+.hero{ --gap-after-title: clamp(10px, 3vh, 28px); }
+.hero-ball{ margin-top: var(--gap-after-title); }
 
 /* =====[ HERO REPLAY BUTTON ]=========================== */
 
