@@ -1664,8 +1664,14 @@ textarea:focus-visible {
 }
 
 /* --- HERO (CSS-only) --- */
+:root {
+  --hero-ease: cubic-bezier(.2, .8, .2, 1);
+  --barca-underline: linear-gradient(90deg, #0a2a6b 0%, #ce1131 50%, #0a2a6b 100%);
+}
+
 .hero {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1680,10 +1686,26 @@ textarea:focus-visible {
   margin: 0;
   text-align: center;
   font: 900 clamp(2.4rem, 6vw, 6rem) "Inter", system-ui, sans-serif;
-  letter-spacing: 0.02em;
   color: #fff;
   line-height: 1.05;
   z-index: 2;
+  opacity: 0;
+  transform: translateY(18px) scale(.98);
+  letter-spacing: .04em;
+  animation: hero-title-in .75s var(--hero-ease) .12s forwards;
+}
+
+.hero-title::after {
+  content: "";
+  display: block;
+  height: 4px;
+  width: min(14ch, 92%);
+  margin: .6rem auto 0;
+  border-radius: 3px;
+  background: var(--barca-underline);
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: hero-underline-in .60s var(--hero-ease) .55s forwards;
 }
 
 .hero-ball {
@@ -1702,8 +1724,27 @@ textarea:focus-visible {
   to   { transform: rotate(360deg); }
 }
 
+@keyframes hero-title-in {
+  0%   { opacity: 0; transform: translateY(18px) scale(.98); letter-spacing: .04em; }
+  60%  { opacity: 1; transform: translateY(0) scale(1.01); letter-spacing: .01em; }
+  100% { opacity: 1; transform: translateY(0) scale(1); letter-spacing: 0; }
+}
+
+@keyframes hero-underline-in {
+  to { transform: scaleX(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-ball { animation: none; }
+  .hero-title {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+  .hero-title::after {
+    transform: none;
+    animation: none;
+  }
 }
 
 /* =====[ HERO REPLAY BUTTON ]=========================== */
