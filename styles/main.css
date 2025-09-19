@@ -1704,31 +1704,25 @@ textarea:focus-visible {
   dominant-baseline: central;
 }
 
-/* CSS-First Hero Layout & Animation */
-
-/* Hero layout */
+/* Minimal Hero CSS */
 .hero{
   position:relative;
   display:grid;
   place-items:center;
-  min-height:clamp(48vh, 58vh, 66vh);
+  min-height:clamp(48vh,58vh,66vh);
   padding:clamp(24px,4vw,48px) 16px;
   text-align:center;
   isolation:isolate;
+  --gap-after-title: clamp(10px, 3vh, 28px);
 }
 
-/* Title */
 .hero-title{
   margin:0 0 clamp(16px, 4vh, 32px);
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  font-weight:900;
+  font: 900 clamp(2.25rem,5vw + 1rem,4.75rem)/1.05 Inter, system-ui, sans-serif;
   letter-spacing:.01em;
-  line-height:1.05;
   color:#fff;
-  font-size:clamp(2.25rem, 5vw + 1rem, 4.75rem);
 }
 
-/* Reveal: start hidden, wipe to visible */
 .title-reveal{
   display:inline-block;
   opacity:0;
@@ -1736,16 +1730,19 @@ textarea:focus-visible {
   transition: clip-path .65s cubic-bezier(.2,.8,.2,1), opacity .2s ease-out;
 }
 
-/* Ball */
 .hero-ball{
   width:clamp(108px, 13vw, 176px);
   height:auto;
-  filter: drop-shadow(0 14px 24px rgba(0,0,0,.35));
+  margin-top: var(--gap-after-title);
   pointer-events:none;
+  filter: drop-shadow(0 14px 24px rgba(0,0,0,.35));
 }
 
-/* Spin (CSS only) */
 @media (prefers-reduced-motion: no-preference){
+  .hero[data-anim="on"] .title-reveal{
+    opacity:1;
+    clip-path: inset(0 0 0 0 round 2px);
+  }
   .hero[data-anim="on"] .hero-ball{
     animation: hero-spin 9s linear infinite;
     transform-origin:50% 50%;
@@ -1753,21 +1750,10 @@ textarea:focus-visible {
   @keyframes hero-spin { to { transform: rotate(360deg); } }
 }
 
-/* Reveal trigger */
-.hero[data-anim="on"] .title-reveal{
-  opacity:1;
-  clip-path: inset(0 0 0 0 round 2px);
-}
-
-/* Reduced motion = everything static */
 @media (prefers-reduced-motion: reduce){
-  .hero .title-reveal{ opacity:1; clip-path:none; }
-  .hero .hero-ball{ animation:none; }
+  .title-reveal{ opacity:1; clip-path:none; }
+  .hero-ball{ animation:none; }
 }
-
-/* simple guard if fonts shift metrics; JS sets this var */
-.hero{ --gap-after-title: clamp(10px, 3vh, 28px); }
-.hero-ball{ margin-top: var(--gap-after-title); }
 
 /* =====[ HERO REPLAY BUTTON ]=========================== */
 

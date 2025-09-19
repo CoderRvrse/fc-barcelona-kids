@@ -111,50 +111,20 @@
         </div>
     </header>
     <main>
-        <section id="hero" class="hero" data-section>
-            <div class="hero-parallax hero-parallax--field" data-parallax data-speed="0.15" aria-hidden="true"></div>
-            <div class="hero-parallax hero-parallax--stadium" data-parallax data-speed="0.25" aria-hidden="true"></div>
-            <div class="container">
-                <p class="hero-kicker" data-animate>Barcelona methodology for future stars</p>
+        <section id="hero" class="hero" aria-label="FC Barcelona">
+            <h1 id="heroTitle" class="hero-title">
+                <span class="title-reveal" aria-hidden="true">FC BARCELONA</span>
+            </h1>
 
-                <!-- Clean hero title with reveal animation -->
-                <h1 id="heroTitle" class="hero-title" aria-live="polite">
-                    <span class="title-reveal" aria-hidden="true">FC BARCELONA</span>
-                </h1>
-
-                <!-- Decorative spinning ball (never blocks clicks) -->
-                <img
-                    id="heroBall"
-                    class="hero-ball"
-                    src="assets/soccer-ball.svg"
-                    alt=""
-                    aria-hidden="true"
-                    decoding="async"
-                    fetchpriority="high"
-                />
-                <p class="hero-subtitle" data-animate>Inspiring the next generation of champions with teamwork, creativity, and respect on and off the pitch.</p>
-                <div class="hero-cta">
-                    <a class="btn primary pulse" href="#join" data-btn="primary">Join the Team</a>
-                    <a class="btn secondary outline" href="#about" data-btn="secondary">Learn More</a>
-                </div>
-                <div class="hero-statistics" data-animate>
-                    <div class="stat-card">
-                        <span class="stat-number" data-count="120">0</span>
-                        <span class="stat-label">Players developed</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" data-count="24">0</span>
-                        <span class="stat-label">Weekly training sessions</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" data-count="15">0</span>
-                        <span class="stat-label">Licensed coaches</span>
-                    </div>
-                </div>
-
-                <!-- Replay button for rolling ball animation -->
-                <button class="hero-replay" aria-label="Replay title animation" title="Replay">↻</button>
-            </div>
+            <!-- Decorative, never blocks clicks -->
+            <img
+                id="heroBall"
+                class="hero-ball"
+                src="assets/soccer-ball.svg"
+                alt=""
+                decoding="async"
+                fetchpriority="high"
+            />
         </section>
 
         <section id="about" class="about" data-section>

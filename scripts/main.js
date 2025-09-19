@@ -177,9 +177,9 @@
           const heroSection = document.getElementById('hero');
           const svg = document.getElementById('heroTitle');
           const ballRolling = document.getElementById('heroBall');
-          const ballIdle = document.getElementById('heroBallIdle');
+          // ballIdle removed - using minimal hero system instead
 
-          if (!heroSection || !svg || !ballRolling || !ballIdle) {
+          if (!heroSection || !svg || !ballRolling) {
             console.warn('[Hero] Required DOM elements not found');
             return;
           }
@@ -637,9 +637,9 @@
 
           // ensure idle/rolling balls have the intended initial vis
           const rollBall = document.getElementById('heroBall');
-          const idleBall = document.getElementById('heroBallIdle');
+          // idleBall removed - using minimal hero system instead
           if (rollBall) rollBall.style.opacity = '0'; // will be shown on run()
-          if (idleBall) idleBall.style.opacity = '0'; // shown after run() finishes
+          // idleBall handling removed
 
           const runOnce = () => {
             if (prefersReduced) {
@@ -1101,57 +1101,46 @@
     })();
     })(); // Close backToTopControl function
 
-// CSS-First Hero Animation System
+// Minimal Hero Animation System
 /* eslint-env browser */
 (() => {
   'use strict';
 
   const $ = (s, r=document) => r.querySelector(s);
-  const hero   = $('#hero');
-  const title  = $('#heroTitle');
-  const text   = $('.title-reveal', title);
-  const ball   = $('#heroBall');
+  const hero  = $('#hero');
+  const title = $('#heroTitle');
+  const ball  = $('#heroBall');
 
-  if (!hero || !title || !text || !ball) {
-    console.warn('[Hero] minimal DOM missing; safe exit');
-    return;
-  }
+  // Hard stop if the minimal 3 elements aren't there
+  if (!hero || !title || !ball) return;
 
-  // 1) Fonts: switch to animation state only after fonts are ready (or timeout)
-  const FONT_TIMEOUT = 1500;
-  const enableAnim = () => hero.dataset.anim = 'on';
-
-  const prepFonts = async () => {
-    let done = false;
-    const t = setTimeout(() => { if (!done) enableAnim(); }, FONT_TIMEOUT);
-    try {
-      await document.fonts?.ready;
-      done = true; clearTimeout(t);
-      enableAnim();
-    } catch {
-      done = true; clearTimeout(t);
-      enableAnim();
-    }
-  };
-
-  // 2) Safe spacing below title to avoid ball/CTA overlap
-  const computeGap = () => {
+  // Safe spacing so ball never overlays CTAs
+  const layout = () => {
     const r = title.getBoundingClientRect();
     hero.style.setProperty('--gap-after-title', Math.round(r.height * 0.30) + 'px');
   };
 
+  // Flip a single attribute to trigger CSS reveal + spin
+  const enable = () => { hero.dataset.anim = 'on'; };
+
+  // Font readiness (with timeout so we never stall)
+  const FONT_TIMEOUT = 1500;
+  const init = async () => {
+    layout();
+    let armed = false;
+    const t = setTimeout(() => { if (!armed) enable(); }, FONT_TIMEOUT);
+    try { await document.fonts?.ready; armed = true; clearTimeout(t); enable(); }
+    catch { armed = true; clearTimeout(t); enable(); }
+  };
+
+  // Kickoff & resize
+  init();
   let raf = 0;
-  const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(computeGap); };
+  addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layout); }, { passive:true });
 
-  // Kickoff
-  computeGap();
-  prepFonts();
-  addEventListener('resize', onResize, { passive:true });
-
-  // Dev hooks
+  // Dev helpers
   window.__hero = {
-    rerun: () => { hero.dataset.anim=''; requestAnimationFrame(() => (hero.dataset.anim='on')); },
-    layout: computeGap,
-    spin: (on=true) => on ? (hero.dataset.anim='on') : (hero.dataset.anim=''),
+    layout,
+    rerun: () => { hero.dataset.anim=''; requestAnimationFrame(() => hero.dataset.anim='on'); }
   };
 })();
