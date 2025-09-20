@@ -1835,16 +1835,35 @@ textarea:focus-visible {
   width: clamp(96px, 12vw, 164px);
   aspect-ratio: 1;
   background: url("../assets/soccer-ball.svg") center/contain no-repeat;
-  animation: hero-spin 9s linear infinite;
+  animation: hero-spin 8s linear infinite;
   filter: drop-shadow(var(--hero-ball-shadow));
   will-change: transform;
   pointer-events: none;
   z-index: 2;
   transform: translateZ(0);
+  position: relative;
 }
 
 @keyframes hero-spin {
-  to { transform: rotate(360deg); }
+  0% { transform: translateZ(0) rotate(0deg); }
+  100% { transform: translateZ(0) rotate(360deg); }
+}
+
+/* Fallback for missing soccer ball SVG */
+.hero-ball:not([style*="background-image"]) {
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #ffffff 15%, #000000 15%, #000000 20%, #ffffff 20%, #ffffff 80%, #000000 80%, #000000 85%, #ffffff 85%),
+              radial-gradient(circle, #ffcb05 0%, #f7a600 100%);
+  border: 2px solid #000000;
+  border-radius: 50%;
+}
+
+/* Ensure ball is always visible */
+.hero-ball {
+  min-width: 96px;
+  min-height: 96px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 @keyframes hero-title-in {
@@ -1864,7 +1883,10 @@ textarea:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-ball { animation: none; }
+  .hero-ball {
+    animation: none;
+    transform: translateZ(0) rotate(0deg);
+  }
   .hero-title {
     opacity: 1;
     transform: none;
