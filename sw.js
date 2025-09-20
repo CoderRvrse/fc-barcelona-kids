@@ -1,5 +1,5 @@
 // File: sw.js
-const VERSION = 'v14';
+const VERSION = 'v15';
 const CACHE_NAME = `fcb-kids-${VERSION}`;
 const OFFLINE_URL = '/fc-barcelona-kids/offline.html';
 
