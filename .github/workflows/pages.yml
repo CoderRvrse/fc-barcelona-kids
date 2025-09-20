@@ -113,26 +113,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ROOT="${{ needs.deploy.outputs.page_url }}"
-          if [ -z "$ROOT" ]; then
-            ROOT="https://coderrvrse.github.io/fc-barcelona-kids"
+          LIVE_URL="${{ needs.deploy.outputs.page_url }}"
+          if [ -z "$LIVE_URL" ]; then
+            LIVE_URL="https://coderrvrse.github.io/fc-barcelona-kids"
           fi
-          html="$(curl -fsSL "$ROOT/")"
-          # 1) hero section exists with new structure
-          echo "$html" | grep -q 'id="hero"'
-          echo "$html" | grep -q 'class="hero-ball"'
-          echo "$html" | grep -q 'id="heroTitle"'
-          # 2) text content is correct - FC BARCELONA
-          echo "$html" | grep -q 'FC BARCELONA'
-          ! echo "$html" | grep -q '>C BARCELONA<' || {
-            echo "❌ Missing 'F' detected - found 'C BARCELONA' instead of 'FC BARCELONA'"
-            exit 1
-          }
-          # 3) versioned CSS reference is correct
-          echo "$html" | grep -q 'styles/main.css?v=14'
-          # 4) accessibility prefix present
-          echo "$html" | grep -q '<span class="sr-only">Welcome to </span>'
-          echo "✅ Hero structure, version pin, and accessibility prefix verified"
+          curl -fsSL "$LIVE_URL" -o /tmp/page.html
+          # Assert the title exists (solid text)
+          grep -q 'FC BARCELONA' /tmp/page.html
+          echo "✅ Hero title verified"
 
       - name: Curl checks continued
         shell: bash

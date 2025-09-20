@@ -1784,6 +1784,19 @@ textarea:focus-visible {
   --hero-underline-delay: .55s;
   --hero-underline-height: 4px;
   --hero-ball-shadow: 0 14px 18px rgba(0,0,0,.25);
+  /* Ball positioning variables */
+  --nav-height: 72px;          /* measured header height on desktop */
+  --nav-height-sm: 64px;       /* smaller header on phones */
+  --ball-size: clamp(100px, 13vw, 160px);
+  --ball-top-gap: 28px;        /* space from bottom of header to top of ball */
+  --hero-top-extra: 36px;      /* extra breathing room above the title */
+}
+
+@media (max-width: 640px) {
+  :root {
+    --nav-height: var(--nav-height-sm);
+    --ball-top-gap: 20px;
+  }
 }
 
 .hero {
@@ -1795,7 +1808,13 @@ textarea:focus-visible {
   justify-content: flex-start;
   gap: clamp(12px, 2.4vh, 24px);
   min-height: clamp(360px, 52vh, 640px);
-  padding-top: clamp(56px, 8vh, 112px);
+  /* Make room above the title for header + ball + breathing space */
+  padding-top: calc(
+    var(--nav-height) +
+    var(--ball-size) +
+    var(--hero-top-extra)
+  );
+  text-align: center;
   isolation: isolate;
 }
 
@@ -1833,16 +1852,16 @@ textarea:focus-visible {
 
 /* === Ball core (enhanced with Barça halo) ========================== */
 .hero-ball{
-  position:absolute;
-  left:50%;
-  top:0;
-  width:clamp(84px,10vw,140px);
-  height:clamp(84px,10vw,140px);
-  transform:translate(-50%,-50%);
-  filter:drop-shadow(0 14px 18px rgba(0,0,0,.25));
-  will-change:transform;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(var(--nav-height) + var(--ball-top-gap)); /* <- key line */
+  width: var(--ball-size);
+  height: var(--ball-size);
+  z-index: 2;                     /* above hero background, below nav shadow */
   pointer-events: none;
-  z-index: 2;
+  filter: drop-shadow(0 12px 18px rgba(0,0,0,.35)); /* slight visual lift for the halo */
+  will-change:transform;
   /* ring controls */
   --ring-size: 7px;                /* thickness of the ring */
   --ring-speed: 7s;                /* rotation speed of ring */
