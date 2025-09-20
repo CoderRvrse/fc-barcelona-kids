@@ -1832,39 +1832,32 @@ textarea:focus-visible {
 }
 
 .hero-ball {
-  width: clamp(96px, 12vw, 164px);
-  aspect-ratio: 1;
-  background: url("assets/soccer-ball.svg") center/contain no-repeat;
-  animation: hero-spin 8s linear infinite;
-  filter: drop-shadow(var(--hero-ball-shadow));
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: clamp(84px, 10vw, 140px);
+  height: clamp(84px, 10vw, 140px);
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 14px 18px rgba(0,0,0,.25));
   will-change: transform;
   pointer-events: none;
   z-index: 2;
-  transform: translateZ(0);
-  position: relative;
+}
+
+/* The image spins; display:block removes inline-gap */
+.hero-ball-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  animation: hero-spin 9s linear infinite;
 }
 
 @keyframes hero-spin {
-  0% { transform: translateZ(0) rotate(0deg); }
-  100% { transform: translateZ(0) rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Fallback for missing soccer ball SVG */
-.hero-ball:not([style*="background-image"]) {
-  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #ffffff 15%, #000000 15%, #000000 20%, #ffffff 20%, #ffffff 80%, #000000 80%, #000000 85%, #ffffff 85%),
-              radial-gradient(circle, #ffcb05 0%, #f7a600 100%);
-  border: 2px solid #000000;
-  border-radius: 50%;
-}
-
-/* Ensure ball is always visible */
-.hero-ball {
-  min-width: 96px;
-  min-height: 96px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
 
 @keyframes hero-title-in {
   0%   { opacity: 0; transform: translateY(12px) scale(.985); letter-spacing: .02em; }
@@ -1883,9 +1876,8 @@ textarea:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-ball {
-    animation: none;
-    transform: translateZ(0) rotate(0deg);
+  .hero-ball-img {
+    animation: none !important;
   }
   .hero-title {
     opacity: 1;
