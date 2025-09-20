@@ -1831,31 +1831,93 @@ textarea:focus-visible {
   will-change: transform, opacity;
 }
 
-.hero-ball {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: clamp(84px, 10vw, 140px);
-  height: clamp(84px, 10vw, 140px);
-  transform: translate(-50%, -50%);
-  filter: drop-shadow(0 14px 18px rgba(0,0,0,.25));
-  will-change: transform;
+/* === Ball core (enhanced with Barça halo) ========================== */
+.hero-ball{
+  position:absolute;
+  left:50%;
+  top:0;
+  width:clamp(84px,10vw,140px);
+  height:clamp(84px,10vw,140px);
+  transform:translate(-50%,-50%);
+  filter:drop-shadow(0 14px 18px rgba(0,0,0,.25));
+  will-change:transform;
   pointer-events: none;
   z-index: 2;
+  /* ring controls */
+  --ring-size: 7px;                /* thickness of the ring */
+  --ring-speed: 7s;                /* rotation speed of ring */
+  --glow-size: 18px;               /* glow radius outside ball */
+  --barca-blue: #0a2a6b;
+  --barca-red:  #ce1131;
+  --barca-gold: #f7b500;
 }
 
-/* The image spins; display:block removes inline-gap */
-.hero-ball-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-  animation: hero-spin 9s linear infinite;
+.hero-ball-img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  border-radius:50%;
+  animation:hero-spin 9s linear infinite;
+  /* kill any accidental white border/outline */
+  border:none;
+  box-shadow:none;
+  background:transparent;
 }
 
-@keyframes hero-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* === Animated Blaugrana ring ======================================== */
+.hero-ball::before{
+  content:"";
+  position:absolute;
+  inset: calc(var(--ring-size) * -1);
+  border-radius:50%;
+  /* rotating conic gradient in Barça colors */
+  background:
+    conic-gradient(from 0deg,
+      var(--barca-blue) 0 35%,
+      var(--barca-red)  35% 70%,
+      var(--barca-gold) 70% 85%,
+      var(--barca-blue) 85% 100%
+    );
+  animation: hero-ring-spin var(--ring-speed) linear infinite;
+  pointer-events:none;
+  /* mask so only a ring shows (hole in the middle) */
+  -webkit-mask:
+    radial-gradient(closest-side, transparent calc(100% - var(--ring-size)), #000 calc(100% - var(--ring-size)));
+          mask:
+    radial-gradient(closest-side, transparent calc(100% - var(--ring-size)), #000 calc(100% - var(--ring-size)));
+}
+
+/* === Soft branded glow pulse ======================================== */
+.hero-ball::after{
+  content:"";
+  position:absolute;
+  inset: calc(var(--glow-size) * -1);
+  border-radius:50%;
+  pointer-events:none;
+  background:
+    radial-gradient(closest-side,
+      rgba(255,255,255,0) 60%,
+      color-mix(in srgb, var(--barca-blue) 60%, transparent) 75%,
+      color-mix(in srgb, var(--barca-red)  55%, transparent) 88%,
+      transparent 92%);
+  filter: blur(8px);
+  animation: hero-glow 3.5s ease-in-out infinite;
+  z-index:-1; /* sits behind the ball */
+}
+
+/* === Animations ====================================================== */
+@keyframes hero-spin{
+  to{ transform:rotate(360deg); }
+}
+
+@keyframes hero-ring-spin{
+  to{ transform:rotate(360deg); }
+}
+
+@keyframes hero-glow{
+  0%,100%{ opacity:.45; transform:scale(.98); }
+  50%    { opacity:.75; transform:scale(1.02); }
 }
 
 
@@ -1875,10 +1937,14 @@ textarea:focus-visible {
   100% { transform: translateX(120%) skewX(-12deg); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero-ball-img {
-    animation: none !important;
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .hero-ball-img,
+  .hero-ball::before,
+  .hero-ball::after{
+    animation:none !important;
   }
+}
   .hero-title {
     opacity: 1;
     transform: none;
