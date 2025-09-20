@@ -1855,29 +1855,7 @@ textarea:focus-visible {
   transform: translateZ(0);
 }
 
-.hero-title::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -0.6em;
-  height: var(--hero-underline-height);
-  width: min(16ch, 68%);
-  border-radius: 999px;
-  background: linear-gradient(90deg, #0a2a6b 0%, #ce1131 50%, #0a2a6b 100%);
-  opacity: 0;
-  transform: translateX(-50%) scaleX(0.2);
-  transform-origin: left center;
-  animation: hero-underline-in .60s var(--hero-ease) var(--hero-underline-delay) forwards,
-             hero-underline-pulse var(--underline-pulse-speed) ease-in-out infinite;
-  will-change: transform, opacity, box-shadow;
-  position: relative;
-  z-index: 1; /* underline stays above background gradient */
-
-  /* Glow layer via box-shadow; we animate it below */
-  box-shadow:
-    0 0 var(--underline-glow-spread) rgba(10, 42, 107, 0.30),
-    0 0 calc(var(--underline-glow-spread) * .55) rgba(206, 17, 49, 0.30);
-}
+/* Old underline rule removed - replaced by v16 premium system below */
 
 /* === Ball core (enhanced with Barça halo) ========================== */
 .hero-ball{
@@ -2102,11 +2080,11 @@ textarea:focus-visible {
 .hero-replay:hover{ transform:scale(1.04); opacity:1 }
 @media (prefers-reduced-motion:reduce){ .hero-replay{display:none} }
 
-/* === v15: Hero Glow & Pulse ============================================= */
+/* === v16: Premium Hero Underline with Shimmer & Spark ================= */
 :root {
   --hero-ease: cubic-bezier(.2, .8, .2, 1);
 
-  /* Ball glow controls */
+  /* Ball glow controls (unchanged) */
   --glow-color-1: rgba(10, 42, 107, 0.35);   /* Barça navy */
   --glow-color-2: rgba(206, 17, 49, 0.35);   /* Barça red  */
   --glow-color-3: rgba(255, 200, 0, 0.30);   /* warm gold  */
@@ -2115,43 +2093,76 @@ textarea:focus-visible {
   --glow-ball-intensity: .85;
   --glow-ball-speed: 2.4s;
 
-  /* Underline pulse */
-  --underline-glow-spread: 14px;
-  --underline-pulse-speed: 2.4s;
+  /* Premium underline system */
+  --underline-width: 85%;              /* % of title text width */
+  --underline-height: 4px;             /* desktop thickness */
+  --underline-gap: 24px;               /* offset below title */
+  --underline-ease: cubic-bezier(.25, .8, .25, 1);
+
+  /* Shimmer (one-time on load) */
+  --shimmer-delay: 0.5s;               /* start after title entrance */
+  --shimmer-duration: 0.65s;           /* sweep time */
+  --shimmer-width: 40%;                /* comet bar width */
+
+  /* Idle pulse (ongoing subtle life) */
+  --idle-period: 2.8s;                 /* gentle breathe cycle */
+  --idle-intensity: 0.25;              /* subtle movement scale */
+
+  /* Spark bead (traveling every 8-10s) */
+  --spark-interval: 9s;                /* travel frequency */
+  --spark-duration: 1.2s;              /* travel time */
+  --spark-size: 3px;                   /* bead diameter */
+  --spark-opacity: 0.12;               /* very subtle */
+}
+
+/* Responsive underline sizing */
+@media (max-width: 1023px) {
+  :root {
+    --underline-height: 3px;
+    --underline-gap: 20px;
+    --underline-width: 88%;
+  }
+}
+
+@media (max-width: 599px) {
+  :root {
+    --underline-height: 2.5px;
+    --underline-gap: 18px;
+    --underline-width: 90%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --glow-ball-speed: 0s;
-    --underline-pulse-speed: 0s;
+    --shimmer-duration: 0s;
+    --idle-period: 0s;
+    --spark-interval: 0s;
   }
 }
 
-/* Ensure ball is positioned above glow */
+/* Ball glow (unchanged from v15) */
 .hero-ball {
   position: absolute;
-  z-index: 2; /* ball above glow */
+  z-index: 2;
   filter: drop-shadow(0 10px 18px rgba(0,0,0,.28));
 }
 
-/* PULSING GLOW HALO behind the ball */
 .hero-ball::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1; /* behind the ball */
+  z-index: -1;
   left: 50%;
   top: 50%;
   width: 100%;
   height: 100%;
   border-radius: 50%;
   transform: translate(-50%, -50%) scale(var(--glow-ball-size-mult));
-
   background:
     radial-gradient(closest-side, var(--glow-color-1), transparent 65%),
     radial-gradient(closest-side, var(--glow-color-2), transparent 70%),
     radial-gradient(closest-side, var(--glow-color-3), transparent 75%);
-
   filter: blur(var(--glow-ball-blur));
   opacity: 0;
   will-change: transform, opacity, filter;
@@ -2164,39 +2175,117 @@ textarea:focus-visible {
   100% { opacity: calc(.35 * var(--glow-ball-intensity)); transform: translate(-50%, -50%) scale(calc(var(--glow-ball-size-mult) * .98)); }
 }
 
-/* UNDERLINE glow pulse on the hero title's ::after */
+/* PREMIUM UNDERLINE SYSTEM ============================================== */
+
+/* Base underline (::after) - proper geometry and idle pulse */
 .hero-title::after {
-  /* keep existing gradient/size from earlier CSS; add glow animation */
-  position: relative;
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(-1 * var(--underline-gap));
+  width: var(--underline-width);
+  height: var(--underline-height);
+  border-radius: 999px;
+  transform: translateX(-50%);
+  transform-origin: center;
   z-index: 1;
+
+  /* Barcelona gradient with soft glow */
+  background: linear-gradient(90deg, #0a2a6b 0%, #ce1131 50%, #0a2a6b 100%);
   box-shadow:
-    0 0 var(--underline-glow-spread) rgba(10, 42, 107, 0.30),
-    0 0 calc(var(--underline-glow-spread) * .55) rgba(206, 17, 49, 0.30);
+    0 0 8px rgba(10, 42, 107, 0.25),
+    0 0 16px rgba(206, 17, 49, 0.15);
+
+  /* Initial entrance + ongoing idle pulse + spark travel */
+  opacity: 0;
+  animation:
+    hero-underline-entrance 0.6s var(--underline-ease) var(--hero-underline-delay) forwards,
+    hero-underline-idle var(--idle-period) ease-in-out infinite var(--idle-period),
+    hero-spark-travel var(--spark-duration) ease-in-out var(--spark-interval) infinite;
+
   will-change: transform, opacity, box-shadow;
-  animation: hero-underline-pulse var(--underline-pulse-speed) ease-in-out infinite;
 }
 
-@keyframes hero-underline-pulse {
-  0% {
-    opacity: .70;
-    transform: scaleX(.995);
-    box-shadow:
-      0 0 var(--underline-glow-spread) rgba(10, 42, 107, 0.28),
-      0 0 calc(var(--underline-glow-spread) * .55) rgba(206, 17, 49, 0.26);
+/* One-time shimmer bar (::before) */
+.hero-title::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(-1 * var(--underline-gap));
+  width: var(--shimmer-width);
+  height: var(--underline-height);
+  border-radius: 999px;
+  transform: translateX(-150%); /* start off-screen left */
+  z-index: 2; /* above base underline */
+
+  /* Bright shimmer comet */
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 40%,
+    rgba(255, 203, 5, 0.8) 50%,
+    rgba(255, 255, 255, 0.6) 60%,
+    transparent 100%
+  );
+
+  opacity: 0;
+  animation: hero-underline-shimmer var(--shimmer-duration) var(--underline-ease)
+             calc(var(--hero-underline-delay) + var(--shimmer-delay)) forwards;
+
+  will-change: transform, opacity;
+}
+
+/* Note: Spark bead uses a subtle box-shadow on the ::after element instead of invalid nested pseudo */
+
+/* KEYFRAME ANIMATIONS ================================================== */
+
+/* Underline entrance (scale in from center) */
+@keyframes hero-underline-entrance {
+  0%   { opacity: 0; transform: translateX(-50%) scaleX(0.1); }
+  100% { opacity: 1; transform: translateX(-50%) scaleX(1); }
+}
+
+/* Gentle idle breathing */
+@keyframes hero-underline-idle {
+  0%   {
+    transform: translateX(-50%) scaleX(1);
+    box-shadow: 0 0 8px rgba(10, 42, 107, 0.25), 0 0 16px rgba(206, 17, 49, 0.15);
   }
-  50% {
-    opacity: 1;
-    transform: scaleX(1.005);
-    box-shadow:
-      0 0 calc(var(--underline-glow-spread) * 1.15) rgba(10, 42, 107, 0.34),
-      0 0 calc(var(--underline-glow-spread) * .75) rgba(206, 17, 49, 0.34);
+  50%  {
+    transform: translateX(-50%) scaleX(calc(1 + var(--idle-intensity) * 0.02));
+    box-shadow: 0 0 12px rgba(10, 42, 107, 0.35), 0 0 20px rgba(206, 17, 49, 0.25);
   }
   100% {
-    opacity: .70;
-    transform: scaleX(.995);
+    transform: translateX(-50%) scaleX(1);
+    box-shadow: 0 0 8px rgba(10, 42, 107, 0.25), 0 0 16px rgba(206, 17, 49, 0.15);
+  }
+}
+
+/* One-time shimmer sweep */
+@keyframes hero-underline-shimmer {
+  0%   { opacity: 0; transform: translateX(-150%); }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(150%); }
+}
+
+/* Subtle spark traveling effect as moving highlight */
+@keyframes hero-spark-travel {
+  0%, 85% {
     box-shadow:
-      0 0 var(--underline-glow-spread) rgba(10, 42, 107, 0.28),
-      0 0 calc(var(--underline-glow-spread) * .55) rgba(206, 17, 49, 0.26);
+      0 0 8px rgba(10, 42, 107, 0.25),
+      0 0 16px rgba(206, 17, 49, 0.15);
+  }
+  88%, 97% {
+    box-shadow:
+      0 0 8px rgba(10, 42, 107, 0.25),
+      0 0 16px rgba(206, 17, 49, 0.15),
+      2px 0 6px rgba(255, 203, 5, var(--spark-opacity)),
+      -2px 0 6px rgba(255, 203, 5, calc(var(--spark-opacity) * 0.6));
+  }
+  100% {
+    box-shadow:
+      0 0 8px rgba(10, 42, 107, 0.25),
+      0 0 16px rgba(206, 17, 49, 0.15);
   }
 }
 
