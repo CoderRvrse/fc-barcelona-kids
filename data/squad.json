@@ -1,0 +1,171 @@
+[
+  {
+    "id": "ter-stegen",
+    "name": "Marc-André ter Stegen",
+    "role": "Captain",
+    "position": "Goalkeeper",
+    "number": 1,
+    "image": "assets/players/ter-stegen.svg",
+    "season": {
+      "games": 38,
+      "cleanSheets": 20,
+      "saves": 112,
+      "savePct": 78
+    }
+  },
+  {
+    "id": "araujo",
+    "name": "Ronald Araújo",
+    "role": "Defensive Engine",
+    "position": "Centre Back",
+    "number": 4,
+    "image": "assets/players/araujo.svg",
+    "season": {
+      "games": 35,
+      "goals": 3,
+      "assists": 1,
+      "tacklesWon": 64
+    }
+  },
+  {
+    "id": "balde",
+    "name": "Alejandro Balde",
+    "role": "Rising Star",
+    "position": "Left Back",
+    "number": 3,
+    "image": "assets/players/balde.svg",
+    "season": {
+      "games": 32,
+      "assists": 5,
+      "chancesCreated": 28,
+      "crosses": 42
+    }
+  },
+  {
+    "id": "de-jong",
+    "name": "Frenkie de Jong",
+    "role": "Midfield Maestro",
+    "position": "Central Midfielder",
+    "number": 21,
+    "image": "assets/players/de-jong.svg",
+    "season": {
+      "games": 34,
+      "assists": 8,
+      "passesCompleted": 2847,
+      "progCarries": 156
+    }
+  },
+  {
+    "id": "pedri",
+    "name": "Pedri",
+    "role": "Creative Genius",
+    "position": "Central Midfielder",
+    "number": 8,
+    "image": "assets/players/pedri.svg",
+    "season": {
+      "games": 37,
+      "goals": 7,
+      "assists": 12,
+      "chancesCreated": 89
+    }
+  },
+  {
+    "id": "gavi",
+    "name": "Gavi",
+    "role": "Warrior",
+    "position": "Central Midfielder",
+    "number": 6,
+    "image": "assets/players/gavi.svg",
+    "season": {
+      "games": 29,
+      "tacklesWon": 47,
+      "pressures": 312,
+      "duelsWon": 68
+    }
+  },
+  {
+    "id": "yamal",
+    "name": "Lamine Yamal",
+    "role": "Wonder Kid",
+    "position": "Right Winger",
+    "number": 27,
+    "image": "assets/players/yamal.svg",
+    "season": {
+      "games": 31,
+      "goals": 12,
+      "assists": 8,
+      "xG": 11.4,
+      "xA": 7.2
+    }
+  },
+  {
+    "id": "lewandowski",
+    "name": "Robert Lewandowski",
+    "role": "Goal Machine",
+    "position": "Striker",
+    "number": 9,
+    "image": "assets/players/lewandowski.svg",
+    "season": {
+      "games": 36,
+      "goals": 28,
+      "assists": 6,
+      "xG": 26.8
+    }
+  },
+  {
+    "id": "kounde",
+    "name": "Jules Koundé",
+    "role": "Versatile Defender",
+    "position": "Right Back",
+    "number": 23,
+    "image": "assets/players/kounde.svg",
+    "season": {
+      "games": 33,
+      "goals": 2,
+      "assists": 4,
+      "interceptions": 56
+    }
+  },
+  {
+    "id": "christensen",
+    "name": "Andreas Christensen",
+    "role": "Ball-Playing CB",
+    "position": "Centre Back",
+    "number": 15,
+    "image": "assets/players/christensen.svg",
+    "season": {
+      "games": 28,
+      "passAccuracy": 94,
+      "aerialWins": 38,
+      "blocks": 22
+    }
+  },
+  {
+    "id": "raphinha",
+    "name": "Raphinha",
+    "role": "Brazilian Flair",
+    "position": "Right Winger",
+    "number": 22,
+    "image": "assets/players/raphinha.svg",
+    "season": {
+      "games": 35,
+      "goals": 9,
+      "assists": 11,
+      "keyPasses": 67
+    }
+  },
+  {
+    "id": "ferran",
+    "name": "Ferran Torres",
+    "role": "Versatile Forward",
+    "position": "Forward",
+    "number": 7,
+    "image": "assets/players/ferran.svg",
+    "season": {
+      "games": 30,
+      "goals": 8,
+      "assists": 4,
+      "shots": 68
+    }
+  }
+]

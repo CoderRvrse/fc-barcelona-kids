@@ -525,6 +525,238 @@ const kill = (el) => {
 })();
 })(); // Close backToTopControl function
 
+// ===== SQUAD SPOTLIGHT FUNCTIONALITY ===================================
+
+(function squadSpotlight() {
+    const squadGrid = document.getElementById('squadGrid');
+    if (!squadGrid) return;
+
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+        document.documentElement.classList.add('rm');
+    }
+
+    // Fetch and render squad data
+    async function initSquad() {
+        try {
+            const squadUrl = new URL('data/squad.json', document.baseURI).href;
+            const response = await fetch(squadUrl, { cache: 'no-store' });
+            const players = await response.json();
+            renderSquad(players);
+            initializeInteractions();
+            initializeLazyLoading();
+        } catch (error) {
+            console.error('Failed to load squad data:', error);
+            squadGrid.innerHTML = '<li class="error-message">Unable to load squad data</li>';
+        }
+    }
+
+    // Render squad cards
+    function renderSquad(players) {
+        const fragment = document.createDocumentFragment();
+
+        players.forEach(player => {
+            const li = document.createElement('li');
+            li.className = 'squad-card';
+            li.setAttribute('data-player', player.id);
+
+            li.innerHTML = `
+                <button class="card3d" aria-expanded="false" aria-label="Flip card for ${player.name}">
+                    <span class="card3d-inner" aria-hidden="true">
+                        <!-- FRONT -->
+                        <span class="card3d-face card3d-front">
+                            <img class="player-img"
+                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400'%3E%3Crect width='100%25' height='100%25' fill='rgba(255,255,255,0.1)'/%3E%3C/svg%3E"
+                                 data-src="${player.image}"
+                                 alt=""
+                                 loading="lazy"
+                                 decoding="async" />
+                            <span class="player-role">${player.role}</span>
+                            <span class="player-name">${player.name}</span>
+                            <span class="player-number">#${player.number}</span>
+                            <span class="player-position">${player.position}</span>
+                        </span>
+                        <!-- BACK -->
+                        <span class="card3d-face card3d-back">
+                            ${generateStats(player.season)}
+                        </span>
+                    </span>
+                </button>
+            `;
+
+            fragment.appendChild(li);
+        });
+
+        squadGrid.appendChild(fragment);
+    }
+
+    // Generate stats HTML with conditional rendering
+    function generateStats(season) {
+        const statOrder = ['games', 'goals', 'assists', 'cleanSheets', 'saves', 'savePct',
+                          'tacklesWon', 'chancesCreated', 'passesCompleted', 'progCarries',
+                          'pressures', 'duelsWon', 'xG', 'xA', 'keyPasses', 'crosses',
+                          'interceptions', 'passAccuracy', 'aerialWins', 'blocks', 'shots'];
+
+        const statLabels = {
+            games: 'Games',
+            goals: 'Goals',
+            assists: 'Assists',
+            cleanSheets: 'Clean Sheets',
+            saves: 'Saves',
+            savePct: 'Save %',
+            tacklesWon: 'Tackles Won',
+            chancesCreated: 'Chances Created',
+            passesCompleted: 'Passes Completed',
+            progCarries: 'Progressive Carries',
+            pressures: 'Pressures',
+            duelsWon: 'Duels Won',
+            xG: 'xG',
+            xA: 'xA',
+            keyPasses: 'Key Passes',
+            crosses: 'Crosses',
+            interceptions: 'Interceptions',
+            passAccuracy: 'Pass Accuracy',
+            aerialWins: 'Aerial Wins',
+            blocks: 'Blocks',
+            shots: 'Shots'
+        };
+
+        return statOrder
+            .filter(stat => season.hasOwnProperty(stat))
+            .slice(0, 4) // Limit to 4 stats to avoid overcrowding
+            .map(stat => {
+                const value = stat === 'savePct' || stat === 'passAccuracy'
+                    ? `${season[stat]}%`
+                    : season[stat];
+                return `
+                    <span class="stat">
+                        <span class="stat-label">${statLabels[stat]}</span>
+                        <span class="stat-value">${value}</span>
+                    </span>
+                `;
+            })
+            .join('');
+    }
+
+    // Initialize flip interactions
+    function initializeInteractions() {
+        let currentlyFlipped = null;
+
+        // Card flip handlers
+        squadGrid.addEventListener('click', handleCardClick);
+        squadGrid.addEventListener('keydown', handleCardKeydown);
+
+        // Click outside to unflip
+        document.addEventListener('click', handleOutsideClick);
+
+        function handleCardClick(e) {
+            const card = e.target.closest('.card3d');
+            if (!card) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            flipCard(card);
+        }
+
+        function handleCardKeydown(e) {
+            const card = e.target.closest('.card3d');
+            if (!card) return;
+
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                flipCard(card);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                if (card.classList.contains('is-flipped')) {
+                    unflipCard(card);
+                }
+            }
+        }
+
+        function handleOutsideClick(e) {
+            if (!e.target.closest('.squad-card') && currentlyFlipped) {
+                unflipCard(currentlyFlipped);
+            }
+        }
+
+        function flipCard(card) {
+            // Unflip any currently flipped card
+            if (currentlyFlipped && currentlyFlipped !== card) {
+                unflipCard(currentlyFlipped);
+            }
+
+            // Toggle current card
+            if (card.classList.contains('is-flipped')) {
+                unflipCard(card);
+            } else {
+                card.classList.add('is-flipped');
+                card.setAttribute('aria-expanded', 'true');
+                currentlyFlipped = card;
+            }
+        }
+
+        function unflipCard(card) {
+            card.classList.remove('is-flipped');
+            card.setAttribute('aria-expanded', 'false');
+            if (currentlyFlipped === card) {
+                currentlyFlipped = null;
+            }
+        }
+
+        // Mouse movement for hover effect
+        if (!prefersReducedMotion) {
+            squadGrid.addEventListener('mousemove', handleMouseMove);
+        }
+
+        function handleMouseMove(e) {
+            const card = e.target.closest('.card3d');
+            if (!card) return;
+
+            const rect = card.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            const inner = card.querySelector('.card3d-inner');
+            inner.style.setProperty('--x', `${x}%`);
+            inner.style.setProperty('--y', `${y}%`);
+        }
+    }
+
+    // Initialize lazy loading for images
+    function initializeLazyLoading() {
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const src = img.getAttribute('data-src');
+                    if (src) {
+                        img.src = src;
+                        img.classList.add('loaded');
+                        img.removeAttribute('data-src');
+                        imageObserver.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.1
+        });
+
+        // Observe all player images
+        document.querySelectorAll('.player-img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+
+    // Initialize squad when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSquad);
+    } else {
+        initSquad();
+    }
+})();
+
 
 
 

@@ -30,10 +30,15 @@ self.addEventListener('install', (event) => {
         '/fc-barcelona-kids/index.html',
         '/fc-barcelona-kids/styles/main.css',
         '/fc-barcelona-kids/scripts/main.js',
+        '/fc-barcelona-kids/data/squad.json',
         '/fc-barcelona-kids/assets/soccer-ball.svg',
         '/fc-barcelona-kids/assets/FC_Barcelona_logo.svg',
         '/fc-barcelona-kids/assets/inter-var.woff2',
         '/fc-barcelona-kids/assets/placeholder-coach.svg',
+        '/fc-barcelona-kids/assets/players/ter-stegen.svg',
+        '/fc-barcelona-kids/assets/players/lewandowski.svg',
+        '/fc-barcelona-kids/assets/players/yamal.svg',
+        '/fc-barcelona-kids/assets/players/pedri.svg',
         OFFLINE_URL
       ])
     )
