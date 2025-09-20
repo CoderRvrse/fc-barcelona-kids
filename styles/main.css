@@ -1790,12 +1790,33 @@ textarea:focus-visible {
   --ball-size: clamp(100px, 13vw, 160px);
   --ball-top-gap: 28px;        /* space from bottom of header to top of ball */
   --hero-top-extra: 36px;      /* extra breathing room above the title */
+
+  /* === Glow & Pulse Controls =========================================== */
+  --glow-color-1: rgba(10, 42, 107, 0.35);  /* Barça navy glow */
+  --glow-color-2: rgba(206, 17, 49, 0.35);  /* Barça red glow  */
+  --glow-color-3: rgba(255, 200, 0, 0.30);  /* warm highlight  */
+
+  --glow-ball-size-mult: 1.45;   /* halo size relative to ball */
+  --glow-ball-blur: 42px;        /* softness of the halo        */
+  --glow-ball-intensity: 0.85;   /* 0–1: glow opacity multiplier*/
+  --glow-ball-speed: 2.4s;       /* pulse duration               */
+
+  --underline-glow-spread: 14px; /* glow softness for underline  */
+  --underline-pulse-speed: 2.4s; /* sync with ball               */
 }
 
 @media (max-width: 640px) {
   :root {
     --nav-height: var(--nav-height-sm);
     --ball-top-gap: 20px;
+  }
+}
+
+/* Reduce motion? keep everything static and crisp */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --glow-ball-speed: 0s;
+    --underline-pulse-speed: 0s;
   }
 }
 
@@ -1846,8 +1867,16 @@ textarea:focus-visible {
   opacity: 0;
   transform: translateX(-50%) scaleX(0.2);
   transform-origin: left center;
-  animation: hero-underline-in .60s var(--hero-ease) var(--hero-underline-delay) forwards;
-  will-change: transform, opacity;
+  animation: hero-underline-in .60s var(--hero-ease) var(--hero-underline-delay) forwards,
+             hero-underline-pulse var(--underline-pulse-speed) ease-in-out infinite;
+  will-change: transform, opacity, box-shadow;
+  position: relative;
+  z-index: 1; /* underline stays above background gradient */
+
+  /* Glow layer via box-shadow; we animate it below */
+  box-shadow:
+    0 0 var(--underline-glow-spread) rgba(10, 42, 107, 0.30),
+    0 0 calc(var(--underline-glow-spread) * .55) rgba(206, 17, 49, 0.30);
 }
 
 /* === Ball core (enhanced with Barça halo) ========================== */
@@ -1860,8 +1889,9 @@ textarea:focus-visible {
   height: var(--ball-size);
   z-index: 2;                     /* above hero background, below nav shadow */
   pointer-events: none;
-  filter: drop-shadow(0 12px 18px rgba(0,0,0,.35)); /* slight visual lift for the halo */
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.28)); /* slight visual lift for the halo */
   will-change:transform;
+  isolation: isolate;             /* keeps mix-blend contained if used */
   /* ring controls */
   --ring-size: 7px;                /* thickness of the ring */
   --ring-speed: 7s;                /* rotation speed of ring */
@@ -1908,21 +1938,30 @@ textarea:focus-visible {
 }
 
 /* === Soft branded glow pulse ======================================== */
-.hero-ball::after{
-  content:"";
-  position:absolute;
-  inset: calc(var(--glow-size) * -1);
-  border-radius:50%;
-  pointer-events:none;
+.hero-ball::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1; /* sits behind the ball */
+  /* Make the halo larger than the ball */
+  transform: translate(-50%, -50%) scale(var(--glow-ball-size-mult));
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+
+  /* Layered glow with subtle color drift */
   background:
-    radial-gradient(closest-side,
-      rgba(255,255,255,0) 60%,
-      color-mix(in srgb, var(--barca-blue) 60%, transparent) 75%,
-      color-mix(in srgb, var(--barca-red)  55%, transparent) 88%,
-      transparent 92%);
-  filter: blur(8px);
-  animation: hero-glow 3.5s ease-in-out infinite;
-  z-index:-1; /* sits behind the ball */
+    radial-gradient(closest-side, var(--glow-color-1), transparent 65%),
+    radial-gradient(closest-side, var(--glow-color-2), transparent 70%),
+    radial-gradient(closest-side, var(--glow-color-3), transparent 75%);
+
+  filter: blur(var(--glow-ball-blur));
+  opacity: 0.0; /* animated in */
+  will-change: transform, opacity, filter;
+  animation: hero-ball-glow var(--glow-ball-speed) ease-in-out infinite;
+  pointer-events: none;
 }
 
 /* === Animations ====================================================== */
@@ -1934,9 +1973,10 @@ textarea:focus-visible {
   to{ transform:rotate(360deg); }
 }
 
-@keyframes hero-glow{
-  0%,100%{ opacity:.45; transform:scale(.98); }
-  50%    { opacity:.75; transform:scale(1.02); }
+@keyframes hero-ball-glow {
+  0%   { opacity: calc(.35 * var(--glow-ball-intensity)); transform: translate(-50%, -50%) scale(calc(var(--glow-ball-size-mult) * .98)); }
+  50%  { opacity: calc(.85 * var(--glow-ball-intensity)); transform: translate(-50%, -50%) scale(calc(var(--glow-ball-size-mult) * 1.02)); }
+  100% { opacity: calc(.35 * var(--glow-ball-intensity)); transform: translate(-50%, -50%) scale(calc(var(--glow-ball-size-mult) * .98)); }
 }
 
 
@@ -1949,6 +1989,27 @@ textarea:focus-visible {
 @keyframes hero-underline-in {
   0%   { opacity: 0; transform: translateX(-50%) scaleX(0.2); }
   100% { opacity: 1; transform: translateX(-50%) scaleX(1); }
+}
+
+@keyframes hero-underline-pulse {
+  0% {
+    opacity: .70;
+    transform: scaleX(.995);
+    box-shadow: 0 0 var(--underline-glow-spread) rgba(10, 42, 107, 0.28),
+                0 0 calc(var(--underline-glow-spread) * .55) rgba(206, 17, 49, 0.26);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.005);
+    box-shadow: 0 0 calc(var(--underline-glow-spread) * 1.15) rgba(10, 42, 107, 0.34),
+                0 0 calc(var(--underline-glow-spread) * .75) rgba(206, 17, 49, 0.34);
+  }
+  100% {
+    opacity: .70;
+    transform: scaleX(.995);
+    box-shadow: 0 0 var(--underline-glow-spread) rgba(10, 42, 107, 0.28),
+                0 0 calc(var(--underline-glow-spread) * .55) rgba(206, 17, 49, 0.26);
+  }
 }
 
 @keyframes vipspot-sheen {
