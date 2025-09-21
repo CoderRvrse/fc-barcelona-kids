@@ -1,6 +1,6 @@
 (function () {
-  // === FORMATION LAB v22.1 - TOAST SYSTEM + DRAG RELIABILITY OVERHAUL ===
-  // Features: In-field toasts, drag threshold, non-blocking tutorial, reliability fixes
+  // === FORMATION LAB v22.2 - INTERACTION & TUTORIAL FIX PACK ===
+  // Features: Drag/hover jank fixes, tutorial persistence, no auto-scroll, proportional arrows, performance optimizations
 
   // State management
   const state = {
@@ -114,12 +114,12 @@
           ...actions,
           {
             text: step > 1 ? 'Previous' : '',
-            action: step > 1 ? () => this.tutorialStep(step - 1) : null,
+            action: step > 1 ? () => window.flabToast.tutorialStep(step - 1) : null,
             secondary: true
           },
           {
             text: step < total ? 'Next' : 'Finish',
-            action: step < total ? () => this.tutorialStep(step + 1) : () => this.endTutorial()
+            action: step < total ? () => window.flabToast.tutorialStep(step + 1) : () => window.flabToast.endTutorial()
           }
         ],
         id: 'tutorial',
@@ -204,12 +204,31 @@
         closeBtn.addEventListener('click', () => this.dismiss(toast.id));
       }
 
-      // Keyboard handling
+      // Enhanced keyboard handling for tutorials
       el.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           this.dismiss(toast.id);
         }
+
+        // Tutorial-specific keyboard shortcuts
+        if (toast.type === 'tutorial') {
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevBtn = el.querySelector('[data-action="Previous"]');
+            if (prevBtn && !prevBtn.disabled) prevBtn.click();
+          }
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'Enter') {
+            e.preventDefault();
+            const nextBtn = el.querySelector('[data-action="Next"], [data-action="Finish"]');
+            if (nextBtn) nextBtn.click();
+          }
+        }
       });
+
+      // Focus trap for tutorials
+      if (toast.type === 'tutorial') {
+        this.setupFocusTrap(el);
+      }
 
       toast.element = el;
       this.toasts.set(toast.id, toast);
@@ -298,6 +317,36 @@
         const nextToast = this.queue.shift();
         this.render(nextToast);
       }
+    },
+
+    setupFocusTrap(element) {
+      const focusableElements = element.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      // Focus first element after a short delay
+      setTimeout(() => firstElement.focus(), 100);
+
+      element.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              e.preventDefault();
+              lastElement.focus();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              e.preventDefault();
+              firstElement.focus();
+            }
+          }
+        }
+      });
     }
   };
 
@@ -342,6 +391,9 @@
     currentTutorialStep = step;
     const stepData = tutorialSteps[step - 1];
 
+    // Persist current step
+    localStorage.setItem('flab.tutorialStep', step.toString());
+
     toastSystem.tutorial(
       `**${stepData.title}** - ${stepData.message}`,
       step,
@@ -352,7 +404,20 @@
   function endTutorial() {
     toastSystem.dismiss('tutorial');
     localStorage.setItem('flab.tutorialSeen', '1');
+    localStorage.removeItem('flab.tutorialStep'); // Clear step state
     toastSystem.success('Tutorial complete! You\'re ready to create formations.');
+  }
+
+  function resumeTutorial() {
+    const savedStep = localStorage.getItem('flab.tutorialStep');
+    if (savedStep) {
+      const step = parseInt(savedStep, 10);
+      if (step >= 1 && step <= tutorialSteps.length) {
+        showTutorialStep(step);
+        return true;
+      }
+    }
+    return false;
   }
 
   // Session storage for one-time tips
@@ -401,6 +466,7 @@
 
   // Enhanced drag management
   let dragFrame = null;
+  let historyDebounce = null;
 
   // Interaction state management (Enhanced v22.1)
   function beginInteraction() {
@@ -409,6 +475,8 @@
       root.classList.add('is-interacting');
       if (state.isDragging) {
         root.classList.add('is-dragging');
+        // Add global drag class for comprehensive scroll/selection prevention
+        document.body.classList.add('lab-dragging');
       }
     }
     showCursorRing();
@@ -419,6 +487,8 @@
     if (root) {
       root.classList.remove('is-interacting', 'is-dragging');
     }
+    // Remove global drag class
+    document.body.classList.remove('lab-dragging');
     hideCursorRing();
     state.isDragging = false;
   }
@@ -522,10 +592,13 @@
     // Set initial mode
     setMode('select');
 
+    // Initialize arrow scaling
+    updateArrowScaling();
+
     // Show tutorial if first time
     checkFirstRun();
 
-    console.log('Formation Lab v22.1 initialized - Toast System + Drag Reliability Complete');
+    console.log('Formation Lab v22.2 initialized - Interaction & Tutorial Fix Pack Complete');
   }
 
   function ensureLayers() {
@@ -959,6 +1032,8 @@
 
     document.addEventListener('pointermove', handleDragMove);
     document.addEventListener('pointerup', handleDragEnd);
+    document.addEventListener('pointercancel', handleDragEnd);
+    window.addEventListener('blur', handleDragEnd);
 
     state.dragStartPos = null; // Clear threshold state
   }
@@ -1015,6 +1090,8 @@
 
     document.removeEventListener('pointermove', handleDragMove);
     document.removeEventListener('pointerup', handleDragEnd);
+    document.removeEventListener('pointercancel', handleDragEnd);
+    window.removeEventListener('blur', handleDragEnd);
 
     // Move original to final position with offset correction
     if (coords) {
@@ -1041,7 +1118,7 @@
 
     state.draggingId = null;
     state.dragOffset = { x: 0, y: 0 };
-    pushHistory();
+    debouncedPushHistory();
   }
 
   function getSVGCoords(e) {
@@ -1219,6 +1296,44 @@
 
     updateGhostPath(coords.x, coords.y);
     updateSnapTarget(coords.x, coords.y);
+  }
+
+  // === ARROW SCALING SYSTEM ===
+
+  function updateArrowScaling() {
+    const s = svg();
+    if (!s) return { shaftWidth: 2.5, headSize: 8 };
+
+    const pitchRect = s.viewBox.baseVal;
+    const pitchWidth = pitchRect.width;
+
+    // Calculate proportional sizes
+    const shaftWidth = Math.max(6, Math.min(10, 0.004 * pitchWidth));
+    const headSize = Math.max(14, Math.min(24, 0.012 * pitchWidth));
+    const headWidth = headSize;
+    const headHeight = headSize * 0.75; // 3:4 aspect ratio
+
+    // Update arrow marker
+    const marker = s.querySelector('#arrowhead');
+    if (marker) {
+      marker.setAttribute('markerWidth', headWidth);
+      marker.setAttribute('markerHeight', headHeight);
+      marker.setAttribute('refX', headWidth * 0.875); // Position at 87.5% of width
+      marker.setAttribute('refY', headHeight / 2); // Center vertically
+
+      const polygon = marker.querySelector('polygon');
+      if (polygon) {
+        polygon.setAttribute('points', `0 0, ${headWidth} ${headHeight/2}, 0 ${headHeight}`);
+        polygon.setAttribute('fill', 'rgba(242, 194, 0, 0.85)'); // Barcelona gold with opacity
+      }
+    }
+
+    // Update existing line stroke widths
+    s.querySelectorAll('.flab-line').forEach(line => {
+      line.setAttribute('stroke-width', shaftWidth);
+    });
+
+    return { shaftWidth, headSize };
   }
 
   function addDrawPoint(x, y, playerId = null) {
@@ -1426,7 +1541,8 @@
 
         pathEl.setAttribute('d', d);
         pathEl.setAttribute('stroke', 'url(#barcaGrad)');
-        pathEl.setAttribute('stroke-width', '2.5');
+        const { shaftWidth } = updateArrowScaling();
+        pathEl.setAttribute('stroke-width', shaftWidth);
         pathEl.setAttribute('fill', 'none');
         pathEl.setAttribute('marker-end', 'url(#arrowhead)');
         pathEl.classList.add('flab-line');
@@ -1444,7 +1560,8 @@
         lineEl.setAttribute('x2', toPos.x);
         lineEl.setAttribute('y2', toPos.y);
         lineEl.setAttribute('stroke', 'url(#barcaGrad)');
-        lineEl.setAttribute('stroke-width', '2.5');
+        const { shaftWidth: shaftWidth2 } = updateArrowScaling();
+        lineEl.setAttribute('stroke-width', shaftWidth2);
         lineEl.setAttribute('marker-end', 'url(#arrowhead)');
         lineEl.classList.add('flab-line');
 
@@ -1600,6 +1717,11 @@
     }
 
     updateToolbarState();
+  }
+
+  function debouncedPushHistory() {
+    if (historyDebounce) clearTimeout(historyDebounce);
+    historyDebounce = setTimeout(pushHistory, 150); // 150ms debounce
   }
 
   function undo() {
@@ -1777,8 +1899,36 @@
   function checkFirstRun() {
     const seen = localStorage.getItem('flab.tutorialSeen');
     if (!seen) {
-      setTimeout(startTutorial, 1000); // Show after 1 second
+      // Try to resume from saved step first
+      if (!resumeTutorial()) {
+        // Use IntersectionObserver to only show tutorial when lab is in view
+        setupTutorialObserver();
+      }
     }
+  }
+
+  function setupTutorialObserver() {
+    const labElement = labRoot();
+    if (!labElement || !('IntersectionObserver' in window)) {
+      // Fallback for browsers without IntersectionObserver
+      setTimeout(startTutorial, 2000);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          // Lab is at least 50% visible, show tutorial
+          startTutorial();
+          observer.disconnect(); // Only show once
+        }
+      });
+    }, {
+      threshold: 0.5,
+      rootMargin: '0px'
+    });
+
+    observer.observe(labElement);
   }
 
   // === INITIALIZATION ===
@@ -1804,5 +1954,6 @@
   // Global tutorial step functions for toast actions
   window.flabToast.tutorialStep = showTutorialStep;
   window.flabToast.endTutorial = endTutorial;
+  window.flabToast.resumeTutorial = resumeTutorial;
 
 })();

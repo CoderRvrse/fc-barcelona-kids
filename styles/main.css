@@ -2829,8 +2829,37 @@ textarea:focus-visible {
   transition: transform 120ms ease;
 }
 
+/* Hover reticle ring system - only when not dragging and in select mode */
+.flab-player:hover:not(.is-dragging)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 4px rgba(10, 42, 107, 0.25);
+  pointer-events: none;
+  animation: reticle-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes reticle-pulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+/* Very subtle scale on hover - minimal to prevent jank */
 .flab-player:hover:not(.is-dragging) {
-  transform: scale(1.04);
+  transform: scale(1.02);
+  transition: transform 80ms ease-out;
 }
 
 .flab-player:active,
@@ -2863,6 +2892,22 @@ textarea:focus-visible {
   dominant-baseline: central;
   fill: #0b1c45;
   pointer-events: none;
+}
+
+/* Generous hit areas for better UX */
+.flab-player__hit {
+  fill: transparent;
+  r: 24; /* 48px diameter hit area */
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.flab-player__hit:hover {
+  cursor: grab;
+}
+
+.flab-player.is-dragging .flab-player__hit {
+  cursor: grabbing;
 }
 
 /* Selection ring */
@@ -3351,7 +3396,7 @@ textarea:focus-visible {
   text-align: center;
 }
 
-/* --- TOAST SYSTEM v22.1 --- */
+/* --- TOAST SYSTEM v22.2 --- */
 
 /* Toast Host */
 .flab-toast-host {
@@ -3584,7 +3629,7 @@ textarea:focus-visible {
   }
 }
 
-/* --- DRAG RELIABILITY OVERHAUL v22.1 --- */
+/* --- INTERACTION & TUTORIAL FIX PACK v22.2 --- */
 
 /* Enhanced Player Hit Areas */
 .flab-player {
@@ -3607,15 +3652,38 @@ textarea:focus-visible {
   z-index: 999;
 }
 
-/* Suppress ALL hover effects during drag */
+/* Comprehensive drag state management */
+.lab-dragging {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+.lab-dragging #formationLab {
+  touch-action: none !important;
+}
+
+/* Suppress ALL hover effects during drag - bulletproof */
 #formationLab.is-dragging .flab-player,
 #formationLab.is-dragging .flab-player:hover,
+#formationLab.is-dragging .flab-player::after,
+#formationLab.is-dragging .flab-player:hover::after,
 #formationLab.is-dragging .flab-player__dot,
 #formationLab.is-dragging .flab-player__dot:hover {
   transition: none !important;
   animation: none !important;
   transform: none !important;
   filter: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Drag performance optimization */
+.flab-player.is-dragging {
+  will-change: transform;
+  transform-style: preserve-3d;
+  pointer-events: none;
 }
 
 /* Only allow hover in select mode when not dragging */
