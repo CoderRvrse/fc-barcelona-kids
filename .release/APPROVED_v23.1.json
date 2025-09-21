@@ -1,0 +1,20 @@
+{
+  "version": "23.1",
+  "commit": "588ed20",
+  "approved_by": "Pathfinder/ClaudeCode",
+  "approved_for": "production",
+  "environment": "github-pages",
+  "timestamp_iso": "2025-09-21T17:04:15.000Z",
+  "live_url": "https://coderrvrse.github.io/fc-barcelona-kids/",
+  "service_worker": { "cache_version_expected": "v23.1" },
+  "rollback": { "commit": "3572a0a", "label": "v22.2" },
+  "checks": [
+    "lint_passed",
+    "deploy_passed",
+    "smoke_assets_versioned",
+    "formation_lab_critical_behaviors",
+    "sw_cache_version",
+    "link_check",
+    "auto_regression_ok"
+  ]
+}

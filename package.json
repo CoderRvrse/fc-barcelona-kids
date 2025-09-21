@@ -21,7 +21,9 @@
     "validate:css": "stylelint styles/*.css",
     "validate:accessibility": "axe http://localhost:3000",
     "lint": "npx --yes eslint@8 \"**/*.js\" --ignore-path .eslintignore --max-warnings=0",
-    "links": "npx --yes lychee@0.2.12 --config .lychee.toml ."
+    "links": "npx --yes lychee@0.2.12 --config .lychee.toml .",
+    "verify:release": "node scripts/release-verify.mjs",
+    "verify:release:ps": "powershell -ExecutionPolicy Bypass -File scripts/release-verify.ps1"
   },
   "devDependencies": {
     "axe-cli": "^4.7.0",
