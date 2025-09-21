@@ -45,9 +45,9 @@
     <!-- Version pin to keep HTML/CSS/JS in sync -->
     <script>window.__VER__='18';</script>
 
-    <link rel="stylesheet" href="styles/main.css?v=18" />
+    <link rel="stylesheet" href="styles/main.css?v=19" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="scripts/main.js?v=18" defer></script>
+    <script src="scripts/main.js?v=19" defer></script>
 
     <noscript>
         <style>
@@ -179,6 +179,71 @@
                 <p class="squad__kicker">Tap a card to flip it and see this season's numbers.</p>
             </div>
             <div id="squadGrid" class="squad__grid" aria-live="polite"></div>
+        </section>
+
+        <section id="formationLab" class="formation">
+            <div class="container">
+                <header class="formation__hdr">
+                    <h2 class="formation__title">Formation Lab</h2>
+                    <p class="formation__subtitle">Create, visualize, and share tactical formations with interactive drag & drop</p>
+                    <div class="formation__controls" role="toolbar" aria-label="Formation controls">
+                        <select id="formationSelect" class="formation__select" aria-label="Formation preset">
+                            <option value="433">4–3–3</option>
+                            <option value="4231">4–2–3–1</option>
+                            <option value="442">4–4–2</option>
+                            <option value="352">3–5–2</option>
+                            <option value="custom">Custom</option>
+                        </select>
+
+                        <button id="toggleBall" class="btn formation__btn" aria-pressed="false" title="Toggle ball (B)">Ball</button>
+                        <button id="drawMode" class="btn formation__btn" aria-pressed="false" title="Draw passes (D)">Draw</button>
+                        <button id="highlightMode" class="btn formation__btn" aria-pressed="false" title="Highlight players (H)">Highlight</button>
+
+                        <button id="undo" class="btn formation__btn" aria-disabled="true" title="Undo (Ctrl+Z)">Undo</button>
+                        <button id="redo" class="btn formation__btn" aria-disabled="true" title="Redo (Ctrl+Y)">Redo</button>
+                        <button id="clear" class="btn formation__btn" title="Clear all">Clear</button>
+
+                        <button id="play" class="btn formation__btn formation__btn--primary" title="Play sequence (P)">Play</button>
+                        <button id="save" class="btn formation__btn" title="Save formation (S)">Save</button>
+                        <button id="load" class="btn formation__btn" title="Load formation (L)">Load</button>
+                        <button id="export" class="btn formation__btn" title="Export PNG">Export</button>
+                    </div>
+                </header>
+
+                <div class="formation__stage">
+                    <svg id="pitch" class="formation__pitch" viewBox="0 0 1000 650" aria-label="Tactics pitch" role="img">
+                        <!-- SVG definitions for markers -->
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7"
+                                    refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#f2c200" />
+                            </marker>
+                            <filter id="playerShadow" x="-50%" y="-50%" width="200%" height="200%">
+                                <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+                            </filter>
+                        </defs>
+
+                        <!-- Pitch markings -->
+                        <rect class="pitch__field" x="0" y="0" width="1000" height="650" />
+                        <line class="pitch__line" x1="500" y1="0" x2="500" y2="650" />
+                        <circle class="pitch__circle" cx="500" cy="325" r="73" />
+                        <rect class="pitch__box" x="0" y="162.5" width="132" height="325" />
+                        <rect class="pitch__box" x="868" y="162.5" width="132" height="325" />
+                        <rect class="pitch__smallbox" x="0" y="243.75" width="44" height="162.5" />
+                        <rect class="pitch__smallbox" x="956" y="243.75" width="44" height="162.5" />
+
+                        <!-- Layers for content -->
+                        <g id="layer-lines" aria-label="Pass lines"></g>
+                        <circle id="ball" r="12" class="ball" cx="500" cy="325" style="display: none;" aria-label="Ball" />
+                        <g id="layer-players" aria-live="polite" aria-label="Players"></g>
+                        <g id="layer-highlights" aria-label="Player highlights"></g>
+                    </svg>
+                </div>
+
+                <footer class="formation__tips" aria-hidden="true">
+                    <span>💡 Tips: Drag players • D = draw pass • H = highlight • B = ball • Esc = exit mode • S = save • P = play</span>
+                </footer>
+            </div>
         </section>
 
         <section id="coaches" class="coaches" data-section>

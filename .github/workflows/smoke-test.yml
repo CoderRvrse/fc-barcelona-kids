@@ -21,13 +21,14 @@ jobs:
           echo "🔍 Fetching live page..."
           curl -fsSL "$ROOT/" > page.html
 
-          echo "✅ Testing v18 assets..."
-          grep -q 'styles/main.css?v=18' page.html || (echo "❌ CSS v18 missing" && exit 1)
-          grep -q 'scripts/main.js?v=18' page.html || (echo "❌ JS v18 missing" && exit 1)
+          echo "✅ Testing v19 assets..."
+          grep -q 'styles/main.css?v=19' page.html || (echo "❌ CSS v19 missing" && exit 1)
+          grep -q 'scripts/main.js?v=19' page.html || (echo "❌ JS v19 missing" && exit 1)
 
           echo "✅ Testing core elements..."
           grep -q 'id="hero"' page.html || (echo "❌ Hero missing" && exit 1)
           grep -q 'id="squadGrid"' page.html || (echo "❌ Squad grid missing" && exit 1)
+          grep -q 'id="formationLab"' page.html || (echo "❌ Formation Lab missing" && exit 1)
           grep -q 'FC BARCELONA' page.html || (echo "❌ Title missing" && exit 1)
 
           echo "✅ Testing JSON endpoint..."
@@ -42,7 +43,7 @@ jobs:
           ! grep -q '>C BARCELONA<' page.html || (echo "❌ Blank title regression detected" && exit 1)
 
           echo "🎉 All smoke tests passed!"
-          echo "- Assets: v18 ✅"
-          echo "- Elements: Hero, Squad Grid ✅"
+          echo "- Assets: v19 ✅"
+          echo "- Elements: Hero, Squad Grid, Formation Lab ✅"
           echo "- Players: $PLAYER_COUNT ✅"
           echo "- No regressions ✅"

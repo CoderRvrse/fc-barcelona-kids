@@ -46,7 +46,8 @@
       "Bash(gh pr view:*)",
       "Bash(git branch:*)",
       "Bash(echo \"Exit code: $?\")",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
