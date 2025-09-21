@@ -43,11 +43,11 @@
     <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
     <!-- Version pin to keep HTML/CSS/JS in sync -->
-    <script>window.__VER__='19';</script>
+    <script>window.__VER__='20';</script>
 
-    <link rel="stylesheet" href="styles/main.css?v=19" />
+    <link rel="stylesheet" href="styles/main.css?v=20" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="scripts/main.js?v=19" defer></script>
+    <script src="scripts/main.js?v=20" defer></script>
 
     <noscript>
         <style>
@@ -181,68 +181,77 @@
             <div id="squadGrid" class="squad__grid" aria-live="polite"></div>
         </section>
 
-        <section id="formationLab" class="formation">
+        <section id="formationLab" class="flab">
             <div class="container">
-                <header class="formation__hdr">
-                    <h2 class="formation__title">Formation Lab</h2>
-                    <p class="formation__subtitle">Create, visualize, and share tactical formations with interactive drag & drop</p>
-                    <div class="formation__controls" role="toolbar" aria-label="Formation controls">
-                        <select id="formationSelect" class="formation__select" aria-label="Formation preset">
-                            <option value="433">4–3–3</option>
-                            <option value="4231">4–2–3–1</option>
-                            <option value="442">4–4–2</option>
-                            <option value="352">3–5–2</option>
-                            <option value="custom">Custom</option>
-                        </select>
+                <div class="flab__head">
+                    <h2>Formation Lab</h2>
+                    <p>Create, visualize, and share tactical formations with interactive drag &amp; drop</p>
+                </div>
 
-                        <button id="toggleBall" class="btn formation__btn" aria-pressed="false" title="Toggle ball (B)">Ball</button>
-                        <button id="drawMode" class="btn formation__btn" aria-pressed="false" title="Draw passes (D)">Draw</button>
-                        <button id="highlightMode" class="btn formation__btn" aria-pressed="false" title="Highlight players (H)">Highlight</button>
-
-                        <button id="undo" class="btn formation__btn" aria-disabled="true" title="Undo (Ctrl+Z)">Undo</button>
-                        <button id="redo" class="btn formation__btn" aria-disabled="true" title="Redo (Ctrl+Y)">Redo</button>
-                        <button id="clear" class="btn formation__btn" title="Clear all">Clear</button>
-
-                        <button id="play" class="btn formation__btn formation__btn--primary" title="Play sequence (P)">Play</button>
-                        <button id="save" class="btn formation__btn" title="Save formation (S)">Save</button>
-                        <button id="load" class="btn formation__btn" title="Load formation (L)">Load</button>
-                        <button id="export" class="btn formation__btn" title="Export PNG">Export</button>
+                <div class="flab__controls">
+                    <select id="flabFormation">
+                        <option value="442">4–4–2</option>
+                        <option value="433" selected>4–3–3</option>
+                        <option value="451">4–5–1</option>
+                        <option value="343">3–4–3</option>
+                        <option value="352">3–5–2</option>
+                    </select>
+                    <div class="flab__buttons">
+                        <button data-mode="ball">Ball</button>
+                        <button data-mode="draw">Draw</button>
+                        <button data-mode="highlight">Highlight</button>
+                        <button data-action="undo">Undo</button>
+                        <button data-action="redo">Redo</button>
+                        <button data-action="clear">Clear</button>
+                        <button data-action="play">Play</button>
+                        <button data-action="save">Save</button>
+                        <button data-action="load">Load</button>
+                        <button data-action="export">Export</button>
                     </div>
-                </header>
+                </div>
 
-                <div class="formation__stage">
-                    <svg id="pitch" class="formation__pitch" viewBox="0 0 1000 650" aria-label="Tactics pitch" role="img">
-                        <!-- SVG definitions for markers -->
+                <!-- Responsive SVG pitch (105x68 scale) -->
+                <div class="flab__stage">
+                    <svg id="flabPitch" viewBox="0 0 105 68" aria-label="Soccer pitch" role="img">
+                        <!-- gradient backdrop -->
                         <defs>
-                            <marker id="arrowhead" markerWidth="10" markerHeight="7"
-                                    refX="9" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="#f2c200" />
-                            </marker>
-                            <filter id="playerShadow" x="-50%" y="-50%" width="200%" height="200%">
-                                <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
-                            </filter>
+                            <linearGradient id="grass" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0" stop-color="#1c3b7a"/>
+                                <stop offset="1" stop-color="#142a4f"/>
+                            </linearGradient>
+                            <pattern id="mow" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(90)">
+                                <rect width="6" height="3" fill="rgba(255,255,255,.03)"/>
+                                <rect y="3" width="6" height="3" fill="rgba(0,0,0,.03)"/>
+                            </pattern>
                         </defs>
 
-                        <!-- Pitch markings -->
-                        <rect class="pitch__field" x="0" y="0" width="1000" height="650" />
-                        <line class="pitch__line" x1="500" y1="0" x2="500" y2="650" />
-                        <circle class="pitch__circle" cx="500" cy="325" r="73" />
-                        <rect class="pitch__box" x="0" y="162.5" width="132" height="325" />
-                        <rect class="pitch__box" x="868" y="162.5" width="132" height="325" />
-                        <rect class="pitch__smallbox" x="0" y="243.75" width="44" height="162.5" />
-                        <rect class="pitch__smallbox" x="956" y="243.75" width="44" height="162.5" />
+                        <rect x="0" y="0" width="105" height="68" fill="url(#grass)"/>
+                        <rect x="0" y="0" width="105" height="68" fill="url(#mow)"/>
 
-                        <!-- Layers for content -->
-                        <g id="layer-lines" aria-label="Pass lines"></g>
-                        <circle id="ball" r="12" class="ball" cx="500" cy="325" style="display: none;" aria-label="Ball" />
-                        <g id="layer-players" aria-live="polite" aria-label="Players"></g>
-                        <g id="layer-highlights" aria-label="Player highlights"></g>
+                        <!-- pitch markings (slightly translucent for style) -->
+                        <g stroke="rgba(255,255,255,.85)" stroke-width="0.4" fill="none">
+                            <rect x="1" y="1" width="103" height="66"/>
+                            <line x1="52.5" y1="1" x2="52.5" y2="67"/>
+                            <circle cx="52.5" cy="34" r="9"/>
+                            <!-- penalty boxes -->
+                            <rect x="1" y="18" width="16.5" height="32"/>
+                            <rect x="87.5" y="18" width="16.5" height="32"/>
+                            <!-- six-yard boxes -->
+                            <rect x="1" y="26" width="5.5" height="16"/>
+                            <rect x="98.5" y="26" width="5.5" height="16"/>
+                            <!-- penalty spots & center -->
+                            <circle cx="52.5" cy="34" r="0.8" fill="rgba(255,255,255,.85)"/>
+                            <circle cx="12" cy="34"  r="0.8" fill="rgba(255,255,255,.85)"/>
+                            <circle cx="93" cy="34"  r="0.8" fill="rgba(255,255,255,.85)"/>
+                        </g>
+
+                        <!-- layers: passes/runs below, players above -->
+                        <g id="flabLines"></g>
+                        <g id="flabPlayers" aria-live="polite"></g>
                     </svg>
                 </div>
 
-                <footer class="formation__tips" aria-hidden="true">
-                    <span>💡 Tips: Drag players • D = draw pass • H = highlight • B = ball • Esc = exit mode • S = save • P = play</span>
-                </footer>
+                <p class="flab__tips">💡 Drag players · D = draw pass · H = highlight · B = ball · Esc = exit · S = save · P = play</p>
             </div>
         </section>
 

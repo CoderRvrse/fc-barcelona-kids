@@ -1,606 +1,248 @@
-// Formation Lab Module - Interactive Tactical Formation Creator
-// Implements drag & drop, pass drawing, animations, and export functionality
+(function () {
+  const svg = () => document.getElementById('flabPitch');
+  const gPlayers = () => document.getElementById('flabPlayers');
+  const gLines = () => document.getElementById('flabLines');
 
-class FormationLab {
-  constructor() {
-    this.pitch = document.getElementById('pitch');
-    this.playersLayer = document.getElementById('playersLayer');
-    this.passesLayer = document.getElementById('passesLayer');
-    this.ballLayer = document.getElementById('ballLayer');
+  const presets = {
+    "433": [
+      [52.5,62],          // GK
+      [16,50],[36,48],[69,48],[89,50], // back 4
+      [30,38],[52.5,36],[75,38],       // mid 3
+      [28,22],[52.5,18],[77,22]        // front 3
+    ],
+    "442": [
+      [52.5,62],          // GK
+      [16,50],[36,48],[69,48],[89,50], // back 4
+      [25,38],[44,36],[61,36],[80,38], // mid 4
+      [40,20],[66,20]                  // front 2
+    ],
+    "451": [
+      [52.5,62],          // GK
+      [16,50],[36,48],[69,48],[89,50], // back 4
+      [20,42],[35,40],[52.5,38],[70,40],[85,42], // mid 5
+      [52.5,18]                        // front 1
+    ],
+    "343": [
+      [52.5,62],          // GK
+      [30,50],[52.5,48],[75,50],       // back 3
+      [16,42],[36,38],[69,38],[89,42], // mid 4
+      [32,22],[52.5,18],[73,22]        // front 3
+    ],
+    "352": [
+      [52.5,62],          // GK
+      [30,50],[52.5,48],[75,50],       // back 3
+      [16,42],[30,38],[52.5,36],[75,38],[89,42], // mid 5
+      [40,20],[66,20]                  // front 2
+    ]
+  };
 
-    this.players = [];
-    this.passes = [];
-    this.isDrawingPass = false;
-    this.currentPass = null;
-    this.selectedPlayer = null;
-    this.ball = null;
-
-    this.formations = {
-      '4-3-3': {
-        name: '4-3-3',
-        positions: [
-          { id: 'GK', x: 50, y: 90, name: 'Goalkeeper' },
-          { id: 'LB', x: 15, y: 70, name: 'Left Back' },
-          { id: 'CB1', x: 35, y: 70, name: 'Centre Back' },
-          { id: 'CB2', x: 65, y: 70, name: 'Centre Back' },
-          { id: 'RB', x: 85, y: 70, name: 'Right Back' },
-          { id: 'CM1', x: 25, y: 45, name: 'Centre Mid' },
-          { id: 'CM2', x: 50, y: 45, name: 'Centre Mid' },
-          { id: 'CM3', x: 75, y: 45, name: 'Centre Mid' },
-          { id: 'LW', x: 15, y: 20, name: 'Left Wing' },
-          { id: 'ST', x: 50, y: 15, name: 'Striker' },
-          { id: 'RW', x: 85, y: 20, name: 'Right Wing' }
-        ]
-      },
-      '4-4-2': {
-        name: '4-4-2',
-        positions: [
-          { id: 'GK', x: 50, y: 90, name: 'Goalkeeper' },
-          { id: 'LB', x: 15, y: 70, name: 'Left Back' },
-          { id: 'CB1', x: 35, y: 70, name: 'Centre Back' },
-          { id: 'CB2', x: 65, y: 70, name: 'Centre Back' },
-          { id: 'RB', x: 85, y: 70, name: 'Right Back' },
-          { id: 'LM', x: 15, y: 45, name: 'Left Mid' },
-          { id: 'CM1', x: 35, y: 45, name: 'Centre Mid' },
-          { id: 'CM2', x: 65, y: 45, name: 'Centre Mid' },
-          { id: 'RM', x: 85, y: 45, name: 'Right Mid' },
-          { id: 'ST1', x: 35, y: 15, name: 'Striker' },
-          { id: 'ST2', x: 65, y: 15, name: 'Striker' }
-        ]
-      },
-      '3-5-2': {
-        name: '3-5-2',
-        positions: [
-          { id: 'GK', x: 50, y: 90, name: 'Goalkeeper' },
-          { id: 'CB1', x: 25, y: 70, name: 'Centre Back' },
-          { id: 'CB2', x: 50, y: 70, name: 'Centre Back' },
-          { id: 'CB3', x: 75, y: 70, name: 'Centre Back' },
-          { id: 'LWB', x: 10, y: 50, name: 'Left Wing Back' },
-          { id: 'CM1', x: 30, y: 45, name: 'Centre Mid' },
-          { id: 'CM2', x: 50, y: 45, name: 'Centre Mid' },
-          { id: 'CM3', x: 70, y: 45, name: 'Centre Mid' },
-          { id: 'RWB', x: 90, y: 50, name: 'Right Wing Back' },
-          { id: 'ST1', x: 35, y: 15, name: 'Striker' },
-          { id: 'ST2', x: 65, y: 15, name: 'Striker' }
-        ]
-      }
-    };
-
-    this.init();
+  function clearGroup(g){
+    if (!g) return;
+    while(g.firstChild) g.removeChild(g.firstChild);
   }
 
-  init() {
-    this.loadFormation('4-3-3');
-    this.createBall();
-    this.bindEvents();
-    this.loadFromStorage();
-  }
+  function drawPlaceholders(formation="433"){
+    const pts = presets[formation] || presets["433"];
+    const playersGroup = gPlayers();
+    if (!playersGroup) return;
 
-  bindEvents() {
-    // Formation selector
-    const formationSelect = document.getElementById('formationSelect');
-    formationSelect.addEventListener('change', (e) => {
-      this.loadFormation(e.target.value);
-    });
+    clearGroup(playersGroup);
 
-    // Clear passes button
-    const clearPassesBtn = document.getElementById('clearPasses');
-    clearPassesBtn.addEventListener('click', () => {
-      this.clearPasses();
-    });
+    pts.forEach((p, i) => {
+      const [x,y] = p;
+      const node = document.createElementNS('http://www.w3.org/2000/svg','g');
+      node.classList.add('flab-player');
+      node.setAttribute('tabindex', '0');
+      node.setAttribute('transform', `translate(${x} ${y})`);
+      node.dataset.index = i;
+      node.setAttribute('aria-label', `Player ${i === 0 ? 'Goalkeeper' : i + 1}`);
 
-    // Reset formation button
-    const resetBtn = document.getElementById('resetFormation');
-    resetBtn.addEventListener('click', () => {
-      this.resetFormation();
-    });
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('class','flab-player__dot');
 
-    // Export button
-    const exportBtn = document.getElementById('exportFormation');
-    exportBtn.addEventListener('click', () => {
-      this.exportFormation();
-    });
+      const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+      label.setAttribute('class','flab-player__label');
+      label.textContent = i === 0 ? '1' : String(i + 1);
 
-    // Animate ball button
-    const animateBallBtn = document.getElementById('animateBall');
-    animateBallBtn.addEventListener('click', () => {
-      this.animateBall();
-    });
+      node.appendChild(dot);
+      node.appendChild(label);
+      playersGroup.appendChild(node);
 
-    // Pass drawing toggle
-    const drawPassesBtn = document.getElementById('drawPasses');
-    drawPassesBtn.addEventListener('click', () => {
-      this.togglePassDrawing();
-    });
+      // Simple drag functionality
+      let dragging = false;
 
-    // Pitch click for pass creation
-    this.pitch.addEventListener('click', (e) => {
-      if (this.isDrawingPass) {
-        this.handlePassClick(e);
-      }
-    });
-
-    // Auto-save on changes
-    this.pitch.addEventListener('pointermove', () => {
-      clearTimeout(this.saveTimeout);
-      this.saveTimeout = setTimeout(() => this.saveToStorage(), 500);
-    });
-  }
-
-  loadFormation(formationName) {
-    const formation = this.formations[formationName];
-    if (!formation) return;
-
-    this.clearPlayers();
-    this.clearPasses();
-
-    formation.positions.forEach(pos => {
-      this.createPlayer(pos);
-    });
-
-    this.saveToStorage();
-  }
-
-  createPlayer(position) {
-    const player = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    player.classList.add('formation__player');
-    player.setAttribute('data-id', position.id);
-    player.setAttribute('data-name', position.name);
-
-    const x = (position.x / 100) * 1000;
-    const y = (position.y / 100) * 650;
-
-    player.innerHTML = `
-      <circle cx="${x}" cy="${y}" r="15" fill="#004d98" stroke="#f2c200" stroke-width="2"/>
-      <text x="${x}" y="${y + 4}" text-anchor="middle" fill="white" font-size="10" font-weight="bold" pointer-events="none">
-        ${position.id}
-      </text>
-    `;
-
-    this.playersLayer.appendChild(player);
-    this.players.push({ element: player, position: { x: position.x, y: position.y }, id: position.id });
-
-    this.makeDraggable(player);
-  }
-
-  makeDraggable(player) {
-    let isDragging = false;
-    let startPoint = { x: 0, y: 0 };
-    let offset = { x: 0, y: 0 };
-
-    const circle = player.querySelector('circle');
-    const text = player.querySelector('text');
-
-    const getPointerPosition = (e) => {
-      const rect = this.pitch.getBoundingClientRect();
-      const scale = 1000 / rect.width;
-      return {
-        x: (e.clientX - rect.left) * scale,
-        y: (e.clientY - rect.top) * scale
-      };
-    };
-
-    const startDrag = (e) => {
-      e.preventDefault();
-      isDragging = true;
-      player.style.cursor = 'grabbing';
-
-      const pointerPos = getPointerPosition(e);
-      const currentX = parseFloat(circle.getAttribute('cx'));
-      const currentY = parseFloat(circle.getAttribute('cy'));
-
-      offset.x = pointerPos.x - currentX;
-      offset.y = pointerPos.y - currentY;
-
-      document.addEventListener('pointermove', drag);
-      document.addEventListener('pointerup', endDrag);
-    };
-
-    const drag = (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
-
-      const pointerPos = getPointerPosition(e);
-      let newX = pointerPos.x - offset.x;
-      let newY = pointerPos.y - offset.y;
-
-      // Constrain to pitch bounds
-      newX = Math.max(15, Math.min(985, newX));
-      newY = Math.max(15, Math.min(635, newY));
-
-      circle.setAttribute('cx', newX);
-      circle.setAttribute('cy', newY);
-      text.setAttribute('x', newX);
-      text.setAttribute('y', newY + 4);
-
-      // Update player position data
-      const playerData = this.players.find(p => p.element === player);
-      if (playerData) {
-        playerData.position.x = (newX / 1000) * 100;
-        playerData.position.y = (newY / 650) * 100;
-      }
-    };
-
-    const endDrag = () => {
-      isDragging = false;
-      player.style.cursor = 'grab';
-      document.removeEventListener('pointermove', drag);
-      document.removeEventListener('pointerup', endDrag);
-      this.saveToStorage();
-    };
-
-    player.addEventListener('pointerdown', startDrag);
-    player.style.cursor = 'grab';
-    player.style.userSelect = 'none';
-  }
-
-  togglePassDrawing() {
-    const btn = document.getElementById('drawPasses');
-    this.isDrawingPass = !this.isDrawingPass;
-
-    if (this.isDrawingPass) {
-      btn.textContent = 'Stop Drawing';
-      btn.classList.add('active');
-      this.pitch.style.cursor = 'crosshair';
-    } else {
-      btn.textContent = 'Draw Passes';
-      btn.classList.remove('active');
-      this.pitch.style.cursor = 'default';
-      this.currentPass = null;
-    }
-  }
-
-  handlePassClick(e) {
-    const rect = this.pitch.getBoundingClientRect();
-    const scale = 1000 / rect.width;
-    const x = (e.clientX - rect.left) * scale;
-    const y = (e.clientY - rect.top) * scale;
-
-    if (!this.currentPass) {
-      // Start new pass
-      this.currentPass = {
-        startX: x,
-        startY: y,
-        endX: x,
-        endY: y
-      };
-    } else {
-      // Complete pass
-      this.currentPass.endX = x;
-      this.currentPass.endY = y;
-      this.createPass(this.currentPass);
-      this.currentPass = null;
-    }
-  }
-
-  createPass(passData) {
-    const pass = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    pass.classList.add('formation__pass');
-    pass.setAttribute('x1', passData.startX);
-    pass.setAttribute('y1', passData.startY);
-    pass.setAttribute('x2', passData.endX);
-    pass.setAttribute('y2', passData.endY);
-    pass.setAttribute('stroke', '#f2c200');
-    pass.setAttribute('stroke-width', '2');
-    pass.setAttribute('marker-end', 'url(#arrowhead)');
-
-    this.passesLayer.appendChild(pass);
-    this.passes.push(pass);
-    this.saveToStorage();
-  }
-
-  createBall() {
-    this.ball = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    this.ball.classList.add('formation__ball');
-    this.ball.innerHTML = `
-      <circle cx="500" cy="325" r="8" fill="#ffffff" stroke="#000000" stroke-width="1"/>
-    `;
-    this.ballLayer.appendChild(this.ball);
-    this.makeBallDraggable();
-  }
-
-  makeBallDraggable() {
-    let isDragging = false;
-    let offset = { x: 0, y: 0 };
-
-    const circle = this.ball.querySelector('circle');
-
-    const getPointerPosition = (e) => {
-      const rect = this.pitch.getBoundingClientRect();
-      const scale = 1000 / rect.width;
-      return {
-        x: (e.clientX - rect.left) * scale,
-        y: (e.clientY - rect.top) * scale
-      };
-    };
-
-    const startDrag = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      isDragging = true;
-
-      const pointerPos = getPointerPosition(e);
-      const currentX = parseFloat(circle.getAttribute('cx'));
-      const currentY = parseFloat(circle.getAttribute('cy'));
-
-      offset.x = pointerPos.x - currentX;
-      offset.y = pointerPos.y - currentY;
-
-      document.addEventListener('pointermove', drag);
-      document.addEventListener('pointerup', endDrag);
-    };
-
-    const drag = (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
-
-      const pointerPos = getPointerPosition(e);
-      let newX = pointerPos.x - offset.x;
-      let newY = pointerPos.y - offset.y;
-
-      newX = Math.max(8, Math.min(992, newX));
-      newY = Math.max(8, Math.min(642, newY));
-
-      circle.setAttribute('cx', newX);
-      circle.setAttribute('cy', newY);
-    };
-
-    const endDrag = () => {
-      isDragging = false;
-      document.removeEventListener('pointermove', drag);
-      document.removeEventListener('pointerup', endDrag);
-      this.saveToStorage();
-    };
-
-    this.ball.addEventListener('pointerdown', startDrag);
-    this.ball.style.cursor = 'grab';
-  }
-
-  animateBall() {
-    if (this.passes.length === 0) return;
-
-    const circle = this.ball.querySelector('circle');
-    let currentPassIndex = 0;
-
-    const animateToNextPass = () => {
-      if (currentPassIndex >= this.passes.length) {
-        currentPassIndex = 0;
-      }
-
-      const pass = this.passes[currentPassIndex];
-      const startX = parseFloat(pass.getAttribute('x1'));
-      const startY = parseFloat(pass.getAttribute('y1'));
-      const endX = parseFloat(pass.getAttribute('x2'));
-      const endY = parseFloat(pass.getAttribute('y2'));
-
-      // Move ball to start of pass
-      circle.setAttribute('cx', startX);
-      circle.setAttribute('cy', startY);
-
-      // Animate to end of pass
-      const animate = circle.animate([
-        { transform: `translate(0, 0)` },
-        { transform: `translate(${endX - startX}px, ${endY - startY}px)` }
-      ], {
-        duration: 800,
-        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      node.addEventListener('pointerdown', e => {
+        dragging = true;
+        node.setPointerCapture?.(e.pointerId);
+        e.preventDefault();
       });
 
-      animate.onfinish = () => {
-        circle.setAttribute('cx', endX);
-        circle.setAttribute('cy', endY);
-        currentPassIndex++;
+      node.addEventListener('pointerup', e => {
+        dragging = false;
+        node.releasePointerCapture?.(e.pointerId);
+      });
 
-        if (currentPassIndex < this.passes.length) {
-          setTimeout(animateToNextPass, 300);
+      node.addEventListener('pointermove', e => {
+        if(!dragging) return;
+        e.preventDefault();
+
+        const pitchSvg = svg();
+        if (!pitchSvg) return;
+
+        const pt = pitchSvg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+
+        try {
+          const local = pt.matrixTransform(pitchSvg.getScreenCTM().inverse());
+          // Constrain to pitch bounds
+          const x = Math.max(1, Math.min(104, local.x));
+          const y = Math.max(1, Math.min(67, local.y));
+          node.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+        } catch (error) {
+          // Fallback for browsers without full SVG support
+          console.warn('SVG transform not supported:', error);
         }
-      };
-    };
+      });
 
-    animateToNextPass();
-  }
+      // Keyboard support
+      node.addEventListener('keydown', e => {
+        const step = 2;
+        const transform = node.getAttribute('transform');
+        const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+        if (!match) return;
 
-  clearPasses() {
-    this.passes.forEach(pass => pass.remove());
-    this.passes = [];
-    this.saveToStorage();
-  }
+        let x = parseFloat(match[1]);
+        let y = parseFloat(match[2]);
 
-  clearPlayers() {
-    this.players.forEach(player => player.element.remove());
-    this.players = [];
-  }
+        switch(e.key) {
+          case 'ArrowLeft': x = Math.max(1, x - step); break;
+          case 'ArrowRight': x = Math.min(104, x + step); break;
+          case 'ArrowUp': y = Math.max(1, y - step); break;
+          case 'ArrowDown': y = Math.min(67, y + step); break;
+          default: return;
+        }
 
-  resetFormation() {
-    const currentFormation = document.getElementById('formationSelect').value;
-    this.loadFormation(currentFormation);
-
-    // Reset ball position
-    const circle = this.ball.querySelector('circle');
-    circle.setAttribute('cx', '500');
-    circle.setAttribute('cy', '325');
-
-    this.saveToStorage();
-  }
-
-  exportFormation() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1000;
-    canvas.height = 650;
-    const ctx = canvas.getContext('2d');
-
-    // Draw pitch background
-    ctx.fillStyle = '#2d5a3d';
-    ctx.fillRect(0, 0, 1000, 650);
-
-    // Draw pitch markings (simplified)
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-
-    // Outer boundary
-    ctx.strokeRect(10, 10, 980, 630);
-
-    // Center line
-    ctx.beginPath();
-    ctx.moveTo(10, 325);
-    ctx.lineTo(990, 325);
-    ctx.stroke();
-
-    // Center circle
-    ctx.beginPath();
-    ctx.arc(500, 325, 73, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    // Goal areas
-    ctx.strokeRect(450, 580, 100, 60);
-    ctx.strokeRect(450, 10, 100, 60);
-
-    // Penalty areas
-    ctx.strokeRect(350, 540, 300, 100);
-    ctx.strokeRect(350, 10, 300, 100);
-
-    // Draw passes
-    ctx.strokeStyle = '#f2c200';
-    ctx.lineWidth = 3;
-    this.passes.forEach(pass => {
-      const x1 = parseFloat(pass.getAttribute('x1'));
-      const y1 = parseFloat(pass.getAttribute('y1'));
-      const x2 = parseFloat(pass.getAttribute('x2'));
-      const y2 = parseFloat(pass.getAttribute('y2'));
-
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
+        e.preventDefault();
+        node.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+      });
     });
+  }
 
-    // Draw players
-    this.players.forEach(player => {
-      const circle = player.element.querySelector('circle');
-      const text = player.element.querySelector('text');
-      const x = parseFloat(circle.getAttribute('cx'));
-      const y = parseFloat(circle.getAttribute('cy'));
+  function wireUI(){
+    const sel = document.getElementById('flabFormation');
+    sel?.addEventListener('change', () => drawPlaceholders(sel.value));
 
-      // Player circle
-      ctx.fillStyle = '#004d98';
-      ctx.beginPath();
-      ctx.arc(x, y, 15, 0, 2 * Math.PI);
-      ctx.fill();
+    document.querySelectorAll('.flab__buttons button').forEach(btn=>{
+      const mode = btn.dataset.mode;
+      const act = btn.dataset.action;
 
-      ctx.strokeStyle = '#f2c200';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Player text
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(text.textContent, x, y + 3);
+      btn.addEventListener('click', () => {
+        if (act === 'clear') {
+          clearGroup(gLines());
+          console.log('Lines cleared');
+        }
+        if (act === 'export') {
+          exportPNG();
+        }
+        if (act === 'save') {
+          saveFormation();
+        }
+        if (act === 'load') {
+          loadFormation();
+        }
+        // Mode handlers can be wired later
+        console.log('Button clicked:', mode || act);
+      });
     });
-
-    // Draw ball
-    const ballCircle = this.ball.querySelector('circle');
-    const ballX = parseFloat(ballCircle.getAttribute('cx'));
-    const ballY = parseFloat(ballCircle.getAttribute('cy'));
-
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(ballX, ballY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Download the canvas as PNG
-    const link = document.createElement('a');
-    link.download = `formation-${Date.now()}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
   }
 
-  saveToStorage() {
-    const data = {
-      formation: document.getElementById('formationSelect').value,
-      players: this.players.map(p => ({
-        id: p.id,
-        position: p.position
-      })),
-      passes: this.passes.map(pass => ({
-        x1: parseFloat(pass.getAttribute('x1')),
-        y1: parseFloat(pass.getAttribute('y1')),
-        x2: parseFloat(pass.getAttribute('x2')),
-        y2: parseFloat(pass.getAttribute('y2'))
-      })),
-      ball: {
-        x: parseFloat(this.ball.querySelector('circle').getAttribute('cx')),
-        y: parseFloat(this.ball.querySelector('circle').getAttribute('cy'))
-      }
-    };
-
-    localStorage.setItem('formationLabState', JSON.stringify(data));
+  function exportPNG(){
+    alert('Export coming next. SVG → PNG pipeline will be added.');
   }
 
-  loadFromStorage() {
-    const saved = localStorage.getItem('formationLabState');
-    if (!saved) return;
-
+  function saveFormation(){
     try {
+      const players = Array.from(gPlayers()?.children || []).map(node => {
+        const transform = node.getAttribute('transform');
+        const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+        return match ? {
+          index: node.dataset.index,
+          x: parseFloat(match[1]),
+          y: parseFloat(match[2])
+        } : null;
+      }).filter(Boolean);
+
+      const formation = document.getElementById('flabFormation')?.value || '433';
+
+      const data = { formation, players, timestamp: Date.now() };
+      localStorage.setItem('formationLab:saved', JSON.stringify(data));
+
+      alert('Formation saved!');
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Save failed. Please try again.');
+    }
+  }
+
+  function loadFormation(){
+    try {
+      const saved = localStorage.getItem('formationLab:saved');
+      if (!saved) {
+        alert('No saved formation found.');
+        return;
+      }
+
       const data = JSON.parse(saved);
 
-      // Load formation
-      document.getElementById('formationSelect').value = data.formation;
+      // Set formation
+      const sel = document.getElementById('flabFormation');
+      if (sel && data.formation) {
+        sel.value = data.formation;
+      }
 
-      // Update player positions
+      // Redraw with saved positions
+      drawPlaceholders(data.formation);
+
+      // Apply saved positions
       if (data.players) {
-        data.players.forEach(savedPlayer => {
-          const player = this.players.find(p => p.id === savedPlayer.id);
-          if (player) {
-            const circle = player.element.querySelector('circle');
-            const text = player.element.querySelector('text');
-            const x = (savedPlayer.position.x / 100) * 1000;
-            const y = (savedPlayer.position.y / 100) * 650;
-
-            circle.setAttribute('cx', x);
-            circle.setAttribute('cy', y);
-            text.setAttribute('x', x);
-            text.setAttribute('y', y + 4);
-
-            player.position = savedPlayer.position;
+        data.players.forEach(playerData => {
+          const node = gPlayers()?.querySelector(`[data-index="${playerData.index}"]`);
+          if (node) {
+            node.setAttribute('transform', `translate(${playerData.x} ${playerData.y})`);
           }
         });
       }
 
-      // Restore passes
-      if (data.passes) {
-        data.passes.forEach(passData => {
-          this.createPass(passData);
-        });
-      }
-
-      // Restore ball position
-      if (data.ball) {
-        const circle = this.ball.querySelector('circle');
-        circle.setAttribute('cx', data.ball.x);
-        circle.setAttribute('cy', data.ball.y);
-      }
+      alert('Formation loaded!');
     } catch (error) {
-      console.error('Failed to load formation state:', error);
+      console.error('Load failed:', error);
+      alert('Load failed. Please try again.');
     }
   }
-}
 
-// Initialize Formation Lab when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('pitch')) {
-      window.formationLab = new FormationLab();
-    }
-  });
-} else {
-  if (document.getElementById('pitch')) {
-    window.formationLab = new FormationLab();
+  function init(){
+    if(!document.getElementById('flabPitch')) return;
+    wireUI();
+    drawPlaceholders(document.getElementById('flabFormation')?.value || '433');
+    console.log('Formation Lab initialized');
   }
-}
 
-export default FormationLab;
+  // Public API
+  const FormationLab = {
+    init,
+    drawPlaceholders,
+    saveFormation,
+    loadFormation,
+    exportPNG
+  };
+
+  window.FormationLab = FormationLab;
+
+  // Auto-initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
