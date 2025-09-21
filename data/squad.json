@@ -2,170 +2,253 @@
   {
     "id": "ter-stegen",
     "name": "Marc-André ter Stegen",
+    "number": 1,
     "role": "Captain",
     "position": "Goalkeeper",
-    "number": 1,
-    "image": "assets/players/ter-stegen.svg",
-    "season": {
+    "rarity": "legend",
+    "img": "assets/players/ter-stegen.svg",
+    "nationality": "Germany",
+    "height_cm": 187,
+    "weight_kg": 85,
+    "season": "2024/25",
+    "stats": {
       "games": 38,
       "cleanSheets": 20,
       "saves": 112,
-      "savePct": 78
-    }
-  },
-  {
-    "id": "araujo",
-    "name": "Ronald Araújo",
-    "role": "Defensive Engine",
-    "position": "Centre Back",
-    "number": 4,
-    "image": "assets/players/araujo.svg",
-    "season": {
-      "games": 35,
-      "goals": 3,
-      "assists": 1,
-      "tacklesWon": 64
-    }
-  },
-  {
-    "id": "balde",
-    "name": "Alejandro Balde",
-    "role": "Rising Star",
-    "position": "Left Back",
-    "number": 3,
-    "image": "assets/players/balde.svg",
-    "season": {
-      "games": 32,
-      "assists": 5,
-      "chancesCreated": 28,
-      "crosses": 42
-    }
-  },
-  {
-    "id": "de-jong",
-    "name": "Frenkie de Jong",
-    "role": "Midfield Maestro",
-    "position": "Central Midfielder",
-    "number": 21,
-    "image": "assets/players/de-jong.svg",
-    "season": {
-      "games": 34,
-      "assists": 8,
-      "passesCompleted": 2847,
-      "progCarries": 156
-    }
-  },
-  {
-    "id": "pedri",
-    "name": "Pedri",
-    "role": "Creative Genius",
-    "position": "Central Midfielder",
-    "number": 8,
-    "image": "assets/players/pedri.svg",
-    "season": {
-      "games": 37,
-      "goals": 7,
-      "assists": 12,
-      "chancesCreated": 89
-    }
-  },
-  {
-    "id": "gavi",
-    "name": "Gavi",
-    "role": "Warrior",
-    "position": "Central Midfielder",
-    "number": 6,
-    "image": "assets/players/gavi.svg",
-    "season": {
-      "games": 29,
-      "tacklesWon": 47,
-      "pressures": 312,
-      "duelsWon": 68
-    }
-  },
-  {
-    "id": "yamal",
-    "name": "Lamine Yamal",
-    "role": "Wonder Kid",
-    "position": "Right Winger",
-    "number": 27,
-    "image": "assets/players/yamal.svg",
-    "season": {
-      "games": 31,
-      "goals": 12,
-      "assists": 8,
-      "xG": 11.4,
-      "xA": 7.2
-    }
+      "savePct": 78,
+      "xgPrevented": 6.2
+    },
+    "traits": ["Sweeper Keeper", "Penalty Specialist"]
   },
   {
     "id": "lewandowski",
     "name": "Robert Lewandowski",
-    "role": "Goal Machine",
-    "position": "Striker",
     "number": 9,
-    "image": "assets/players/lewandowski.svg",
-    "season": {
+    "role": "Goal Machine",
+    "position": "Centre Forward",
+    "rarity": "legend",
+    "img": "assets/players/lewandowski.svg",
+    "nationality": "Poland",
+    "height_cm": 185,
+    "weight_kg": 81,
+    "season": "2024/25",
+    "stats": {
       "games": 36,
       "goals": 28,
       "assists": 6,
-      "xG": 26.8
-    }
+      "xG": 26.8,
+      "shotsOnTarget": 67
+    },
+    "traits": ["Clinical Finisher", "Penalty Expert"]
+  },
+  {
+    "id": "yamal",
+    "name": "Lamine Yamal",
+    "number": 27,
+    "role": "Wonder Kid",
+    "position": "Right Winger",
+    "rarity": "elite",
+    "img": "assets/players/yamal.svg",
+    "nationality": "Spain",
+    "height_cm": 180,
+    "weight_kg": 70,
+    "season": "2024/25",
+    "stats": {
+      "games": 31,
+      "goals": 12,
+      "assists": 8,
+      "xG": 11.4,
+      "dribbleSuccess": 78
+    },
+    "traits": ["Flair", "Pace"]
+  },
+  {
+    "id": "pedri",
+    "name": "Pedri",
+    "number": 8,
+    "role": "Creative Genius",
+    "position": "Central Midfielder",
+    "rarity": "elite",
+    "img": "assets/players/pedri.svg",
+    "nationality": "Spain",
+    "height_cm": 174,
+    "weight_kg": 60,
+    "season": "2024/25",
+    "stats": {
+      "games": 37,
+      "goals": 7,
+      "assists": 12,
+      "chancesCreated": 89,
+      "passAccuracy": 93
+    },
+    "traits": ["Vision", "Technique"]
+  },
+  {
+    "id": "gavi",
+    "name": "Gavi",
+    "number": 6,
+    "role": "Warrior",
+    "position": "Central Midfielder",
+    "rarity": "rare",
+    "img": "assets/players/gavi.svg",
+    "nationality": "Spain",
+    "height_cm": 173,
+    "weight_kg": 68,
+    "season": "2024/25",
+    "stats": {
+      "games": 29,
+      "tacklesWon": 47,
+      "pressures": 312,
+      "duelsWon": 68,
+      "assists": 5
+    },
+    "traits": ["Energy", "Pressing"]
+  },
+  {
+    "id": "de-jong",
+    "name": "Frenkie de Jong",
+    "number": 21,
+    "role": "Midfield Maestro",
+    "position": "Central Midfielder",
+    "rarity": "rare",
+    "img": "assets/players/de-jong.svg",
+    "nationality": "Netherlands",
+    "height_cm": 180,
+    "weight_kg": 74,
+    "season": "2024/25",
+    "stats": {
+      "games": 34,
+      "assists": 8,
+      "passesCompleted": 2847,
+      "progCarries": 156,
+      "passAccuracy": 91
+    },
+    "traits": ["Ball Carrier", "Press Resistant"]
+  },
+  {
+    "id": "araujo",
+    "name": "Ronald Araújo",
+    "number": 4,
+    "role": "Defensive Engine",
+    "position": "Centre Back",
+    "rarity": "rare",
+    "img": "assets/players/araujo.svg",
+    "nationality": "Uruguay",
+    "height_cm": 188,
+    "weight_kg": 78,
+    "season": "2024/25",
+    "stats": {
+      "games": 35,
+      "goals": 3,
+      "assists": 1,
+      "tacklesWon": 64,
+      "aerialWins": 156
+    },
+    "traits": ["Aerial Threat", "Pace"]
   },
   {
     "id": "kounde",
     "name": "Jules Koundé",
+    "number": 23,
     "role": "Versatile Defender",
     "position": "Right Back",
-    "number": 23,
-    "image": "assets/players/kounde.svg",
-    "season": {
+    "rarity": "rare",
+    "img": "assets/players/kounde.svg",
+    "nationality": "France",
+    "height_cm": 178,
+    "weight_kg": 70,
+    "season": "2024/25",
+    "stats": {
       "games": 33,
       "goals": 2,
       "assists": 4,
-      "interceptions": 56
-    }
+      "interceptions": 56,
+      "passAccuracy": 89
+    },
+    "traits": ["Recovery", "Distribution"]
   },
   {
-    "id": "christensen",
-    "name": "Andreas Christensen",
-    "role": "Ball-Playing CB",
-    "position": "Centre Back",
-    "number": 15,
-    "image": "assets/players/christensen.svg",
-    "season": {
-      "games": 28,
-      "passAccuracy": 94,
-      "aerialWins": 38,
-      "blocks": 22
-    }
+    "id": "balde",
+    "name": "Alejandro Balde",
+    "number": 3,
+    "role": "Rising Star",
+    "position": "Left Back",
+    "rarity": "common",
+    "img": "assets/players/balde.svg",
+    "nationality": "Spain",
+    "height_cm": 175,
+    "weight_kg": 70,
+    "season": "2024/25",
+    "stats": {
+      "games": 32,
+      "assists": 5,
+      "chancesCreated": 28,
+      "crosses": 42,
+      "tacklesWon": 45
+    },
+    "traits": ["Pace", "Crossing"]
   },
   {
     "id": "raphinha",
     "name": "Raphinha",
+    "number": 22,
     "role": "Brazilian Flair",
     "position": "Right Winger",
-    "number": 22,
-    "image": "assets/players/raphinha.svg",
-    "season": {
+    "rarity": "rare",
+    "img": "assets/players/raphinha.svg",
+    "nationality": "Brazil",
+    "height_cm": 176,
+    "weight_kg": 68,
+    "season": "2024/25",
+    "stats": {
       "games": 35,
       "goals": 9,
       "assists": 11,
-      "keyPasses": 67
-    }
+      "keyPasses": 67,
+      "dribbles": 123
+    },
+    "traits": ["Flair", "Set Pieces"]
   },
   {
     "id": "ferran",
     "name": "Ferran Torres",
+    "number": 7,
     "role": "Versatile Forward",
     "position": "Forward",
-    "number": 7,
-    "image": "assets/players/ferran.svg",
-    "season": {
+    "rarity": "common",
+    "img": "assets/players/ferran.svg",
+    "nationality": "Spain",
+    "height_cm": 184,
+    "weight_kg": 77,
+    "season": "2024/25",
+    "stats": {
       "games": 30,
       "goals": 8,
       "assists": 4,
-      "shots": 68
-    }
+      "shots": 68,
+      "passAccuracy": 86
+    },
+    "traits": ["Versatility", "Work Rate"]
+  },
+  {
+    "id": "christensen",
+    "name": "Andreas Christensen",
+    "number": 15,
+    "role": "Ball-Playing CB",
+    "position": "Centre Back",
+    "rarity": "common",
+    "img": "assets/players/christensen.svg",
+    "nationality": "Denmark",
+    "height_cm": 187,
+    "weight_kg": 78,
+    "season": "2024/25",
+    "stats": {
+      "games": 28,
+      "passAccuracy": 94,
+      "aerialWins": 38,
+      "blocks": 22,
+      "clearances": 87
+    },
+    "traits": ["Composure", "Passing"]
   }
 ]
