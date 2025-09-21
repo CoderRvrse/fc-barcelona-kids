@@ -1,5 +1,5 @@
 // File: sw.js
-const VERSION = 'v18';
+const VERSION = 'v19';
 const CACHE_NAME = `fcb-kids-${VERSION}`;
 const OFFLINE_URL = '/fc-barcelona-kids/offline.html';
 
@@ -35,6 +35,7 @@ self.addEventListener('install', (event) => {
         '/fc-barcelona-kids/index.html',
         '/fc-barcelona-kids/styles/main.css',
         '/fc-barcelona-kids/scripts/main.js',
+        '/fc-barcelona-kids/scripts/formation.js',
         '/fc-barcelona-kids/data/squad.json',
         '/fc-barcelona-kids/assets/soccer-ball.svg',
         '/fc-barcelona-kids/assets/FC_Barcelona_logo.svg',

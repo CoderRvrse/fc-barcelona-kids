@@ -820,6 +820,26 @@ const kill = (el) => {
     }
 })();
 
+// Formation Lab Integration
+(() => {
+    function loadFormationLab() {
+        // Only load if Formation Lab section exists
+        if (document.getElementById('pitch')) {
+            const script = document.createElement('script');
+            script.src = './scripts/formation.js?v=19';
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+    }
+
+    // Initialize Formation Lab when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadFormationLab);
+    } else {
+        loadFormationLab();
+    }
+})();
+
 
 
 
