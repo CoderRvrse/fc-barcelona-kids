@@ -17,6 +17,17 @@
     dragThreshold: 6, // pixels before drag starts
     dragTimer: null,
 
+    // Surgical drag state for precision control
+    surgicalDrag: {
+      active: false,
+      armed: false,   // pressed but not past slop yet
+      grabDX: 0,
+      grabDY: 0,
+      playerEl: null,
+      startSvgX: 0,
+      startSvgY: 0
+    },
+
     // Draw mode state
     drawing: false,
     drawPoints: [], // Current line being drawn
@@ -62,6 +73,27 @@
   const helpBtn = () => document.getElementById('flabHelpBtn');
   const drawFinishBtn = () => document.getElementById('flabDrawFinish');
   const toastHost = () => document.getElementById('flabToastHost');
+
+  // Pixel-density & container-corrected pointer (adapted for SVG)
+  function getLocalPoint(evt, container) {
+    const e = (evt.touches?.[0]) ?? evt;
+    const rect = container.getBoundingClientRect();
+    const svg = container.querySelector('svg') || container;
+    const svgRect = svg.getBoundingClientRect();
+
+    // Convert to SVG coordinate space
+    const viewBox = svg.viewBox.baseVal;
+    const scaleX = viewBox.width / svgRect.width;
+    const scaleY = viewBox.height / svgRect.height;
+
+    return {
+      x: (e.clientX - svgRect.left) * scaleX,
+      y: (e.clientY - svgRect.top) * scaleY,
+      // Also provide raw screen coordinates for halo positioning
+      screenX: e.clientX - rect.left,
+      screenY: e.clientY - rect.top
+    };
+  }
   const viewport = () => document.getElementById('flabViewport');
   const content = () => document.getElementById('flabContent');
   const fullscreenBtn = () => document.getElementById('flabFullscreenBtn');
@@ -1018,6 +1050,15 @@
     // Add missing layers
     ensureLayers();
 
+    // Create single DOM halo that follows the active player
+    const fieldEl = document.querySelector('.flab__stage'); // field wrapper
+    if (fieldEl && !fieldEl.querySelector('.flab-halo')) {
+      const halo = document.createElement('div');
+      halo.className = 'flab-halo';
+      fieldEl.appendChild(halo);
+      fieldEl.classList.add('can-hover'); // Enable hover effects initially
+    }
+
     // Wire UI
     wireToolbar();
     wireKeyboard();
@@ -1397,6 +1438,63 @@
 
   const SLOP = 6; // 6px threshold before drag starts
 
+  // Surgical drag helper functions
+  function armSurgicalDrag(playerEl, evt, id) {
+    const fieldEl = document.querySelector('.flab__stage');
+    const halo = fieldEl?.querySelector('.flab-halo');
+    if (!fieldEl || !halo) return;
+
+    const p0 = getLocalPoint(evt, fieldEl);
+
+    // Get current player SVG position
+    const currentPos = state.positions.get(id) || { x: 50, y: 50 };
+
+    // Calculate grab offset in SVG coordinates
+    state.surgicalDrag.grabDX = currentPos.x - p0.x;
+    state.surgicalDrag.grabDY = currentPos.y - p0.y;
+    state.surgicalDrag.playerEl = playerEl;
+    state.surgicalDrag.armed = true;
+    state.surgicalDrag.startSvgX = currentPos.x;
+    state.surgicalDrag.startSvgY = currentPos.y;
+
+    fieldEl.classList.remove('can-hover');
+
+    // Position halo at current player location (screen coordinates)
+    const svg = document.getElementById('flabPitch');
+    const svgRect = svg.getBoundingClientRect();
+    const fieldRect = fieldEl.getBoundingClientRect();
+    const viewBox = svg.viewBox.baseVal;
+
+    const screenX = ((currentPos.x / viewBox.width) * svgRect.width) + (svgRect.left - fieldRect.left);
+    const screenY = ((currentPos.y / viewBox.height) * svgRect.height) + (svgRect.top - fieldRect.top);
+
+    halo.style.left = `${screenX}px`;
+    halo.style.top = `${screenY}px`;
+  }
+
+  function startSurgicalDrag(evt) {
+    const fieldEl = document.querySelector('.flab__stage');
+    const halo = fieldEl?.querySelector('.flab-halo');
+    if (!halo) return;
+
+    state.surgicalDrag.active = true;
+    fieldEl?.classList.add('is-dragging');
+    halo.classList.add('is-visible');
+  }
+
+  function endSurgicalDrag() {
+    const fieldEl = document.querySelector('.flab__stage');
+    const halo = fieldEl?.querySelector('.flab-halo');
+
+    state.surgicalDrag.active = false;
+    state.surgicalDrag.armed = false;
+    state.surgicalDrag.playerEl = null;
+
+    halo?.classList.remove('is-visible');
+    fieldEl?.classList.remove('is-dragging');
+    fieldEl?.classList.add('can-hover'); // re-enable gentle hover only when idle
+  }
+
   function startDragSequence(e, id) {
     e.preventDefault();
     e.stopPropagation();
@@ -1409,6 +1507,9 @@
     if (labEl) {
       labEl.classList.add('lab-pressing');
     }
+
+    // Arm surgical drag system
+    armSurgicalDrag(e.currentTarget, e, id);
 
     state.press = {
       id: id,
@@ -1430,17 +1531,69 @@
   function handlePointerMove(e) {
     if (!state.press) return;
 
-    const dx = e.clientX - state.press.x;
-    const dy = e.clientY - state.press.y;
-    const distance = Math.hypot(dx, dy);
+    // Use surgical drag system
+    if (!state.surgicalDrag.armed && !state.surgicalDrag.active) return;
 
-    if (!state.drag && distance > SLOP) {
-      startActualDrag(e, state.press.id);
+    const fieldEl = document.querySelector('.flab__stage');
+    const halo = fieldEl?.querySelector('.flab-halo');
+    if (!fieldEl || !halo) return;
+
+    const p = getLocalPoint(e, fieldEl);
+
+    // Slop gate - check screen distance for slop threshold
+    if (state.surgicalDrag.armed) {
+      const dx = e.clientX - state.press.x;
+      const dy = e.clientY - state.press.y;
+      const screenDistance = Math.hypot(dx, dy);
+
+      if (screenDistance >= SLOP) {
+        startSurgicalDrag(e);
+        // Also start the original drag system for compatibility
+        if (!state.drag) {
+          startActualDrag(e, state.press.id);
+        }
+      } else {
+        return; // Still within slop threshold
+      }
     }
 
-    if (state.drag) {
+    if (state.surgicalDrag.active) {
       e.preventDefault();
-      updateDragPosition(e);
+
+      // Calculate new position with grab offset
+      const newSvgX = p.x + state.surgicalDrag.grabDX;
+      const newSvgY = p.y + state.surgicalDrag.grabDY;
+
+      // Update player position using existing system
+      const player = svg().querySelector(`[data-id="${state.press.id}"]`);
+      if (player) {
+        // Constrain to field boundaries
+        const constrainedX = Math.max(0, Math.min(105, newSvgX));
+        const constrainedY = Math.max(0, Math.min(68, newSvgY));
+
+        // Update player using existing setAttribute method
+        player.setAttribute('transform', `translate(${constrainedX.toFixed(1)} ${constrainedY.toFixed(1)})`);
+
+        // Update state
+        state.positions.set(state.press.id, { x: constrainedX, y: constrainedY });
+
+        // Update halo position (screen coordinates)
+        const svg = document.getElementById('flabPitch');
+        const svgRect = svg.getBoundingClientRect();
+        const fieldRect = fieldEl.getBoundingClientRect();
+        const viewBox = svg.viewBox.baseVal;
+
+        const screenX = ((constrainedX / viewBox.width) * svgRect.width) + (svgRect.left - fieldRect.left);
+        const screenY = ((constrainedY / viewBox.height) * svgRect.height) + (svgRect.top - fieldRect.top);
+
+        halo.style.left = `${screenX}px`;
+        halo.style.top = `${screenY}px`;
+      }
+
+      // Also call original update for compatibility
+      if (state.drag) {
+        updateDragPosition(e);
+      }
     }
   }
 
@@ -1451,6 +1604,9 @@
       // Click without drag - toggle selection
       toggleSelection(state.press.id);
     }
+
+    // Clean up surgical drag
+    endSurgicalDrag();
     cleanupPress(e);
   }
 

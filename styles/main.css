@@ -24,6 +24,14 @@
     --vipspot-kicker: #b9c2db;
     --vipspot-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
     --vipspot-sheen: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.6) 45%, transparent 60%);
+
+    /* Pass arrow styling variables */
+    --pass-stroke: 3px;         /* desktop shaft width */
+    --pass-dash: 8 6;           /* subtle dash pattern */
+    --pass-head-len: 14px;      /* default arrowhead length */
+    --pass-head-width: 8px;     /* default arrowhead width */
+    --pass-color: #ffcb05;      /* Barça gold */
+    --pass-glow: rgba(255, 203, 5, .45);
 }
 
 @font-face {
@@ -2829,6 +2837,38 @@ textarea:focus-visible {
   transition: transform 120ms ease;
 }
 
+/* --- Selection halo rendering & hover discipline --- */
+.flab-field { position: relative; } /* ensure local coords */
+.flab-halo {
+  position: absolute;
+  width: var(--halo, 28px);
+  height: var(--halo, 28px);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 12px rgba(255,255,255,.35);
+  transform: translate(-50%, -50%); /* center on x,y */
+  will-change: transform;
+  opacity: 0;
+  transition: opacity .12s linear;
+}
+.flab-halo.is-visible { opacity: 1; }
+
+/* Kill "boing" unless we explicitly allow it while idle */
+.player { transition: transform 0s; }                 /* default: no hover transforms */
+.can-hover .player:hover { transition: transform .12s ease-out; transform: translateZ(0) scale(1.02); }
+.is-dragging .player { transition: none !important; } /* lock during drag */
+
+/* Optional micro-polish */
+.player { cursor: grab; }
+.is-dragging .player { cursor: grabbing; }
+.flab-field, .player { touch-action: none; } /* prevents browser scroll during drag */
+
+/* Boing guard for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  .can-hover .player:hover { transform: none !important; }
+}
+
 /* Hover reticle ring system - only when not dragging and in select mode */
 .flab-player:hover:not(.is-dragging)::after {
   content: "";
@@ -3629,7 +3669,91 @@ textarea:focus-visible {
   }
 }
 
-/* --- INTERACTION & TUTORIAL FIX PACK v22.2 --- */
+/* --- MOBILE PRO MODE & INTERACTION FIX PACK v23.0 --- */
+
+/* Mobile Pro Mode - Full-screen viewport with zoom/pan */
+.lab-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.lab-viewport.is-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  background: #0a2a5c !important;
+}
+
+.lab-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.lab-content.is-transforming {
+  transition: none;
+}
+
+/* Pro Mode UI overlay */
+.lab-viewport.is-fullscreen .formation-toolbar {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10000;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.lab-viewport.is-fullscreen .flab-toast-host {
+  z-index: 10001;
+}
+
+/* Full-screen toggle button */
+.flab-fullscreen-btn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.flab-fullscreen-btn:hover {
+  background: white;
+  transform: scale(1.05);
+}
+
+.flab-fullscreen-btn:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Pro Mode responsive adjustments */
+@media (max-width: 768px) {
+  .lab-viewport.is-fullscreen .formation-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .lab-viewport.is-fullscreen .formation-toolbar button {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+}
 
 /* Enhanced Player Hit Areas */
 .flab-player {
@@ -3664,19 +3788,170 @@ textarea:focus-visible {
   touch-action: none !important;
 }
 
-/* Suppress ALL hover effects during drag - bulletproof */
-#formationLab.is-dragging .flab-player,
-#formationLab.is-dragging .flab-player:hover,
-#formationLab.is-dragging .flab-player::after,
-#formationLab.is-dragging .flab-player:hover::after,
-#formationLab.is-dragging .flab-player__dot,
-#formationLab.is-dragging .flab-player__dot:hover {
+/* === ZERO-BOING POLICY: KILL HOVER BEFORE DRAG STARTS === */
+
+/* Aggressively disable everything that can cause boing before/while dragging */
+.lab-pressing .flab-player,
+.lab-pressing .flab-player *,
+.lab-dragging .flab-player,
+.lab-dragging .flab-player * {
   transition: none !important;
   animation: none !important;
-  transform: none !important;
+  transform: none !important;         /* only we set transforms in JS */
   filter: none !important;
+}
+
+/* Also neutralize :hover during press/drag */
+.lab-pressing .flab-player:hover,
+.lab-dragging .flab-player:hover {
+  transform: none !important;
   box-shadow: none !important;
+  filter: none !important;
+}
+
+/* 2) Disable transitions on everything that can animate while dragging */
+.lab--dragging .flab-player,
+.lab--dragging .flab-player > *,
+.lab--dragging .flab-line,
+.lab--dragging .flab-highlight {
+  transition: none !important;
+}
+
+/* 3) Never hide others during drag */
+.lab--dragging .flab-player,
+.lab--dragging .flab-line,
+.lab--dragging .flab-highlight {
   opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 4) Make the hit area generous so initial mousedown doesn't miss */
+.flab-player__hit {
+  pointer-events: auto;
+  r: 3;
+  opacity: 0;
+  cursor: grab;
+}
+
+/* 5) While dragging a player, elevate it but don't create new stacking contexts for others */
+.flab-player.is-dragging {
+  will-change: transform;
+  z-index: 10;
+}
+
+/* 6) Prevent text selection or image drag during ops */
+#formationLab,
+#formationLab * {
+  user-select: none;
+}
+
+/* === HALO ALIGNMENT FIX: RING INSIDE CHIP NODE === */
+
+/* 7) Hover ring positioned within chip to inherit transform/position */
+.flab-player__ring {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  transform-origin: center;
+}
+
+.flab-player--show-ring .flab-player__ring {
+  opacity: 1;
+}
+
+/* 8) Ring styling for perfect alignment */
+.flab-player__ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 0.4;
+  r: 3.2;
+  filter: drop-shadow(0 0 2px rgba(10, 42, 107, 0.4));
+}
+
+/* 9) Hide ring during drag to avoid distraction */
+.lab--dragging .flab-player__ring,
+.flab-player.is-dragging .flab-player__ring {
+  opacity: 0 !important;
+}
+
+/* 10) Optional grab feedback for active chip */
+.flab-player.is-dragging .flab-player__dot {
+  transform: scale(0.98);
+}
+
+/* === SLIM PASS ARROWS: REPLACE CHUNKY CONE === */
+
+/* Smaller screens: slightly slimmer */
+@media (max-width: 640px) {
+  :root {
+    --pass-stroke: 2.5px;
+    --pass-head-len: 12px;
+    --pass-head-width: 7px;
+  }
+}
+
+/* SVG line polish (don't scale stroke when zooming the lab) */
+.flab-line {
+  stroke: var(--pass-color);
+  stroke-width: var(--pass-stroke);
+  stroke-dasharray: var(--pass-dash);
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 6px var(--pass-glow));
+}
+
+.flab-line-arrow {
+  fill: var(--pass-color);
+  vector-effect: non-scaling-stroke;
+}
+
+.flab-line-highlight {
+  stroke: rgba(255,255,255,.2);
+  stroke-width: calc(var(--pass-stroke) + 1px);
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+/* === SELECTION RING SYSTEM === */
+
+.flab-player { position: relative; }
+.flab-player .flab-selection-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 3px solid var(--ring-color, #6cf);
+  box-shadow: 0 0 10px rgba(0,0,0,.35), 0 0 8px var(--ring-glow, rgba(108,207,255,.45));
+  opacity: 0;
+  transform: scale(.9);
+  transition: opacity .12s ease, transform .12s ease;
+  pointer-events: none;
+}
+
+.flab-player.is-selected .flab-selection-ring {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Mode colors */
+#formationLab[data-mode="ball"] .flab-player.is-selected .flab-selection-ring {
+  --ring-color: #fff;
+  --ring-glow: rgba(255,255,255,.5);
+}
+
+#formationLab[data-mode="draw"] .flab-player.is-selected .flab-selection-ring {
+  --ring-color: #ffcb05;
+  --ring-glow: rgba(255,203,5,.45);
+}
+
+#formationLab[data-mode="highlight"] .flab-player.is-selected .flab-selection-ring {
+  --ring-color: #6a5cff;
+  --ring-glow: rgba(106,92,255,.45);
+}
+
+/* Specifically disable the reticle during drag */
+.lab-dragging .flab-player::after,
+#formationLab.is-dragging .flab-player::after {
+  display: none !important;
 }
 
 /* Drag performance optimization */
