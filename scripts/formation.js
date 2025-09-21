@@ -1,6 +1,6 @@
 (function () {
-  // === FORMATION LAB v22 - COMPREHENSIVE UX OVERHAUL ===
-  // Fixes: Drag offset "shooting" issue + Cursor ring + Enhanced Draw mode + Onboarding
+  // === FORMATION LAB v22.1 - TOAST SYSTEM + DRAG RELIABILITY OVERHAUL ===
+  // Features: In-field toasts, drag threshold, non-blocking tutorial, reliability fixes
 
   // State management
   const state = {
@@ -11,7 +11,13 @@
     highlights: new Set(),
     lines: [], // [{fromId, toId, id, points}]
 
-    // New Draw mode state
+    // Enhanced drag state
+    isDragging: false,
+    dragStartPos: null,
+    dragThreshold: 6, // pixels before drag starts
+    dragTimer: null,
+
+    // Draw mode state
     drawing: false,
     drawPoints: [], // Current line being drawn
     ghostPath: null,
@@ -38,6 +44,327 @@
   const modeHint = () => document.getElementById('flabModeHint');
   const helpBtn = () => document.getElementById('flabHelpBtn');
   const drawFinishBtn = () => document.getElementById('flabDrawFinish');
+  const toastHost = () => document.getElementById('flabToastHost');
+
+  // === TOAST SYSTEM ===
+
+  const toastSystem = {
+    toasts: new Map(),
+    queue: [],
+    maxVisible: 3,
+    nextId: 1,
+
+    show(options) {
+      const {
+        type = 'info',
+        message,
+        timeout = 5000,
+        actions = [],
+        id = `toast_${this.nextId++}`,
+        persistent = false
+      } = options;
+
+      // If toast with same ID exists, pulse it instead of creating new
+      if (this.toasts.has(id)) {
+        this.pulse(id);
+        return id;
+      }
+
+      const toast = {
+        id,
+        type,
+        message,
+        timeout,
+        actions,
+        persistent,
+        element: null,
+        timer: null
+      };
+
+      if (this.toasts.size >= this.maxVisible) {
+        this.queue.push(toast);
+      } else {
+        this.render(toast);
+      }
+
+      return id;
+    },
+
+    info(message, options = {}) {
+      return this.show({ ...options, type: 'info', message });
+    },
+
+    success(message, options = {}) {
+      return this.show({ ...options, type: 'success', message });
+    },
+
+    warn(message, options = {}) {
+      return this.show({ ...options, type: 'warn', message });
+    },
+
+    error(message, options = {}) {
+      return this.show({ ...options, type: 'error', message, timeout: 8000 });
+    },
+
+    tutorial(message, step, total, actions = []) {
+      return this.show({
+        type: 'tutorial',
+        message,
+        actions: [
+          ...actions,
+          {
+            text: step > 1 ? 'Previous' : '',
+            action: step > 1 ? () => this.tutorialStep(step - 1) : null,
+            secondary: true
+          },
+          {
+            text: step < total ? 'Next' : 'Finish',
+            action: step < total ? () => this.tutorialStep(step + 1) : () => this.endTutorial()
+          }
+        ],
+        id: 'tutorial',
+        persistent: true,
+        timeout: 0
+      });
+    },
+
+    render(toast) {
+      const host = toastHost();
+      if (!host) return;
+
+      const el = document.createElement('div');
+      el.className = `flab-toast flab-toast--${toast.type}`;
+      el.setAttribute('role', toast.type === 'error' ? 'alert' : 'status');
+      el.setAttribute('aria-live', toast.type === 'error' ? 'assertive' : 'polite');
+
+      const icons = {
+        info: '⚽',
+        success: '✅',
+        warn: '⚠️',
+        error: '❌',
+        tutorial: '🎯'
+      };
+
+      let actionsHtml = '';
+      if (toast.actions && toast.actions.length > 0) {
+        const actionButtons = toast.actions
+          .filter(action => action.text && action.action)
+          .map(action =>
+            `<button class="flab-toast__action ${action.secondary ? 'flab-toast__action--secondary' : ''}"
+                     data-action="${action.text}">${action.text}</button>`
+          ).join('');
+
+        if (actionButtons) {
+          actionsHtml = `<div class="flab-toast__actions">${actionButtons}</div>`;
+        }
+      }
+
+      // Tutorial-specific navigation
+      let tutorialNav = '';
+      if (toast.type === 'tutorial') {
+        const currentStep = parseInt(toast.id.split('_')[1]) || 1;
+        const totalSteps = 4; // Fixed for now
+        tutorialNav = `
+          <div class="flab-tutorial-nav">
+            <div class="flab-tutorial-progress">${currentStep} / ${totalSteps}</div>
+            <div class="flab-tutorial-actions">
+              ${actionsHtml}
+            </div>
+          </div>
+        `;
+        actionsHtml = ''; // Move actions to tutorial nav
+      }
+
+      el.innerHTML = `
+        <div class="flab-toast__icon">${icons[toast.type] || '⚽'}</div>
+        <div class="flab-toast__content">
+          <p class="flab-toast__message">${toast.message}</p>
+          ${actionsHtml}
+          ${tutorialNav}
+        </div>
+        ${!toast.persistent ? '<button class="flab-toast__close" aria-label="Close">&times;</button>' : ''}
+        ${toast.timeout > 0 ? '<div class="flab-toast__progress" style="width: 100%"></div>' : ''}
+      `;
+
+      // Wire up action buttons
+      el.querySelectorAll('[data-action]').forEach(btn => {
+        const actionText = btn.dataset.action;
+        const action = toast.actions?.find(a => a.text === actionText);
+        if (action?.action) {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            action.action();
+          });
+        }
+      });
+
+      // Wire up close button
+      const closeBtn = el.querySelector('.flab-toast__close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.dismiss(toast.id));
+      }
+
+      // Keyboard handling
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          this.dismiss(toast.id);
+        }
+      });
+
+      toast.element = el;
+      this.toasts.set(toast.id, toast);
+      host.appendChild(el);
+
+      // Start progress bar animation
+      if (toast.timeout > 0) {
+        const progressBar = el.querySelector('.flab-toast__progress');
+        if (progressBar) {
+          progressBar.style.transition = `width ${toast.timeout}ms linear`;
+          setTimeout(() => {
+            progressBar.style.width = '0%';
+          }, 50);
+
+          // Auto-dismiss
+          toast.timer = setTimeout(() => {
+            this.dismiss(toast.id);
+          }, toast.timeout);
+
+          // Pause on hover
+          el.addEventListener('mouseenter', () => {
+            if (toast.timer) {
+              clearTimeout(toast.timer);
+              progressBar.style.animationPlayState = 'paused';
+            }
+          });
+
+          el.addEventListener('mouseleave', () => {
+            if (toast.timeout > 0) {
+              const remaining = toast.timeout * (parseFloat(progressBar.style.width) / 100);
+              toast.timer = setTimeout(() => {
+                this.dismiss(toast.id);
+              }, remaining);
+            }
+          });
+        }
+      }
+
+      // Focus management for accessibility
+      const firstButton = el.querySelector('button:not(.flab-toast__close)');
+      if (firstButton) {
+        firstButton.focus();
+      }
+    },
+
+    pulse(id) {
+      const toast = this.toasts.get(id);
+      if (toast?.element) {
+        toast.element.style.animation = 'none';
+        setTimeout(() => {
+          toast.element.style.animation = 'toast-enter 180ms ease-out';
+        }, 10);
+      }
+    },
+
+    dismiss(id) {
+      const toast = this.toasts.get(id);
+      if (!toast) return;
+
+      if (toast.timer) {
+        clearTimeout(toast.timer);
+      }
+
+      if (toast.element) {
+        toast.element.classList.add('exiting');
+        setTimeout(() => {
+          if (toast.element.parentNode) {
+            toast.element.parentNode.removeChild(toast.element);
+          }
+          this.toasts.delete(id);
+          this.processQueue();
+        }, 160);
+      } else {
+        this.toasts.delete(id);
+        this.processQueue();
+      }
+    },
+
+    clear() {
+      this.toasts.forEach((_, id) => this.dismiss(id));
+      this.queue = [];
+    },
+
+    processQueue() {
+      if (this.queue.length > 0 && this.toasts.size < this.maxVisible) {
+        const nextToast = this.queue.shift();
+        this.render(nextToast);
+      }
+    }
+  };
+
+  // Global toast API
+  window.flabToast = toastSystem;
+
+  // === TUTORIAL SYSTEM ===
+
+  const tutorialSteps = [
+    {
+      title: "Move Players",
+      message: "Drag players to reposition them. Use arrow keys for precision. Players snap to pitch boundaries.",
+      demo: "⚽ Drag demo here"
+    },
+    {
+      title: "Ball Mode",
+      message: "Click 'Ball', then tap a player to place the ball. Click again to move it between players.",
+      demo: "🏟️ Ball placement demo"
+    },
+    {
+      title: "Draw Mode",
+      message: "Click 'Draw', then click to add points. Lines snap to players. Enter to finish, Esc to cancel.",
+      demo: "📏 Drawing demo"
+    },
+    {
+      title: "Play Animation",
+      message: "Click 'Play' to animate pass sequences. Use Save/Load to preserve formations and Undo/Redo to refine.",
+      demo: "📸 Animation demo"
+    }
+  ];
+
+  let currentTutorialStep = 0;
+
+  function startTutorial() {
+    currentTutorialStep = 1;
+    showTutorialStep(1);
+  }
+
+  function showTutorialStep(step) {
+    if (step < 1 || step > tutorialSteps.length) return;
+
+    currentTutorialStep = step;
+    const stepData = tutorialSteps[step - 1];
+
+    toastSystem.tutorial(
+      `**${stepData.title}** - ${stepData.message}`,
+      step,
+      tutorialSteps.length
+    );
+  }
+
+  function endTutorial() {
+    toastSystem.dismiss('tutorial');
+    localStorage.setItem('flab.tutorialSeen', '1');
+    toastSystem.success('Tutorial complete! You\'re ready to create formations.');
+  }
+
+  // Session storage for one-time tips
+  const sessionTips = {
+    hasShown: new Set(),
+
+    show(id, message, type = 'info') {
+      if (this.hasShown.has(id)) return;
+      this.hasShown.add(id);
+      toastSystem[type](message, { id });
+    }
+  };
 
   // Formation presets
   const presets = {
@@ -72,17 +399,28 @@
   let cursorFrame = null;
   let cursorVisible = false;
 
-  // Interaction state management (Hotfix v21.1)
+  // Enhanced drag management
+  let dragFrame = null;
+
+  // Interaction state management (Enhanced v22.1)
   function beginInteraction() {
     const root = labRoot();
-    if (root) root.classList.add('is-interacting');
+    if (root) {
+      root.classList.add('is-interacting');
+      if (state.isDragging) {
+        root.classList.add('is-dragging');
+      }
+    }
     showCursorRing();
   }
 
   function endInteraction() {
     const root = labRoot();
-    if (root) root.classList.remove('is-interacting');
+    if (root) {
+      root.classList.remove('is-interacting', 'is-dragging');
+    }
     hideCursorRing();
+    state.isDragging = false;
   }
 
   // Cursor Ring Implementation
@@ -166,8 +504,6 @@
     if (hint) hint.classList.remove('show');
   }
 
-  let dragFrame = null;
-
   function init() {
     if (!svg()) return;
 
@@ -186,10 +522,10 @@
     // Set initial mode
     setMode('select');
 
-    // Show onboarding if first time
+    // Show tutorial if first time
     checkFirstRun();
 
-    console.log('Formation Lab v22 initialized - UX Overhaul Complete');
+    console.log('Formation Lab v22.1 initialized - Toast System + Drag Reliability Complete');
   }
 
   function ensureLayers() {
@@ -252,7 +588,7 @@
   function wireOnboarding() {
     // Help button
     const help = helpBtn();
-    help?.addEventListener('click', showOnboarding);
+    help?.addEventListener('click', startTutorial);
 
     // Mobile draw finish button
     const finish = drawFinishBtn();
@@ -260,9 +596,9 @@
   }
 
   function handleKeyboard(e) {
-    // Onboarding shortcuts
+    // Tutorial shortcuts
     if (e.key === 'Escape') {
-      hideOnboarding();
+      toastSystem.dismiss('tutorial');
       if (state.drawing) {
         cancelDrawing();
       }
@@ -359,6 +695,19 @@
       showModeHint(hints[mode]);
     }
 
+    // Show one-time session tips
+    switch(mode) {
+      case 'ball':
+        sessionTips.show('ball-tip', 'Ball mode: click a player to attach the ball • Play animates passes', 'info');
+        break;
+      case 'draw':
+        sessionTips.show('draw-tip', 'Draw mode: click to add points • Enter = finish • Esc = cancel', 'info');
+        break;
+      case 'highlight':
+        sessionTips.show('highlight-tip', 'Highlight mode: click players to highlight/unhighlight for tactical emphasis', 'info');
+        break;
+    }
+
     // Special mode setup
     if (mode === 'draw') {
       setupDrawMode();
@@ -453,9 +802,10 @@
     player.setAttribute('aria-label', `Player ${id + 1} ${role}`);
     player.setAttribute('aria-grabbed', 'false');
 
-    // Hit target (larger invisible circle)
+    // Enhanced hit target (larger for reliability)
     const hitTarget = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    hitTarget.setAttribute('r', '5.5');
+    hitTarget.classList.add('flab-player__hit');
+    hitTarget.setAttribute('r', '7'); // Larger hit area
     hitTarget.setAttribute('fill', 'transparent');
     hitTarget.setAttribute('pointer-events', 'visible');
 
@@ -479,8 +829,8 @@
     player.appendChild(dot);
     player.appendChild(label);
 
-    // Event listeners
-    player.addEventListener('pointerdown', e => startDrag(e, id));
+    // Enhanced event listeners with drag threshold
+    player.addEventListener('pointerdown', e => startDragSequence(e, id));
     player.addEventListener('click', e => {
       e.stopPropagation();
       handlePlayerClick(id);
@@ -501,18 +851,84 @@
 
     player.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
     state.positions.set(id, { x, y });
+
+    // Update ball carrier status
+    if (state.ballId === id) {
+      player.classList.add('has-ball');
+    } else {
+      player.classList.remove('has-ball');
+    }
   }
 
-  // === FIXED DRAG IMPLEMENTATION ===
-  // This fixes the "shooting off" issue by calculating proper drag offset
+  // === ENHANCED DRAG IMPLEMENTATION WITH THRESHOLD ===
 
-  function startDrag(e, id) {
+  function startDragSequence(e, id) {
     e.preventDefault();
     e.stopPropagation();
 
     if (state.mode !== 'select') return;
 
     const player = e.currentTarget;
+    const startCoords = getSVGCoords(e);
+
+    state.dragStartPos = startCoords;
+    state.selectedId = id;
+
+    // Set up threshold detection
+    player.setPointerCapture?.(e.pointerId);
+
+    // Start threshold timer (60ms hold alternative)
+    state.dragTimer = setTimeout(() => {
+      if (state.dragStartPos) {
+        startActualDrag(e, id, player);
+      }
+    }, 60);
+
+    document.addEventListener('pointermove', handleThresholdMove);
+    document.addEventListener('pointerup', handleThresholdEnd);
+
+    updateSelection();
+  }
+
+  function handleThresholdMove(e) {
+    if (!state.dragStartPos) return;
+
+    const currentCoords = getSVGCoords(e);
+    if (!currentCoords) return;
+
+    const distance = Math.sqrt(
+      Math.pow(currentCoords.x - state.dragStartPos.x, 2) +
+      Math.pow(currentCoords.y - state.dragStartPos.y, 2)
+    );
+
+    // Start drag if threshold exceeded
+    if (distance > state.dragThreshold) {
+      clearTimeout(state.dragTimer);
+      const player = gPlayers()?.querySelector(`[data-id="${state.selectedId}"]`);
+      if (player) {
+        startActualDrag(e, state.selectedId, player);
+      }
+    }
+  }
+
+  function handleThresholdEnd(e) {
+    clearTimeout(state.dragTimer);
+
+    document.removeEventListener('pointermove', handleThresholdMove);
+    document.removeEventListener('pointerup', handleThresholdEnd);
+
+    const player = gPlayers()?.querySelector(`[data-id="${state.selectedId}"]`);
+    if (player) {
+      player.releasePointerCapture?.(e.pointerId);
+    }
+
+    state.dragStartPos = null;
+  }
+
+  function startActualDrag(e, id, player) {
+    // Clean up threshold listeners
+    document.removeEventListener('pointermove', handleThresholdMove);
+    document.removeEventListener('pointerup', handleThresholdEnd);
 
     // Calculate drag offset to prevent "shooting"
     const playerPos = state.positions.get(id);
@@ -527,27 +943,24 @@
       state.dragOffset = { x: 0, y: 0 };
     }
 
-    player.setPointerCapture?.(e.pointerId);
-
     state.draggingId = id;
-    state.selectedId = id;
+    state.isDragging = true;
 
-    // Begin interaction (Hotfix v21.1)
+    // Begin interaction with drag state
     beginInteraction();
     lockCursorRing();
 
     // Create drag proxy
     createDragProxy(id);
 
-    // Set original to ghost state and mark as dragging
-    player.style.opacity = '0.5';
+    // Set original to ghost state
+    player.classList.add('drag-origin');
     player.setAttribute('aria-grabbed', 'true');
-    player.classList.add('is-dragging');
 
     document.addEventListener('pointermove', handleDragMove);
     document.addEventListener('pointerup', handleDragEnd);
 
-    updateSelection();
+    state.dragStartPos = null; // Clear threshold state
   }
 
   function createDragProxy(id) {
@@ -560,10 +973,9 @@
 
     // Clone player elements
     const proxyPlayer = original.cloneNode(true);
+    proxyPlayer.classList.add('drag-proxy');
     proxyPlayer.setAttribute('data-proxy', 'true');
     proxyPlayer.style.transform = original.getAttribute('transform');
-    proxyPlayer.style.filter = 'drop-shadow(0 2px 8px rgba(0,0,0,0.4))';
-    proxyPlayer.style.cursor = 'grabbing';
 
     // Scale up proxy slightly
     const dot = proxyPlayer.querySelector('.flab-player__dot');
@@ -614,9 +1026,8 @@
     // Restore original player
     const player = gPlayers()?.querySelector(`[data-id="${id}"]`);
     if (player) {
-      player.style.opacity = '';
+      player.classList.remove('drag-origin');
       player.setAttribute('aria-grabbed', 'false');
-      player.classList.remove('is-dragging');
       player.releasePointerCapture?.(e.pointerId);
     }
 
@@ -712,6 +1123,7 @@
       state.ballId = id;
     }
     renderBall();
+    renderAllPlayers(); // Update has-ball classes
     pushHistory();
   }
 
@@ -865,11 +1277,8 @@
     renderLines();
     pushHistory();
 
-    // Announce completion
-    const liveRegion = document.querySelector('[aria-live="polite"]');
-    if (liveRegion) {
-      liveRegion.textContent = `Line finished with ${newLine.points.length} points`;
-    }
+    // Show success toast
+    toastSystem.success(`Pass line created with ${newLine.points.length} points`);
   }
 
   function cancelDrawing() {
@@ -1078,26 +1487,39 @@
     if (ballGroup) while (ballGroup.firstChild) ballGroup.removeChild(ballGroup.firstChild);
 
     renderHighlights();
+    renderAllPlayers(); // Update has-ball classes
   }
 
   // === ANIMATION AND PLAYBACK ===
 
   function playSequence() {
     if (state.lines.length === 0) {
-      alert('💡 Draw some pass lines first, then click Play to animate the ball!');
+      toastSystem.warn('Place a ball and draw a path first', {
+        actions: [
+          { text: 'Ball Mode', action: () => setMode('ball') },
+          { text: 'Draw Mode', action: () => setMode('draw') }
+        ]
+      });
       return;
     }
 
     const ballGroup = gBall();
     if (!ballGroup || state.ballId === null) {
-      alert('💡 Place the ball on a player first using Ball mode!');
+      toastSystem.warn('Place the ball on a player first using Ball mode', {
+        actions: [
+          { text: 'Ball Mode', action: () => setMode('ball') }
+        ]
+      });
       return;
     }
 
     let currentLine = 0;
 
     function animateNextPass() {
-      if (currentLine >= state.lines.length) return;
+      if (currentLine >= state.lines.length) {
+        toastSystem.success('Animation complete!');
+        return;
+      }
 
       const line = state.lines[currentLine];
       let fromPos, toPos;
@@ -1144,13 +1566,18 @@
           state.ballId = line.toId;
         }
 
+        renderAllPlayers(); // Update has-ball classes
+
         currentLine++;
         if (currentLine < state.lines.length) {
           setTimeout(animateNextPass, 400);
+        } else {
+          toastSystem.success('Animation complete!');
         }
       };
     }
 
+    toastSystem.info(`Playing ${state.lines.length} pass sequences...`);
     animateNextPass();
   }
 
@@ -1215,7 +1642,7 @@
     renderAllPlayers();
   }
 
-  // === SAVE/LOAD SYSTEM ===
+  // === SAVE/LOAD SYSTEM WITH TOASTS ===
 
   function saveFormation() {
     try {
@@ -1230,10 +1657,14 @@
       };
 
       localStorage.setItem('fcb_formation_v2', JSON.stringify(data));
-      alert('✅ Formation saved!');
+      toastSystem.success('Formation saved successfully!');
     } catch (error) {
       console.error('Save failed:', error);
-      alert('❌ Save failed. Please try again.');
+      toastSystem.error('Save failed. Please try again.', {
+        actions: [
+          { text: 'Retry', action: () => saveFormation() }
+        ]
+      });
     }
   }
 
@@ -1241,7 +1672,11 @@
     try {
       const saved = localStorage.getItem('fcb_formation_v2') || localStorage.getItem('fcb_formation_v1');
       if (!saved) {
-        alert('No saved formation found.');
+        toastSystem.warn('No saved formation found.', {
+          actions: [
+            { text: 'Save Current', action: () => saveFormation() }
+          ]
+        });
         return;
       }
 
@@ -1274,10 +1709,14 @@
       renderAllPlayers();
       pushHistory();
 
-      alert('✅ Formation loaded!');
+      toastSystem.success('Formation loaded successfully!');
     } catch (error) {
       console.error('Load failed:', error);
-      alert('❌ Load failed. Please try again.');
+      toastSystem.error('Load failed. Please try again.', {
+        actions: [
+          { text: 'Retry', action: () => loadSavedFormation() }
+        ]
+      });
     }
   }
 
@@ -1312,7 +1751,7 @@
         link.href = canvas.toDataURL();
         link.click();
 
-        alert('✅ Formation exported as PNG!');
+        toastSystem.success('Formation exported as PNG!');
       };
 
       img.onerror = () => {
@@ -1325,97 +1764,21 @@
 
     } catch (error) {
       console.error('Export failed:', error);
-      alert('❌ Export failed. Please try again.');
+      toastSystem.error('Export failed. Please try again.', {
+        actions: [
+          { text: 'Retry', action: () => exportFormation() }
+        ]
+      });
     }
   }
 
-  // === ONBOARDING SYSTEM ===
+  // === FIRST RUN CHECK ===
 
   function checkFirstRun() {
     const seen = localStorage.getItem('flab.tutorialSeen');
     if (!seen) {
-      setTimeout(showOnboarding, 1000); // Show after 1 second
+      setTimeout(startTutorial, 1000); // Show after 1 second
     }
-  }
-
-  function showOnboarding() {
-    const modal = document.getElementById('flabOnboard');
-    if (!modal) return;
-
-    modal.style.display = 'flex';
-
-    // Wire modal events
-    wireOnboardingEvents();
-
-    // Focus first slide
-    showSlide(0);
-  }
-
-  function hideOnboarding() {
-    const modal = document.getElementById('flabOnboard');
-    if (!modal) return;
-
-    modal.style.display = 'none';
-
-    // Mark as seen if checkbox is checked
-    const checkbox = document.getElementById('onboard-dont-show');
-    if (checkbox?.checked) {
-      localStorage.setItem('flab.tutorialSeen', 'true');
-    }
-  }
-
-  let currentSlide = 0;
-
-  function wireOnboardingEvents() {
-    // Close button
-    const closeBtn = document.querySelector('.flab-onboard__close');
-    closeBtn?.addEventListener('click', hideOnboarding);
-
-    // Navigation buttons
-    const prevBtn = document.querySelector('.btn-prev');
-    const nextBtn = document.querySelector('.btn-next');
-
-    prevBtn?.addEventListener('click', () => showSlide(currentSlide - 1));
-    nextBtn?.addEventListener('click', () => {
-      if (currentSlide === 3) {
-        hideOnboarding();
-      } else {
-        showSlide(currentSlide + 1);
-      }
-    });
-
-    // Escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') hideOnboarding();
-    });
-
-    // Click outside to close
-    const modal = document.getElementById('flabOnboard');
-    modal?.addEventListener('click', (e) => {
-      if (e.target === modal) hideOnboarding();
-    });
-  }
-
-  function showSlide(index) {
-    const slides = document.querySelectorAll('.flab-onboard__slide');
-    const prevBtn = document.querySelector('.btn-prev');
-    const nextBtn = document.querySelector('.btn-next');
-    const indicator = document.querySelector('.slide-indicator');
-
-    if (index < 0 || index >= slides.length) return;
-
-    // Hide all slides
-    slides.forEach(slide => slide.style.display = 'none');
-
-    // Show current slide
-    slides[index].style.display = 'block';
-
-    // Update navigation
-    currentSlide = index;
-
-    if (prevBtn) prevBtn.disabled = index === 0;
-    if (nextBtn) nextBtn.textContent = index === slides.length - 1 ? 'Finish' : 'Next';
-    if (indicator) indicator.textContent = `${index + 1} / ${slides.length}`;
   }
 
   // === INITIALIZATION ===
@@ -1434,7 +1797,12 @@
     loadFormation,
     saveFormation,
     exportFormation,
-    showOnboarding
+    startTutorial,
+    toast: toastSystem
   };
+
+  // Global tutorial step functions for toast actions
+  window.flabToast.tutorialStep = showTutorialStep;
+  window.flabToast.endTutorial = endTutorial;
 
 })();

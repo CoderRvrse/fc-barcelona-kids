@@ -3351,6 +3351,314 @@ textarea:focus-visible {
   text-align: center;
 }
 
+/* --- TOAST SYSTEM v22.1 --- */
+
+/* Toast Host */
+.flab-toast-host {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+  width: calc(100% - 40px);
+}
+
+/* Individual Toast */
+.flab-toast {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 58, 138, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+  transform: translateY(100px) scale(0.95);
+  opacity: 0;
+  animation: toast-enter 180ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+}
+
+.flab-toast.exiting {
+  animation: toast-exit 160ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes toast-enter {
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-exit {
+  to {
+    transform: translateY(20px) scale(0.98);
+    opacity: 0;
+  }
+}
+
+/* Toast Types */
+.flab-toast--info {
+  border-left: 4px solid #1e3a8a;
+}
+
+.flab-toast--success {
+  border-left: 4px solid #16a34a;
+}
+
+.flab-toast--warn {
+  border-left: 4px solid #d97706;
+}
+
+.flab-toast--error {
+  border-left: 4px solid #dc2626;
+  background: rgba(254, 242, 242, 0.95);
+}
+
+/* Toast Icon */
+.flab-toast__icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Toast Content */
+.flab-toast__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.flab-toast__message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #374151;
+  font-weight: 500;
+}
+
+.flab-toast__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.flab-toast__action {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.flab-toast__action:hover {
+  background: #1e40af;
+}
+
+.flab-toast__action--secondary {
+  background: #6b7280;
+}
+
+.flab-toast__action--secondary:hover {
+  background: #4b5563;
+}
+
+/* Toast Close Button */
+.flab-toast__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.flab-toast__close:hover {
+  color: #374151;
+}
+
+/* Toast Progress Bar */
+.flab-toast__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #1e3a8a 0%, #f2c200 100%);
+  transition: width 0.1s linear;
+  border-radius: 0 0 12px 12px;
+}
+
+.flab-toast:hover .flab-toast__progress {
+  animation-play-state: paused;
+}
+
+/* Tutorial Toast Styling */
+.flab-toast--tutorial {
+  background: linear-gradient(135deg, #1e3a8a 0%, #f2c200 100%);
+  color: white;
+  border: none;
+  max-width: 480px;
+}
+
+.flab-toast--tutorial .flab-toast__message {
+  color: white;
+}
+
+.flab-toast--tutorial .flab-toast__close {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.flab-toast--tutorial .flab-toast__close:hover {
+  color: white;
+}
+
+.flab-toast--tutorial .flab-toast__action {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.flab-toast--tutorial .flab-toast__action:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Tutorial Navigation */
+.flab-tutorial-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.flab-tutorial-progress {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.flab-tutorial-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .flab-toast-host {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    max-width: none;
+    width: auto;
+  }
+
+  .flab-toast {
+    padding: 14px;
+  }
+
+  .flab-toast__message {
+    font-size: 13px;
+  }
+
+  .flab-toast--tutorial {
+    max-width: none;
+  }
+}
+
+/* --- DRAG RELIABILITY OVERHAUL v22.1 --- */
+
+/* Enhanced Player Hit Areas */
+.flab-player {
+  cursor: pointer;
+}
+
+.flab-player__hit {
+  r: 7; /* Larger hit area - min 44px equivalent */
+}
+
+/* Drag States */
+.flab-player.drag-origin {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.flab-player.drag-proxy {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+  transform-origin: center;
+  z-index: 999;
+}
+
+/* Suppress ALL hover effects during drag */
+#formationLab.is-dragging .flab-player,
+#formationLab.is-dragging .flab-player:hover,
+#formationLab.is-dragging .flab-player__dot,
+#formationLab.is-dragging .flab-player__dot:hover {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Only allow hover in select mode when not dragging */
+#formationLab[data-mode="select"]:not(.is-dragging) .flab-player:not(.drag-origin):hover {
+  transform: translate(var(--tx,0), var(--ty,0)) scale(1.02);
+  transition: transform 120ms ease;
+}
+
+/* Selection rings - enhanced visibility */
+.flab-ring.is-active {
+  animation: ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ring-pulse {
+  0%, 100% {
+    stroke-opacity: 0.8;
+    stroke-width: 0.9;
+  }
+  50% {
+    stroke-opacity: 1;
+    stroke-width: 1.1;
+  }
+}
+
+/* Ball carrier gets gold ring */
+.flab-player.has-ball .flab-ring.is-active {
+  stroke: #f2c200;
+  animation: ring-gold 2s ease-in-out infinite;
+}
+
+@keyframes ring-gold {
+  0%, 100% {
+    stroke-opacity: 0.9;
+    stroke-width: 1;
+    filter: drop-shadow(0 0 4px rgba(242, 194, 0, 0.3));
+  }
+  50% {
+    stroke-opacity: 1;
+    stroke-width: 1.2;
+    filter: drop-shadow(0 0 8px rgba(242, 194, 0, 0.5));
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .flab-player,
