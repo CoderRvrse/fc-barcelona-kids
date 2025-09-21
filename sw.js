@@ -1,5 +1,5 @@
 // File: sw.js
-const VERSION = 'v17';
+const VERSION = 'v18';
 const CACHE_NAME = `fcb-kids-${VERSION}`;
 const OFFLINE_URL = '/fc-barcelona-kids/offline.html';
 
@@ -9,8 +9,12 @@ self.addEventListener('message', (e) => {
 });
 
 // ensure instant takeover
-self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('install', () => {
+  console.log(`[SW] Installing ${VERSION}`);
+  self.skipWaiting();
+});
 self.addEventListener('activate', (event) => {
+  console.log(`[SW] Activating ${VERSION}`);
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(
@@ -18,6 +22,7 @@ self.addEventListener('activate', (event) => {
           .map(k => caches.delete(k))
     );
     await self.clients.claim();
+    console.log(`[SW] ${VERSION} activated and claimed`);
   })());
 });
 
