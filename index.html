@@ -43,11 +43,11 @@
     <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
     <!-- Version pin to keep HTML/CSS/JS in sync -->
-    <script>window.__VER__='16';</script>
+    <script>window.__ASSET_VER__='17';</script>
 
-    <link rel="stylesheet" href="styles/main.css?v=16" />
+    <link rel="stylesheet" href="styles/main.css?v=17" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="scripts/main.js?v=16" defer></script>
+    <script src="scripts/main.js?v=17" defer></script>
 
     <noscript>
         <style>
@@ -173,16 +173,12 @@
             </div>
         </section>
 
-        <section id="squad" class="squad" data-section>
-            <div class="container">
-                <header class="squad-head">
-                    <h2 class="squad-title" data-underline>2024/25 Squad Spotlight</h2>
-                    <p class="squad-kicker">Tap a card to flip it and see this season's numbers.</p>
-                </header>
-
-                <!-- Grid auto-populated by JS from data/squad.json -->
-                <ul id="squadGrid" class="squad-grid" aria-live="polite"></ul>
+        <section id="squad" class="squad">
+            <div class="squad__intro">
+                <h2 class="squad__title">2024/25 Squad Spotlight</h2>
+                <p class="squad__kicker">Tap a card to flip it and see this season's numbers.</p>
             </div>
+            <div id="squadGrid" class="squad__grid" aria-live="polite"></div>
         </section>
 
         <section id="coaches" class="coaches" data-section>

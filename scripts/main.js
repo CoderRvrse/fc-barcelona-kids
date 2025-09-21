@@ -525,9 +525,9 @@ const kill = (el) => {
 })();
 })(); // Close backToTopControl function
 
-// ===== SQUAD SPOTLIGHT FUNCTIONALITY ===================================
+// ===== BARÇA TRADING CARDS v1 ==========================================
 
-(function squadSpotlight() {
+(function tradingCards() {
     const squadGrid = document.getElementById('squadGrid');
     if (!squadGrid) return;
 
@@ -537,67 +537,76 @@ const kill = (el) => {
         document.documentElement.classList.add('rm');
     }
 
+    let currentlyFlipped = null;
+
     // Fetch and render squad data
-    async function initSquad() {
+    async function initTradingCards() {
         try {
-            const squadUrl = new URL('data/squad.json', document.baseURI).href;
-            const response = await fetch(squadUrl, { cache: 'no-store' });
+            const dataUrl = new URL('./data/squad.json', location.href).toString();
+            const response = await fetch(dataUrl, { cache: 'no-store' });
             const players = await response.json();
-            renderSquad(players);
+            renderTradingCards(players);
             initializeInteractions();
             initializeLazyLoading();
+            initializeVisibilityObserver();
         } catch (error) {
             console.error('Failed to load squad data:', error);
-            squadGrid.innerHTML = '<li class="error-message">Unable to load squad data</li>';
+            squadGrid.innerHTML = '<div class="error-message">Unable to load squad data</div>';
         }
     }
 
-    // Render squad cards
-    function renderSquad(players) {
+    // Render trading cards
+    function renderTradingCards(players) {
         const fragment = document.createDocumentFragment();
 
         players.forEach(player => {
-            const li = document.createElement('li');
-            li.className = 'squad-card';
-            li.setAttribute('data-player', player.id);
+            const article = document.createElement('article');
+            article.className = 'card';
+            article.setAttribute('tabindex', '0');
+            article.setAttribute('aria-label', `${player.name} trading card`);
+            article.setAttribute('data-player', player.id);
+            article.setAttribute('data-rarity', player.rarity);
 
-            li.innerHTML = `
-                <button class="card3d" aria-expanded="false" aria-label="Flip card for ${player.name}">
-                    <span class="card3d-inner" aria-hidden="true">
-                        <!-- FRONT -->
-                        <span class="card3d-face card3d-front">
-                            <img class="player-img"
-                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400'%3E%3Crect width='100%25' height='100%25' fill='rgba(255,255,255,0.1)'/%3E%3C/svg%3E"
-                                 data-src="${player.image}"
-                                 alt=""
-                                 loading="lazy"
-                                 decoding="async" />
-                            <span class="player-role">${player.role}</span>
-                            <span class="player-name">${player.name}</span>
-                            <span class="player-number">#${player.number}</span>
-                            <span class="player-position">${player.position}</span>
-                        </span>
-                        <!-- BACK -->
-                        <span class="card3d-face card3d-back">
-                            ${generateStats(player.season)}
-                        </span>
-                    </span>
-                </button>
+            article.innerHTML = `
+                <div class="card__glass"></div>
+                <div class="card__wrap">
+                    <div class="card__side card__front" aria-hidden="false">
+                        <div class="card__shine" aria-hidden="true"></div>
+                        <header class="card__header">
+                            <span class="card__badge">#${player.number}</span>
+                            <span class="card__rarity">${player.rarity}</span>
+                        </header>
+                        <img class="card__img"
+                             loading="lazy"
+                             decoding="async"
+                             src="${player.img}"
+                             onerror="this.src='assets/placeholder-coach.svg';"
+                             alt="">
+                        <h3 class="card__name">${player.name}</h3>
+                        <p class="card__meta">${player.role} • ${player.position}</p>
+                    </div>
+
+                    <div class="card__side card__back" aria-hidden="true">
+                        <h4 class="card__backTitle">Season <span>${player.season}</span></h4>
+                        <div class="card__stats">
+                            ${generateStatsHTML(player.stats)}
+                        </div>
+                        <div class="card__traits">
+                            ${player.traits.map(trait => `<span class="chip">${trait}</span>`).join('')}
+                        </div>
+                        <button class="card__close" aria-label="Close details">×</button>
+                    </div>
+                </div>
             `;
 
-            fragment.appendChild(li);
+            fragment.appendChild(article);
         });
 
         squadGrid.appendChild(fragment);
     }
 
-    // Generate stats HTML with conditional rendering
-    function generateStats(season) {
-        const statOrder = ['games', 'goals', 'assists', 'cleanSheets', 'saves', 'savePct',
-                          'tacklesWon', 'chancesCreated', 'passesCompleted', 'progCarries',
-                          'pressures', 'duelsWon', 'xG', 'xA', 'keyPasses', 'crosses',
-                          'interceptions', 'passAccuracy', 'aerialWins', 'blocks', 'shots'];
-
+    // Generate stats HTML
+    function generateStatsHTML(stats) {
         const statLabels = {
             games: 'Games',
             goals: 'Goals',
@@ -605,44 +614,44 @@ const kill = (el) => {
             cleanSheets: 'Clean Sheets',
             saves: 'Saves',
             savePct: 'Save %',
-            tacklesWon: 'Tackles Won',
+            xgPrevented: 'xG Prevented',
+            shotsOnTarget: 'Shots on Target',
+            xG: 'xG',
+            dribbleSuccess: 'Dribble Success',
             chancesCreated: 'Chances Created',
+            passAccuracy: 'Pass Accuracy',
             passesCompleted: 'Passes Completed',
             progCarries: 'Progressive Carries',
+            tacklesWon: 'Tackles Won',
             pressures: 'Pressures',
             duelsWon: 'Duels Won',
-            xG: 'xG',
-            xA: 'xA',
-            keyPasses: 'Key Passes',
-            crosses: 'Crosses',
-            interceptions: 'Interceptions',
-            passAccuracy: 'Pass Accuracy',
             aerialWins: 'Aerial Wins',
+            interceptions: 'Interceptions',
+            keyPasses: 'Key Passes',
+            dribbles: 'Dribbles',
+            shots: 'Shots',
+            crosses: 'Crosses',
             blocks: 'Blocks',
-            shots: 'Shots'
+            clearances: 'Clearances'
         };
 
-        return statOrder
-            .filter(stat => season.hasOwnProperty(stat))
-            .slice(0, 4) // Limit to 4 stats to avoid overcrowding
-            .map(stat => {
-                const value = stat === 'savePct' || stat === 'passAccuracy'
-                    ? `${season[stat]}%`
-                    : season[stat];
-                return `
-                    <span class="stat">
-                        <span class="stat-label">${statLabels[stat]}</span>
-                        <span class="stat-value">${value}</span>
-                    </span>
-                `;
+        return Object.entries(stats)
+            .slice(0, 5) // Limit to 5 stats max
+            .map(([key, value]) => {
+                const label = statLabels[key] || key;
+                const displayValue = (key === 'savePct' || key === 'passAccuracy' || key === 'dribbleSuccess')
+                    ? `${value}%`
+                    : key === 'xgPrevented' && value > 0
+                    ? `+${value}`
+                    : value;
+
+                return `<div class="stat-item"><span>${label}</span><b>${displayValue}</b></div>`;
             })
             .join('');
     }
 
-    // Initialize flip interactions
+    // Initialize interactions
     function initializeInteractions() {
-        let currentlyFlipped = null;
-
         // Card flip handlers
         squadGrid.addEventListener('click', handleCardClick);
         squadGrid.addEventListener('keydown', handleCardKeydown);
@@ -650,76 +659,115 @@ const kill = (el) => {
         // Click outside to unflip
         document.addEventListener('click', handleOutsideClick);
 
-        function handleCardClick(e) {
-            const card = e.target.closest('.card3d');
-            if (!card) return;
+        // Parallax tilt (if motion not reduced)
+        if (!prefersReducedMotion) {
+            squadGrid.addEventListener('pointermove', handlePointerMove);
+            squadGrid.addEventListener('pointerleave', handlePointerLeave);
+        }
+    }
 
+    function handleCardClick(e) {
+        const card = e.target.closest('.card');
+        if (!card) return;
+
+        const closeBtn = e.target.closest('.card__close');
+        if (closeBtn) {
             e.preventDefault();
             e.stopPropagation();
+            unflipCard(card);
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        flipCard(card);
+    }
+
+    function handleCardKeydown(e) {
+        const card = e.target.closest('.card');
+        if (!card) return;
+
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
             flipCard(card);
-        }
-
-        function handleCardKeydown(e) {
-            const card = e.target.closest('.card3d');
-            if (!card) return;
-
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                flipCard(card);
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                if (card.classList.contains('is-flipped')) {
-                    unflipCard(card);
-                }
-            }
-        }
-
-        function handleOutsideClick(e) {
-            if (!e.target.closest('.squad-card') && currentlyFlipped) {
-                unflipCard(currentlyFlipped);
-            }
-        }
-
-        function flipCard(card) {
-            // Unflip any currently flipped card
-            if (currentlyFlipped && currentlyFlipped !== card) {
-                unflipCard(currentlyFlipped);
-            }
-
-            // Toggle current card
-            if (card.classList.contains('is-flipped')) {
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            if (card.querySelector('.card__wrap').classList.contains('is-flipped')) {
                 unflipCard(card);
-            } else {
-                card.classList.add('is-flipped');
-                card.setAttribute('aria-expanded', 'true');
-                currentlyFlipped = card;
             }
         }
+    }
 
-        function unflipCard(card) {
-            card.classList.remove('is-flipped');
-            card.setAttribute('aria-expanded', 'false');
-            if (currentlyFlipped === card) {
-                currentlyFlipped = null;
+    function handleOutsideClick(e) {
+        if (!e.target.closest('.card') && currentlyFlipped) {
+            unflipCard(currentlyFlipped);
+        }
+    }
+
+    function handlePointerMove(e) {
+        const card = e.target.closest('.card');
+        if (!card || card.querySelector('.card__wrap').classList.contains('is-flipped')) return;
+
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = ((y - centerY) / centerY) * -10; // Max 10 degrees
+        const rotateY = ((x - centerX) / centerX) * 10;
+
+        const cardWrap = card.querySelector('.card__wrap');
+        cardWrap.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    }
+
+    function handlePointerLeave(e) {
+        const card = e.target.closest('.card');
+        if (!card || card.querySelector('.card__wrap').classList.contains('is-flipped')) return;
+
+        const cardWrap = card.querySelector('.card__wrap');
+        cardWrap.style.transform = '';
+    }
+
+    function flipCard(card) {
+        const cardWrap = card.querySelector('.card__wrap');
+        const frontFace = card.querySelector('.card__front');
+        const backFace = card.querySelector('.card__back');
+
+        // Unflip any currently flipped card
+        if (currentlyFlipped && currentlyFlipped !== card) {
+            unflipCard(currentlyFlipped);
+        }
+
+        // Toggle current card
+        if (cardWrap.classList.contains('is-flipped')) {
+            unflipCard(card);
+        } else {
+            cardWrap.classList.add('is-flipped');
+            card.setAttribute('aria-expanded', 'true');
+            frontFace.setAttribute('aria-hidden', 'true');
+            backFace.setAttribute('aria-hidden', 'false');
+            currentlyFlipped = card;
+
+            // Reset any tilt transform
+            if (!prefersReducedMotion) {
+                cardWrap.style.transform = '';
             }
         }
+    }
 
-        // Mouse movement for hover effect
-        if (!prefersReducedMotion) {
-            squadGrid.addEventListener('mousemove', handleMouseMove);
-        }
+    function unflipCard(card) {
+        const cardWrap = card.querySelector('.card__wrap');
+        const frontFace = card.querySelector('.card__front');
+        const backFace = card.querySelector('.card__back');
 
-        function handleMouseMove(e) {
-            const card = e.target.closest('.card3d');
-            if (!card) return;
+        cardWrap.classList.remove('is-flipped');
+        card.setAttribute('aria-expanded', 'false');
+        frontFace.setAttribute('aria-hidden', 'false');
+        backFace.setAttribute('aria-hidden', 'true');
 
-            const rect = card.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-            const inner = card.querySelector('.card3d-inner');
-            inner.style.setProperty('--x', `${x}%`);
-            inner.style.setProperty('--y', `${y}%`);
+        if (currentlyFlipped === card) {
+            currentlyFlipped = null;
         }
     }
 
@@ -729,13 +777,8 @@ const kill = (el) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const img = entry.target;
-                    const src = img.getAttribute('data-src');
-                    if (src) {
-                        img.src = src;
-                        img.classList.add('loaded');
-                        img.removeAttribute('data-src');
-                        imageObserver.unobserve(img);
-                    }
+                    img.classList.add('loaded');
+                    imageObserver.unobserve(img);
                 }
             });
         }, {
@@ -743,17 +786,37 @@ const kill = (el) => {
             threshold: 0.1
         });
 
-        // Observe all player images
-        document.querySelectorAll('.player-img[data-src]').forEach(img => {
+        // Observe all card images
+        document.querySelectorAll('.card__img').forEach(img => {
             imageObserver.observe(img);
         });
     }
 
-    // Initialize squad when DOM is ready
+    // Initialize visibility observer for entrance animations
+    function initializeVisibilityObserver() {
+        const cardObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    cardObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            rootMargin: '-10% 0px',
+            threshold: 0.3
+        });
+
+        // Observe all cards
+        document.querySelectorAll('.card').forEach(card => {
+            cardObserver.observe(card);
+        });
+    }
+
+    // Initialize trading cards when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initSquad);
+        document.addEventListener('DOMContentLoaded', initTradingCards);
     } else {
-        initSquad();
+        initTradingCards();
     }
 })();
 
