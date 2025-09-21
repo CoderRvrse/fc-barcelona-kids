@@ -1,6 +1,6 @@
 (function () {
-  // === FORMATION LAB v22.2 - INTERACTION & TUTORIAL FIX PACK ===
-  // Features: Drag/hover jank fixes, tutorial persistence, no auto-scroll, proportional arrows, performance optimizations
+  // === FORMATION LAB v23.1 - PRECISION DRAG + SLIM ARROWS + ZERO BOING ===
+  // Features: Full-screen zoom/pan, bulletproof drag, polished tutorial modal, enhanced draw tools
 
   // State management
   const state = {
@@ -29,7 +29,24 @@
 
     history: [],
     future: [],
-    positions: new Map() // id -> {x, y}
+    positions: new Map(), // id -> {x, y}
+
+    // Mobile Pro Mode state
+    viewport: {
+      scale: 1,
+      tx: 0,
+      ty: 0,
+      isFullscreen: false,
+      isTransforming: false
+    },
+
+    // Touch gesture state
+    gestures: {
+      touches: new Map(),
+      lastDistance: 0,
+      lastCenter: { x: 0, y: 0 },
+      isGesturing: false
+    }
   };
 
   // DOM references
@@ -45,6 +62,9 @@
   const helpBtn = () => document.getElementById('flabHelpBtn');
   const drawFinishBtn = () => document.getElementById('flabDrawFinish');
   const toastHost = () => document.getElementById('flabToastHost');
+  const viewport = () => document.getElementById('flabViewport');
+  const content = () => document.getElementById('flabContent');
+  const fullscreenBtn = () => document.getElementById('flabFullscreenBtn');
 
   // === TOAST SYSTEM ===
 
@@ -353,6 +373,424 @@
   // Global toast API
   window.flabToast = toastSystem;
 
+  // === MOBILE PRO MODE SYSTEM ===
+
+  function isFullscreenAvailable() {
+    return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled || document.mozFullScreenEnabled);
+  }
+
+  function enterFullscreen() {
+    const vp = viewport();
+    if (!vp) return;
+
+    state.viewport.isFullscreen = true;
+    vp.classList.add('is-fullscreen');
+
+    // Try native fullscreen first
+    if (isFullscreenAvailable()) {
+      if (vp.requestFullscreen) {
+        vp.requestFullscreen();
+      } else if (vp.webkitRequestFullscreen) {
+        vp.webkitRequestFullscreen();
+      } else if (vp.mozRequestFullScreen) {
+        vp.mozRequestFullScreen();
+      }
+    }
+
+    // Update button
+    const btn = fullscreenBtn();
+    if (btn) {
+      btn.textContent = '❌';
+      btn.title = 'Exit full-screen mode';
+      btn.setAttribute('aria-label', 'Exit full-screen mode');
+    }
+
+    // Load saved viewport state
+    loadViewportState();
+
+    toastSystem.info('Use pinch-to-zoom and pan to navigate. Double-tap to zoom.', {
+      timeout: 3000
+    });
+  }
+
+  function exitFullscreen() {
+    const vp = viewport();
+    if (!vp) return;
+
+    state.viewport.isFullscreen = false;
+    vp.classList.remove('is-fullscreen');
+
+    // Exit native fullscreen
+    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      }
+    }
+
+    // Update button
+    const btn = fullscreenBtn();
+    if (btn) {
+      btn.textContent = '📱';
+      btn.title = 'Enter full-screen mode';
+      btn.setAttribute('aria-label', 'Enter full-screen mode');
+    }
+
+    // Save viewport state
+    saveViewportState();
+  }
+
+  function toggleFullscreen() {
+    if (state.viewport.isFullscreen) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
+  }
+
+  function applyViewportTransform() {
+    const cnt = content();
+    if (!cnt) return;
+
+    const { scale, tx, ty } = state.viewport;
+    cnt.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+  }
+
+  function updateViewport(newScale, newTx, newTy, animate = true) {
+    // Clamp scale
+    const scale = Math.max(0.5, Math.min(3.0, newScale));
+
+    // Calculate bounds for pan (keep some content visible)
+    const cnt = content();
+    if (!cnt) return;
+
+    const rect = cnt.getBoundingClientRect();
+    const maxPan = Math.max(200, rect.width * scale * 0.3);
+
+    const tx = Math.max(-maxPan, Math.min(maxPan, newTx));
+    const ty = Math.max(-maxPan, Math.min(maxPan, newTy));
+
+    state.viewport.scale = scale;
+    state.viewport.tx = tx;
+    state.viewport.ty = ty;
+
+    // Apply transform
+    if (animate) {
+      cnt.classList.remove('is-transforming');
+    } else {
+      cnt.classList.add('is-transforming');
+    }
+
+    applyViewportTransform();
+
+    if (!animate) {
+      setTimeout(() => cnt.classList.remove('is-transforming'), 100);
+    }
+  }
+
+  function saveViewportState() {
+    if (state.viewport.isFullscreen) {
+      const stateKey = window.innerWidth > 768 ? 'flab.viewport.desktop' : 'flab.viewport.mobile';
+      localStorage.setItem(stateKey, JSON.stringify({
+        scale: state.viewport.scale,
+        tx: state.viewport.tx,
+        ty: state.viewport.ty
+      }));
+    }
+  }
+
+  function loadViewportState() {
+    const stateKey = window.innerWidth > 768 ? 'flab.viewport.desktop' : 'flab.viewport.mobile';
+    const saved = localStorage.getItem(stateKey);
+
+    if (saved) {
+      try {
+        const { scale, tx, ty } = JSON.parse(saved);
+        updateViewport(scale || 1, tx || 0, ty || 0, true);
+      } catch (e) {
+        updateViewport(1, 0, 0, true);
+      }
+    } else {
+      updateViewport(1, 0, 0, true);
+    }
+  }
+
+  // === SLIM PASS ARROWS SYSTEM ===
+
+  function ensureArrowMarker(svg) {
+    let defs = svg.querySelector('defs') || svg.insertBefore(document.createElementNS('http://www.w3.org/2000/svg','defs'), svg.firstChild);
+    let marker = defs.querySelector('#passArrow');
+    if (!marker) {
+      marker = document.createElementNS(svg.namespaceURI, 'marker');
+      marker.id = 'passArrow';
+      marker.setAttribute('viewBox', '0 0 10 10');
+      marker.setAttribute('refX', '10');      // tip aligns with end of line
+      marker.setAttribute('refY', '5');
+      marker.setAttribute('markerWidth', '10');
+      marker.setAttribute('markerHeight', '10');
+      marker.setAttribute('orient', 'auto');
+      marker.setAttribute('markerUnits', 'strokeWidth'); // scales with stroke only
+      const path = document.createElementNS(svg.namespaceURI, 'path');
+      path.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');    // small triangle
+      path.setAttribute('class', 'flab-line-arrow');
+      marker.appendChild(path);
+      defs.appendChild(marker);
+    }
+    return marker;
+  }
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function drawPass(svg, x1, y1, x2, y2) {
+    ensureArrowMarker(svg);
+
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.hypot(dx, dy);                   // pixel length of pass
+
+    // Compute scale-aware marker size; clamp so it never looks huge
+    const headLen   = clamp(len * 0.08, 8, 18);       // 8–18px
+    const headWidth = clamp(headLen * 0.6, 6, 12);    // proportional
+
+    // Sync marker size to CSS var defaults, but override for long/short passes
+    const marker = svg.querySelector('#passArrow');
+    if (marker) {
+      marker.setAttribute('markerWidth', headLen.toFixed(2));
+      marker.setAttribute('markerHeight', headLen.toFixed(2));
+    }
+
+    // Optional faint trail (under shaft)
+    const hl = document.createElementNS(svg.namespaceURI, 'line');
+    hl.setAttribute('x1', x1); hl.setAttribute('y1', y1);
+    hl.setAttribute('x2', x2); hl.setAttribute('y2', y2);
+    hl.setAttribute('class', 'flab-line-highlight');
+    svg.appendChild(hl);
+
+    // Main shaft line
+    const line = document.createElementNS(svg.namespaceURI, 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('class', 'flab-line');
+    line.setAttribute('marker-end', 'url(#passArrow)');
+    svg.appendChild(line);
+
+    return { line, hl };
+  }
+
+  // === MOBILE PRO MODE GESTURE HANDLING ===
+
+  function setupMobileGestures() {
+    const vp = viewport();
+    const cnt = content();
+    if (!vp || !cnt) return;
+
+    // Touch events for gesture recognition
+    vp.addEventListener('touchstart', handleTouchStart, { passive: false });
+    vp.addEventListener('touchmove', handleTouchMove, { passive: false });
+    vp.addEventListener('touchend', handleTouchEnd, { passive: false });
+    vp.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+
+    // Prevent default zoom behavior
+    vp.addEventListener('gesturestart', e => e.preventDefault());
+    vp.addEventListener('gesturechange', e => e.preventDefault());
+    vp.addEventListener('gestureend', e => e.preventDefault());
+  }
+
+  function handleTouchStart(e) {
+    if (!state.viewport.isFullscreen) return;
+
+    // Store touch data
+    for (const touch of e.touches) {
+      state.gestures.touches.set(touch.identifier, {
+        x: touch.clientX,
+        y: touch.clientY,
+        startTime: performance.now()
+      });
+    }
+
+    if (e.touches.length === 2) {
+      // Start two-finger gesture
+      state.gestures.isGesturing = true;
+      state.viewport.isTransforming = true;
+
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+
+      // Calculate initial distance and center
+      const dx = touch2.clientX - touch1.clientX;
+      const dy = touch2.clientY - touch1.clientY;
+      state.gestures.lastDistance = Math.sqrt(dx * dx + dy * dy);
+
+      state.gestures.lastCenter = {
+        x: (touch1.clientX + touch2.clientX) / 2,
+        y: (touch1.clientY + touch2.clientY) / 2
+      };
+
+      e.preventDefault();
+    }
+  }
+
+  function handleTouchMove(e) {
+    if (!state.viewport.isFullscreen || !state.gestures.isGesturing) return;
+
+    if (e.touches.length === 2) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+
+      // Calculate current distance and center
+      const dx = touch2.clientX - touch1.clientX;
+      const dy = touch2.clientY - touch1.clientY;
+      const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+      const currentCenter = {
+        x: (touch1.clientX + touch2.clientX) / 2,
+        y: (touch1.clientY + touch2.clientY) / 2
+      };
+
+      // Calculate scale change
+      const scaleChange = currentDistance / state.gestures.lastDistance;
+      const newScale = state.viewport.scale * scaleChange;
+
+      // Calculate pan change (relative to viewport)
+      const panDx = currentCenter.x - state.gestures.lastCenter.x;
+      const panDy = currentCenter.y - state.gestures.lastCenter.y;
+
+      const newTx = state.viewport.tx + panDx;
+      const newTy = state.viewport.ty + panDy;
+
+      // Apply combined transform
+      updateViewport(newScale, newTx, newTy, false);
+
+      // Update tracking values
+      state.gestures.lastDistance = currentDistance;
+      state.gestures.lastCenter = currentCenter;
+
+      e.preventDefault();
+    } else if (e.touches.length === 1 && state.gestures.touches.size === 1) {
+      // Single finger pan
+      const touch = e.touches[0];
+      const stored = state.gestures.touches.get(touch.identifier);
+
+      if (stored) {
+        const panDx = touch.clientX - stored.x;
+        const panDy = touch.clientY - stored.y;
+
+        const newTx = state.viewport.tx + panDx;
+        const newTy = state.viewport.ty + panDy;
+
+        updateViewport(state.viewport.scale, newTx, newTy, false);
+
+        // Update stored position
+        stored.x = touch.clientX;
+        stored.y = touch.clientY;
+
+        e.preventDefault();
+      }
+    }
+  }
+
+  function handleTouchEnd(e) {
+    if (!state.viewport.isFullscreen) return;
+
+    // Remove ended touches
+    const remainingTouches = new Set();
+    for (const touch of e.touches) {
+      remainingTouches.add(touch.identifier);
+    }
+
+    for (const [id] of state.gestures.touches) {
+      if (!remainingTouches.has(id)) {
+        const touchData = state.gestures.touches.get(id);
+
+        // Check for double-tap
+        if (touchData && performance.now() - touchData.startTime < 300) {
+          checkDoubleTap(touchData);
+        }
+
+        state.gestures.touches.delete(id);
+      }
+    }
+
+    if (e.touches.length === 0) {
+      // All touches ended
+      state.gestures.isGesturing = false;
+      state.viewport.isTransforming = false;
+      saveViewportState();
+    }
+  }
+
+  function handleTouchCancel(e) {
+    // Clean up all touch state
+    state.gestures.touches.clear();
+    state.gestures.isGesturing = false;
+    state.viewport.isTransforming = false;
+  }
+
+  function checkDoubleTap(touchData) {
+    const now = performance.now();
+
+    if (state.gestures.lastTap && now - state.gestures.lastTap < 300) {
+      // Double-tap detected - zoom to fit or zoom in
+      if (state.viewport.scale < 1.5) {
+        updateViewport(2.0, 0, 0, true);
+      } else {
+        updateViewport(1.0, 0, 0, true);
+      }
+      state.gestures.lastTap = null;
+    } else {
+      state.gestures.lastTap = now;
+    }
+  }
+
+  // === MOBILE PRO MODE SETUP ===
+
+  function setupMobileProMode() {
+    // Wire fullscreen button
+    const fsBtn = fullscreenBtn();
+    if (fsBtn) {
+      fsBtn.addEventListener('click', toggleFullscreen);
+    }
+
+    // Setup gesture handling
+    setupMobileGestures();
+
+    // Load saved viewport state on mobile
+    if (window.innerWidth <= 768) {
+      loadViewportState();
+    }
+
+    // Handle fullscreen change events
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+  }
+
+  function handleFullscreenChange() {
+    const isFullscreen = !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement
+    );
+
+    state.viewport.isFullscreen = isFullscreen;
+    const vp = viewport();
+
+    if (vp) {
+      vp.classList.toggle('is-fullscreen', isFullscreen);
+    }
+
+    // Update button text
+    const fsBtn = fullscreenBtn();
+    if (fsBtn) {
+      fsBtn.setAttribute('aria-label', isFullscreen ? 'Exit full-screen mode' : 'Enter full-screen mode');
+      fsBtn.setAttribute('title', isFullscreen ? 'Exit full-screen mode' : 'Enter full-screen mode');
+    }
+  }
+
   // === TUTORIAL SYSTEM ===
 
   const tutorialSteps = [
@@ -595,10 +1033,12 @@
     // Initialize arrow scaling
     updateArrowScaling();
 
+    // Setup Mobile Pro Mode
+    setupMobileProMode();
     // Show tutorial if first time
     checkFirstRun();
 
-    console.log('Formation Lab v22.2 initialized - Interaction & Tutorial Fix Pack Complete');
+    console.log('Formation Lab v23.1 initialized - Precision Drag + Slim Arrows + Zero Boing Complete');
   }
 
   function ensureLayers() {
@@ -875,18 +1315,27 @@
     player.setAttribute('aria-label', `Player ${id + 1} ${role}`);
     player.setAttribute('aria-grabbed', 'false');
 
-    // Enhanced hit target (larger for reliability)
+    // Enhanced hit target (generous for initial mousedown reliability)
     const hitTarget = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     hitTarget.classList.add('flab-player__hit');
-    hitTarget.setAttribute('r', '7'); // Larger hit area
+    hitTarget.setAttribute('r', '3'); // ~48px diameter target at standard zoom
     hitTarget.setAttribute('fill', 'transparent');
     hitTarget.setAttribute('pointer-events', 'visible');
 
-    // Selection ring (hidden by default)
+    // Hover ring positioned within chip to inherit transform/position
     const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    ring.classList.add('flab-ring');
-    ring.setAttribute('r', '4.2');
-    ring.style.display = 'none';
+    ring.classList.add('flab-player__ring');
+    ring.setAttribute('r', '3.2');
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', 'rgba(255, 255, 255, 0.8)');
+    ring.setAttribute('stroke-width', '0.4');
+    ring.style.filter = 'drop-shadow(0 0 2px rgba(10, 42, 107, 0.4))';
+
+    // Legacy selection ring (hidden by default)
+    const legacyRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    legacyRing.classList.add('flab-ring');
+    legacyRing.setAttribute('r', '4.2');
+    legacyRing.style.display = 'none';
 
     // Player dot
     const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -899,6 +1348,7 @@
 
     player.appendChild(hitTarget);
     player.appendChild(ring);
+    player.appendChild(legacyRing);
     player.appendChild(dot);
     player.appendChild(label);
 
@@ -909,6 +1359,16 @@
       handlePlayerClick(id);
     });
     player.addEventListener('focus', () => setSelection(id));
+
+    // Hover ring management (not during drag)
+    player.addEventListener('mouseenter', () => {
+      if (!player.classList.contains('is-dragging') && state.mode === 'select') {
+        player.classList.add('flab-player--show-ring');
+      }
+    });
+    player.addEventListener('mouseleave', () => {
+      player.classList.remove('flab-player--show-ring');
+    });
 
     gPlayers()?.appendChild(player);
     setPlayerPosition(id, x, y);
@@ -933,7 +1393,9 @@
     }
   }
 
-  // === ENHANCED DRAG IMPLEMENTATION WITH THRESHOLD ===
+  // === PRECISE DRAG SYSTEM WITH SLOP THRESHOLD ===
+
+  const SLOP = 6; // 6px threshold before drag starts
 
   function startDragSequence(e, id) {
     e.preventDefault();
@@ -941,26 +1403,74 @@
 
     if (state.mode !== 'select') return;
 
-    const player = e.currentTarget;
-    const startCoords = getSVGCoords(e);
+    const labEl = document.getElementById('formationLab');
 
-    state.dragStartPos = startCoords;
-    state.selectedId = id;
+    // IMMEDIATELY add lab-pressing guard to kill hover boing
+    if (labEl) {
+      labEl.classList.add('lab-pressing');
+    }
 
-    // Set up threshold detection
-    player.setPointerCapture?.(e.pointerId);
+    state.press = {
+      id: id,
+      x: e.clientX,
+      y: e.clientY,
+      player: e.currentTarget
+    };
 
-    // Start threshold timer (60ms hold alternative)
-    state.dragTimer = setTimeout(() => {
-      if (state.dragStartPos) {
-        startActualDrag(e, id, player);
-      }
-    }, 60);
+    state.press.player.setPointerCapture?.(e.pointerId);
 
-    document.addEventListener('pointermove', handleThresholdMove);
-    document.addEventListener('pointerup', handleThresholdEnd);
+    // Global pointer listeners with capture
+    window.addEventListener('pointermove', handlePointerMove, { capture: true, passive: false });
+    window.addEventListener('pointerup', handlePointerUp, { capture: true });
+    window.addEventListener('pointercancel', handlePointerUp, { capture: true });
 
     updateSelection();
+  }
+
+  function handlePointerMove(e) {
+    if (!state.press) return;
+
+    const dx = e.clientX - state.press.x;
+    const dy = e.clientY - state.press.y;
+    const distance = Math.hypot(dx, dy);
+
+    if (!state.drag && distance > SLOP) {
+      startActualDrag(e, state.press.id);
+    }
+
+    if (state.drag) {
+      e.preventDefault();
+      updateDragPosition(e);
+    }
+  }
+
+  function handlePointerUp(e) {
+    if (state.drag) {
+      endDrag(e);
+    } else if (state.press) {
+      // Click without drag - toggle selection
+      toggleSelection(state.press.id);
+    }
+    cleanupPress(e);
+  }
+
+  function cleanupPress(e = null) {
+    const labEl = document.getElementById('formationLab');
+
+    if (state.press && state.press.player && e) {
+      state.press.player.releasePointerCapture?.(e.pointerId);
+    }
+
+    state.press = null;
+    state.drag = null;
+
+    if (labEl) {
+      labEl.classList.remove('lab-pressing', 'lab-dragging');
+    }
+
+    window.removeEventListener('pointermove', handlePointerMove, { capture: true });
+    window.removeEventListener('pointerup', handlePointerUp, { capture: true });
+    window.removeEventListener('pointercancel', handlePointerUp, { capture: true });
   }
 
   function handleThresholdMove(e) {
@@ -991,17 +1501,32 @@
     document.removeEventListener('pointerup', handleThresholdEnd);
 
     const player = gPlayers()?.querySelector(`[data-id="${state.selectedId}"]`);
+    const labEl = document.getElementById('formationLab');
+
     if (player) {
       player.releasePointerCapture?.(e.pointerId);
+      player.classList.remove('is-dragging');
+    }
+
+    // ALWAYS clear lab dragging guard
+    if (labEl) {
+      labEl.classList.remove('lab--dragging');
     }
 
     state.dragStartPos = null;
   }
 
-  function startActualDrag(e, id, player) {
-    // Clean up threshold listeners
-    document.removeEventListener('pointermove', handleThresholdMove);
-    document.removeEventListener('pointerup', handleThresholdEnd);
+  function startActualDrag(e, id) {
+    const labEl = document.getElementById('formationLab');
+
+    // Switch from pressing to dragging
+    if (labEl) {
+      labEl.classList.remove('lab-pressing');
+      labEl.classList.add('lab-dragging');
+    }
+
+    const player = getPlayerElement(id);
+    if (!player) return;
 
     // Calculate drag offset to prevent "shooting"
     const playerPos = state.positions.get(id);
@@ -1016,26 +1541,111 @@
       state.dragOffset = { x: 0, y: 0 };
     }
 
-    state.draggingId = id;
-    state.isDragging = true;
+    // Create drag proxy system
+    state.drag = {
+      id: id,
+      orig: player,
+      proxy: player.cloneNode(true)
+    };
 
-    // Begin interaction with drag state
+    state.drag.proxy.classList.add('is-proxy');
+    state.drag.proxy.style.pointerEvents = 'none';
+    state.drag.proxy.style.zIndex = '10';
+
+    // Hide original with opacity (not visibility)
+    state.drag.orig.style.opacity = '0';
+
+    // Add proxy to same parent
+    player.parentNode.appendChild(state.drag.proxy);
+
+    // Begin interaction
     beginInteraction();
     lockCursorRing();
 
-    // Create drag proxy
-    createDragProxy(id);
+    state.draggingId = id;
+    state.isDragging = true;
+  }
 
-    // Set original to ghost state
-    player.classList.add('drag-origin');
-    player.setAttribute('aria-grabbed', 'true');
+  function updateDragPosition(e) {
+    if (!state.drag) return;
 
-    document.addEventListener('pointermove', handleDragMove);
-    document.addEventListener('pointerup', handleDragEnd);
-    document.addEventListener('pointercancel', handleDragEnd);
-    window.addEventListener('blur', handleDragEnd);
+    const coords = getSVGCoords(e);
+    if (!coords) return;
 
-    state.dragStartPos = null; // Clear threshold state
+    // Apply drag offset to prevent jumping
+    const x = coords.x - state.dragOffset.x;
+    const y = coords.y - state.dragOffset.y;
+
+    // Update proxy position with world coordinates
+    if (state.drag.proxy) {
+      const constrainedX = Math.max(3, Math.min(102, x));
+      const constrainedY = Math.max(3, Math.min(65, y));
+      state.drag.proxy.style.transform = `translate3d(${constrainedX}px, ${constrainedY}px, 0)`;
+    }
+  }
+
+  function endDrag(e) {
+    if (!state.drag) return;
+
+    const coords = getSVGCoords(e);
+    const id = state.drag.id;
+
+    // Move original to final position with offset correction
+    if (coords) {
+      const x = coords.x - state.dragOffset.x;
+      const y = coords.y - state.dragOffset.y;
+      setPlayerPosition(id, x, y);
+    }
+
+    // Restore original player
+    if (state.drag.orig) {
+      state.drag.orig.style.opacity = '1';
+    }
+
+    // Remove proxy
+    if (state.drag.proxy) {
+      state.drag.proxy.remove();
+    }
+
+    // End interaction
+    unlockCursorRing();
+    endInteraction();
+
+    state.draggingId = null;
+    state.dragOffset = { x: 0, y: 0 };
+    debouncedPushHistory();
+  }
+
+  function getPlayerElement(id) {
+    return gPlayers()?.querySelector(`[data-id="${id}"]`);
+  }
+
+  function toggleSelection(id) {
+    const player = getPlayerElement(id);
+    if (!player) return;
+
+    const isSelected = player.classList.contains('is-selected');
+
+    // Clear all other selections first
+    gPlayers()?.querySelectorAll('.flab-player.is-selected').forEach(p => {
+      p.classList.remove('is-selected');
+      p.setAttribute('aria-selected', 'false');
+    });
+
+    // Toggle this player
+    const newSelected = !isSelected;
+    player.classList.toggle('is-selected', newSelected);
+    player.setAttribute('aria-selected', newSelected ? 'true' : 'false');
+
+    // Ensure selection ring element exists
+    if (!player.querySelector('.flab-selection-ring')) {
+      const ring = document.createElement('div');
+      ring.className = 'flab-selection-ring';
+      player.appendChild(ring);
+    }
+
+    state.selectedId = newSelected ? id : null;
+    updateSelection();
   }
 
   function createDragProxy(id) {
@@ -1102,10 +1712,17 @@
 
     // Restore original player
     const player = gPlayers()?.querySelector(`[data-id="${id}"]`);
+    const labEl = document.getElementById('formationLab');
+
     if (player) {
-      player.classList.remove('drag-origin');
+      player.classList.remove('drag-origin', 'is-dragging');
       player.setAttribute('aria-grabbed', 'false');
       player.releasePointerCapture?.(e.pointerId);
+    }
+
+    // ALWAYS clear lab dragging guard
+    if (labEl) {
+      labEl.classList.remove('lab--dragging');
     }
 
     // Clear proxy
@@ -1119,6 +1736,25 @@
     state.draggingId = null;
     state.dragOffset = { x: 0, y: 0 };
     debouncedPushHistory();
+  }
+
+  function parseTransform(transformString) {
+    // Parse CSS transform matrix for world space math
+    if (transformString === 'none' || !transformString) {
+      return { scale: 1, tx: 0, ty: 0 };
+    }
+
+    const match = transformString.match(/matrix\(([^)]+)\)/);
+    if (match) {
+      const values = match[1].split(',').map(v => parseFloat(v.trim()));
+      return {
+        scale: values[0] || 1,
+        tx: values[4] || 0,
+        ty: values[5] || 0
+      };
+    }
+
+    return { scale: 1, tx: 0, ty: 0 };
   }
 
   function getSVGCoords(e) {

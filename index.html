@@ -43,11 +43,11 @@
     <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
     <!-- Version pin to keep HTML/CSS/JS in sync -->
-    <script>window.__VER__='22';</script>
+    <script>window.__VER__='23.1';</script>
 
-    <link rel="stylesheet" href="styles/main.css?v=22" />
+    <link rel="stylesheet" href="styles/main.css?v=23.1" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="scripts/main.js?v=22" defer></script>
+    <script src="scripts/main.js?v=23.1" defer></script>
 
     <noscript>
         <style>
@@ -212,7 +212,15 @@
 
                 <!-- Responsive SVG pitch (105x68 scale) -->
                 <div class="flab__stage">
-                    <svg id="flabPitch" viewBox="0 0 105 68" aria-label="Soccer pitch" role="img">
+                    <!-- Mobile Pro Mode viewport wrapper -->
+                    <div class="lab-viewport" id="flabViewport">
+                        <!-- Full-screen toggle button (mobile only) -->
+                        <button class="flab-fullscreen-btn" id="flabFullscreenBtn" aria-label="Enter full-screen mode" title="Enter full-screen mode">
+                            📱
+                        </button>
+
+                        <div class="lab-content" id="flabContent">
+                            <svg id="flabPitch" viewBox="0 0 105 68" aria-label="Soccer pitch" role="img">
                         <!-- gradient backdrop -->
                         <defs>
                             <linearGradient id="grass" x1="0" x2="0" y1="0" y2="1">
@@ -276,6 +284,8 @@
 
                     <!-- Toast Container -->
                     <div id="flabToastHost" class="flab-toast-host" aria-live="polite"></div>
+                        </div> <!-- /lab-content -->
+                    </div> <!-- /lab-viewport -->
                 </div>
 
                 <p class="flab__tips">💡 Drag players · D = draw pass · H = highlight · B = ball · Esc = exit · S = save · P = play</p>

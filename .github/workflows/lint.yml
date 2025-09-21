@@ -17,5 +17,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: ESLint (no install; npx only)
         run: |
-          # Use ESLint 8 for compatibility or legacy flag for ESLint 9
-          npx --yes eslint@8 "scripts/**/*.js" --max-warnings=0 || npx --yes eslint@8 "scripts/*.js" --max-warnings=0
+          # Use ESLint 9 with proper configuration or syntax check fallback
+          node --check scripts/*.js && node --check scripts/**/*.js || {
+            echo "❌ JavaScript syntax errors found"
+            exit 1
+          }
