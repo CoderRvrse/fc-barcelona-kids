@@ -1,4 +1,7 @@
 (function () {
+  // === FORMATION LAB v22 - COMPREHENSIVE UX OVERHAUL ===
+  // Fixes: Drag offset "shooting" issue + Cursor ring + Enhanced Draw mode + Onboarding
+
   // State management
   const state = {
     mode: 'select', // 'select' | 'ball' | 'draw' | 'highlight'
@@ -6,8 +9,18 @@
     draggingId: null,
     ballId: null,
     highlights: new Set(),
-    lines: [], // [{fromId, toId, id}]
-    drawFrom: null, // for two-click pass drawing
+    lines: [], // [{fromId, toId, id, points}]
+
+    // New Draw mode state
+    drawing: false,
+    drawPoints: [], // Current line being drawn
+    ghostPath: null,
+    snapEnabled: true,
+    snapTarget: null,
+
+    // Drag offset fix
+    dragOffset: { x: 0, y: 0 },
+
     history: [],
     future: [],
     positions: new Map() // id -> {x, y}
@@ -19,18 +32,12 @@
   const gLines = () => document.getElementById('flabLines');
   const gDragProxy = () => document.getElementById('flabDragProxy');
   const gBall = () => document.getElementById('flabBall');
+  const gGhost = () => document.getElementById('flabGhostLayer');
   const labRoot = () => document.getElementById('formationLab');
-
-  // Interaction state management (Hotfix v21.1)
-  function beginInteraction() {
-    const root = labRoot();
-    if (root) root.classList.add('is-interacting');
-  }
-
-  function endInteraction() {
-    const root = labRoot();
-    if (root) root.classList.remove('is-interacting');
-  }
+  const cursorRing = () => document.getElementById('flabCursorRing');
+  const modeHint = () => document.getElementById('flabModeHint');
+  const helpBtn = () => document.getElementById('flabHelpBtn');
+  const drawFinishBtn = () => document.getElementById('flabDrawFinish');
 
   // Formation presets
   const presets = {
@@ -61,6 +68,104 @@
     ]
   };
 
+  // Cursor ring management
+  let cursorFrame = null;
+  let cursorVisible = false;
+
+  // Interaction state management (Hotfix v21.1)
+  function beginInteraction() {
+    const root = labRoot();
+    if (root) root.classList.add('is-interacting');
+    showCursorRing();
+  }
+
+  function endInteraction() {
+    const root = labRoot();
+    if (root) root.classList.remove('is-interacting');
+    hideCursorRing();
+  }
+
+  // Cursor Ring Implementation
+  function showCursorRing() {
+    const ring = cursorRing();
+    if (!ring) return;
+
+    ring.classList.add('show');
+    cursorVisible = true;
+
+    // Start tracking cursor
+    document.addEventListener('pointermove', updateCursorRing);
+    document.addEventListener('pointerleave', hideCursorRing);
+  }
+
+  function hideCursorRing() {
+    const ring = cursorRing();
+    if (!ring) return;
+
+    ring.classList.remove('show', 'locked');
+    cursorVisible = false;
+
+    document.removeEventListener('pointermove', updateCursorRing);
+    document.removeEventListener('pointerleave', hideCursorRing);
+  }
+
+  function lockCursorRing() {
+    const ring = cursorRing();
+    if (ring) ring.classList.add('locked');
+  }
+
+  function unlockCursorRing() {
+    const ring = cursorRing();
+    if (ring) ring.classList.remove('locked');
+  }
+
+  function updateCursorRing(e) {
+    if (!cursorVisible) return;
+
+    if (cursorFrame) cancelAnimationFrame(cursorFrame);
+
+    cursorFrame = requestAnimationFrame(() => {
+      const ring = cursorRing();
+      if (!ring) return;
+
+      const stage = document.querySelector('.flab__stage');
+      if (!stage) return;
+
+      const rect = stage.getBoundingClientRect();
+      let x = e.clientX - rect.left;
+      let y = e.clientY - rect.top;
+
+      // Touch offset - nudge ring up on mobile
+      if (e.pointerType === 'touch') {
+        y -= 28;
+      }
+
+      ring.style.left = x + 'px';
+      ring.style.top = y + 'px';
+    });
+  }
+
+  // Mode hint management
+  function showModeHint(text) {
+    const hint = modeHint();
+    if (!hint) return;
+
+    hint.textContent = text;
+    hint.classList.add('show');
+
+    // Auto-hide after 4 seconds unless user is actively drawing
+    setTimeout(() => {
+      if (!state.drawing) {
+        hint.classList.remove('show');
+      }
+    }, 4000);
+  }
+
+  function hideModeHint() {
+    const hint = modeHint();
+    if (hint) hint.classList.remove('show');
+  }
+
   let dragFrame = null;
 
   function init() {
@@ -72,14 +177,19 @@
     // Wire UI
     wireToolbar();
     wireKeyboard();
+    wireCursorRing();
+    wireOnboarding();
 
     // Load default formation
     loadFormation('433');
 
-    // Set initial mode (Hotfix v21.1)
+    // Set initial mode
     setMode('select');
 
-    console.log('Formation Lab v21.1 initialized');
+    // Show onboarding if first time
+    checkFirstRun();
+
+    console.log('Formation Lab v22 initialized - UX Overhaul Complete');
   }
 
   function ensureLayers() {
@@ -99,6 +209,14 @@
       const ball = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       ball.id = 'flabBall';
       s.appendChild(ball);
+    }
+
+    // Ensure ghost layer exists for draw mode
+    if (!gGhost()) {
+      const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      ghost.id = 'flabGhostLayer';
+      ghost.setAttribute('aria-hidden', 'true');
+      s.appendChild(ghost);
     }
   }
 
@@ -127,7 +245,43 @@
     document.addEventListener('keydown', handleKeyboard);
   }
 
+  function wireCursorRing() {
+    // Cursor ring is wired through begin/endInteraction
+  }
+
+  function wireOnboarding() {
+    // Help button
+    const help = helpBtn();
+    help?.addEventListener('click', showOnboarding);
+
+    // Mobile draw finish button
+    const finish = drawFinishBtn();
+    finish?.addEventListener('click', finishDrawing);
+  }
+
   function handleKeyboard(e) {
+    // Onboarding shortcuts
+    if (e.key === 'Escape') {
+      hideOnboarding();
+      if (state.drawing) {
+        cancelDrawing();
+      }
+      return;
+    }
+
+    // Drawing shortcuts
+    if (state.mode === 'draw') {
+      if (e.key === 'Enter') {
+        finishDrawing();
+        return;
+      }
+      if (e.key === 'Backspace') {
+        removeLastDrawPoint();
+        return;
+      }
+    }
+
+    // Player movement
     if (!state.selectedId) return;
 
     const step = e.shiftKey ? 2 : 0.5;
@@ -168,15 +322,47 @@
   }
 
   function setMode(mode) {
-    state.mode = mode;
-    state.drawFrom = null; // Reset draw state
+    // Exit current mode cleanly
+    exitCurrentMode();
 
-    // Set data-mode attribute for CSS hover guards (Hotfix v21.1)
+    state.mode = mode;
+
+    // Set data-mode attribute for CSS hover guards
     const root = labRoot();
     if (root) root.setAttribute('data-mode', mode);
 
+    // Enter new mode
+    enterMode(mode);
+
     updateToolbarState();
     updateCursor();
+  }
+
+  function exitCurrentMode() {
+    switch(state.mode) {
+      case 'draw':
+        cancelDrawing();
+        break;
+    }
+    hideModeHint();
+  }
+
+  function enterMode(mode) {
+    const hints = {
+      select: null, // No hint for select mode
+      ball: 'Ball mode: click a player to place ball, then Play to animate passes',
+      draw: 'Draw mode: click to add points, double-click or Enter to finish, Esc to cancel',
+      highlight: 'Highlight mode: click players to highlight/unhighlight them'
+    };
+
+    if (hints[mode]) {
+      showModeHint(hints[mode]);
+    }
+
+    // Special mode setup
+    if (mode === 'draw') {
+      setupDrawMode();
+    }
   }
 
   function updateToolbarState() {
@@ -241,6 +427,8 @@
         break;
     }
   }
+
+  // === PLAYER CREATION AND POSITIONING ===
 
   function loadFormation(formationName) {
     const formation = presets[formationName] || presets["433"];
@@ -315,6 +503,9 @@
     state.positions.set(id, { x, y });
   }
 
+  // === FIXED DRAG IMPLEMENTATION ===
+  // This fixes the "shooting off" issue by calculating proper drag offset
+
   function startDrag(e, id) {
     e.preventDefault();
     e.stopPropagation();
@@ -322,6 +513,20 @@
     if (state.mode !== 'select') return;
 
     const player = e.currentTarget;
+
+    // Calculate drag offset to prevent "shooting"
+    const playerPos = state.positions.get(id);
+    const svgCoords = getSVGCoords(e);
+
+    if (playerPos && svgCoords) {
+      state.dragOffset = {
+        x: svgCoords.x - playerPos.x,
+        y: svgCoords.y - playerPos.y
+      };
+    } else {
+      state.dragOffset = { x: 0, y: 0 };
+    }
+
     player.setPointerCapture?.(e.pointerId);
 
     state.draggingId = id;
@@ -329,6 +534,7 @@
 
     // Begin interaction (Hotfix v21.1)
     beginInteraction();
+    lockCursorRing();
 
     // Create drag proxy
     createDragProxy(id);
@@ -375,12 +581,16 @@
       const coords = getSVGCoords(e);
       if (!coords) return;
 
+      // Apply drag offset to prevent jumping
+      const x = coords.x - state.dragOffset.x;
+      const y = coords.y - state.dragOffset.y;
+
       // Update proxy position
       const proxy = gDragProxy()?.querySelector('[data-proxy]');
       if (proxy) {
-        const x = Math.max(3, Math.min(102, coords.x));
-        const y = Math.max(3, Math.min(65, coords.y));
-        proxy.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        const constrainedX = Math.max(3, Math.min(102, x));
+        const constrainedY = Math.max(3, Math.min(65, y));
+        proxy.style.transform = `translate(${constrainedX.toFixed(1)}px, ${constrainedY.toFixed(1)}px)`;
       }
     });
   }
@@ -394,9 +604,11 @@
     document.removeEventListener('pointermove', handleDragMove);
     document.removeEventListener('pointerup', handleDragEnd);
 
-    // Move original to final position
+    // Move original to final position with offset correction
     if (coords) {
-      setPlayerPosition(id, coords.x, coords.y);
+      const x = coords.x - state.dragOffset.x;
+      const y = coords.y - state.dragOffset.y;
+      setPlayerPosition(id, x, y);
     }
 
     // Restore original player
@@ -412,10 +624,12 @@
     const proxy = gDragProxy();
     if (proxy) while (proxy.firstChild) proxy.removeChild(proxy.firstChild);
 
-    // End interaction (Hotfix v21.1)
+    // End interaction
+    unlockCursorRing();
     endInteraction();
 
     state.draggingId = null;
+    state.dragOffset = { x: 0, y: 0 };
     pushHistory();
   }
 
@@ -434,6 +648,8 @@
     }
   }
 
+  // === PLAYER INTERACTION ===
+
   function handlePlayerClick(id) {
     switch(state.mode) {
       case 'select':
@@ -446,7 +662,7 @@
         toggleHighlight(id);
         break;
       case 'draw':
-        handlePassDraw(id);
+        handleDrawClick(id);
         break;
     }
   }
@@ -541,46 +757,244 @@
     });
   }
 
-  function handlePassDraw(id) {
-    if (state.drawFrom === null) {
-      // First click - set starting point
-      state.drawFrom = id;
-      showDrawHint(id);
-    } else if (state.drawFrom === id) {
-      // Clicking same player - cancel
-      state.drawFrom = null;
-      hideDrawHint();
+  // === ENHANCED DRAW MODE ===
+
+  function setupDrawMode() {
+    state.drawing = false;
+    state.drawPoints = [];
+    state.ghostPath = null;
+    state.snapTarget = null;
+
+    // Wire canvas for drawing
+    const s = svg();
+    if (s) {
+      s.addEventListener('pointerdown', handleCanvasPointerDown);
+      s.addEventListener('pointermove', handleCanvasPointerMove);
+      s.addEventListener('dblclick', finishDrawing);
+    }
+  }
+
+  function handleDrawClick(id) {
+    const pos = state.positions.get(id);
+    if (!pos) return;
+
+    addDrawPoint(pos.x, pos.y, id);
+  }
+
+  function handleCanvasPointerDown(e) {
+    if (state.mode !== 'draw') return;
+
+    const coords = getSVGCoords(e);
+    if (!coords) return;
+
+    // Check for snap target
+    const snapTarget = findSnapTarget(coords.x, coords.y);
+    if (snapTarget) {
+      const pos = state.positions.get(snapTarget);
+      if (pos) {
+        addDrawPoint(pos.x, pos.y, snapTarget);
+      }
     } else {
-      // Second click - create line
-      createPassLine(state.drawFrom, id);
-      state.drawFrom = null;
-      hideDrawHint();
-      pushHistory();
+      addDrawPoint(coords.x, coords.y);
     }
   }
 
-  function showDrawHint(id) {
-    const player = gPlayers()?.querySelector(`[data-id="${id}"]`);
-    if (player) {
-      player.classList.add('draw-from');
+  function handleCanvasPointerMove(e) {
+    if (state.mode !== 'draw' || !state.drawing) return;
+
+    const coords = getSVGCoords(e);
+    if (!coords) return;
+
+    updateGhostPath(coords.x, coords.y);
+    updateSnapTarget(coords.x, coords.y);
+  }
+
+  function addDrawPoint(x, y, playerId = null) {
+    state.drawPoints.push({ x, y, playerId });
+
+    if (!state.drawing) {
+      state.drawing = true;
+      beginInteraction();
+
+      // Show mobile finish button
+      const finishBtn = drawFinishBtn();
+      if (finishBtn && 'ontouchstart' in window) {
+        finishBtn.style.display = 'block';
+      }
+
+      // Update hint
+      const hint = modeHint();
+      if (hint) {
+        hint.textContent = `Drawing: ${state.drawPoints.length} points - double-click or Enter to finish`;
+      }
+    }
+
+    renderDrawPoints();
+    announceDrawing();
+  }
+
+  function removeLastDrawPoint() {
+    if (state.drawPoints.length === 0) return;
+
+    state.drawPoints.pop();
+
+    if (state.drawPoints.length === 0) {
+      cancelDrawing();
+    } else {
+      renderDrawPoints();
+      announceDrawing();
     }
   }
 
-  function hideDrawHint() {
-    gPlayers()?.querySelectorAll('.draw-from').forEach(p => {
-      p.classList.remove('draw-from');
-    });
-  }
+  function finishDrawing() {
+    if (!state.drawing || state.drawPoints.length < 2) return;
 
-  function createPassLine(fromId, toId) {
-    const fromPos = state.positions.get(fromId);
-    const toPos = state.positions.get(toId);
-    if (!fromPos || !toPos) return;
-
+    // Create the line
     const lineId = `line_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    state.lines.push({ fromId, toId, id: lineId });
+    const newLine = {
+      id: lineId,
+      points: [...state.drawPoints],
+      fromId: state.drawPoints[0].playerId,
+      toId: state.drawPoints[state.drawPoints.length - 1].playerId
+    };
 
+    state.lines.push(newLine);
+
+    // Clean up draw state
+    cancelDrawing();
     renderLines();
+    pushHistory();
+
+    // Announce completion
+    const liveRegion = document.querySelector('[aria-live="polite"]');
+    if (liveRegion) {
+      liveRegion.textContent = `Line finished with ${newLine.points.length} points`;
+    }
+  }
+
+  function cancelDrawing() {
+    state.drawing = false;
+    state.drawPoints = [];
+    state.ghostPath = null;
+    state.snapTarget = null;
+
+    // Clear ghost layer
+    const ghost = gGhost();
+    if (ghost) while (ghost.firstChild) ghost.removeChild(ghost.firstChild);
+
+    // Hide mobile finish button
+    const finishBtn = drawFinishBtn();
+    if (finishBtn) finishBtn.style.display = 'none';
+
+    // Remove canvas listeners
+    const s = svg();
+    if (s) {
+      s.removeEventListener('pointerdown', handleCanvasPointerDown);
+      s.removeEventListener('pointermove', handleCanvasPointerMove);
+      s.removeEventListener('dblclick', finishDrawing);
+    }
+
+    endInteraction();
+
+    // Reset hint
+    if (state.mode === 'draw') {
+      showModeHint('Draw mode: click to add points, double-click or Enter to finish, Esc to cancel');
+    }
+  }
+
+  function findSnapTarget(x, y, tolerance = 22) {
+    let closest = null;
+    let closestDist = tolerance;
+
+    state.positions.forEach((pos, id) => {
+      const dist = Math.sqrt((x - pos.x) ** 2 + (y - pos.y) ** 2);
+      if (dist < closestDist) {
+        closest = id;
+        closestDist = dist;
+      }
+    });
+
+    return closest;
+  }
+
+  function updateSnapTarget(x, y) {
+    const newTarget = state.snapEnabled ? findSnapTarget(x, y) : null;
+
+    if (newTarget !== state.snapTarget) {
+      // Clear old target
+      if (state.snapTarget !== null) {
+        const oldPlayer = gPlayers()?.querySelector(`[data-id="${state.snapTarget}"]`);
+        if (oldPlayer) oldPlayer.classList.remove('snap-target');
+      }
+
+      // Set new target
+      state.snapTarget = newTarget;
+      if (state.snapTarget !== null) {
+        const newPlayer = gPlayers()?.querySelector(`[data-id="${state.snapTarget}"]`);
+        if (newPlayer) newPlayer.classList.add('snap-target');
+      }
+    }
+  }
+
+  function updateGhostPath(x, y) {
+    if (state.drawPoints.length === 0) return;
+
+    // Use snap target position if available
+    if (state.snapTarget !== null) {
+      const snapPos = state.positions.get(state.snapTarget);
+      if (snapPos) {
+        x = snapPos.x;
+        y = snapPos.y;
+      }
+    }
+
+    const ghost = gGhost();
+    if (!ghost) return;
+
+    // Clear previous ghost
+    while (ghost.firstChild) ghost.removeChild(ghost.firstChild);
+
+    // Create ghost path
+    const lastPoint = state.drawPoints[state.drawPoints.length - 1];
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', lastPoint.x);
+    line.setAttribute('y1', lastPoint.y);
+    line.setAttribute('x2', x);
+    line.setAttribute('y2', y);
+    line.classList.add('flab-ghost-path');
+
+    if (state.snapTarget !== null) {
+      line.classList.add('snapped');
+    }
+
+    ghost.appendChild(line);
+
+    // Add snap dot if snapping
+    if (state.snapTarget !== null) {
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.classList.add('flab-snap-dot');
+      dot.setAttribute('cx', x);
+      dot.setAttribute('cy', y);
+      dot.setAttribute('r', '2');
+      ghost.appendChild(dot);
+    }
+  }
+
+  function renderDrawPoints() {
+    // Draw points are rendered as part of the ghost path
+    // The actual committed lines are rendered separately
+  }
+
+  function announceDrawing() {
+    const liveRegion = document.querySelector('[aria-live="polite"]');
+    if (liveRegion && state.drawing) {
+      let msg = `Drawing: ${state.drawPoints.length} points`;
+      if (state.snapTarget !== null) {
+        msg += `, snapped to Player ${state.snapTarget + 1}`;
+      }
+      liveRegion.textContent = msg;
+    }
   }
 
   function renderLines() {
@@ -592,24 +1006,45 @@
 
     // Render all lines
     state.lines.forEach(line => {
-      const fromPos = state.positions.get(line.fromId);
-      const toPos = state.positions.get(line.toId);
-      if (!fromPos || !toPos) return;
+      if (line.points && line.points.length >= 2) {
+        // Multi-point line (new format)
+        const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-      const lineEl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      lineEl.setAttribute('x1', fromPos.x);
-      lineEl.setAttribute('y1', fromPos.y);
-      lineEl.setAttribute('x2', toPos.x);
-      lineEl.setAttribute('y2', toPos.y);
-      lineEl.setAttribute('stroke', 'url(#barcaGrad)');
-      lineEl.setAttribute('stroke-width', '1.2');
-      lineEl.setAttribute('stroke-dasharray', '3 2');
-      lineEl.setAttribute('marker-end', 'url(#arrowhead)');
-      lineEl.classList.add('flab-line');
+        let d = `M ${line.points[0].x} ${line.points[0].y}`;
+        for (let i = 1; i < line.points.length; i++) {
+          d += ` L ${line.points[i].x} ${line.points[i].y}`;
+        }
 
-      linesGroup.appendChild(lineEl);
+        pathEl.setAttribute('d', d);
+        pathEl.setAttribute('stroke', 'url(#barcaGrad)');
+        pathEl.setAttribute('stroke-width', '2.5');
+        pathEl.setAttribute('fill', 'none');
+        pathEl.setAttribute('marker-end', 'url(#arrowhead)');
+        pathEl.classList.add('flab-line');
+
+        linesGroup.appendChild(pathEl);
+      } else {
+        // Legacy two-point line
+        const fromPos = state.positions.get(line.fromId);
+        const toPos = state.positions.get(line.toId);
+        if (!fromPos || !toPos) return;
+
+        const lineEl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        lineEl.setAttribute('x1', fromPos.x);
+        lineEl.setAttribute('y1', fromPos.y);
+        lineEl.setAttribute('x2', toPos.x);
+        lineEl.setAttribute('y2', toPos.y);
+        lineEl.setAttribute('stroke', 'url(#barcaGrad)');
+        lineEl.setAttribute('stroke-width', '2.5');
+        lineEl.setAttribute('marker-end', 'url(#arrowhead)');
+        lineEl.classList.add('flab-line');
+
+        linesGroup.appendChild(lineEl);
+      }
     });
   }
+
+  // === UTILITY FUNCTIONS ===
 
   function renderAllPlayers() {
     state.positions.forEach((pos, id) => {
@@ -634,7 +1069,7 @@
     state.ballId = null;
     state.highlights.clear();
     state.lines = [];
-    state.drawFrom = null;
+    cancelDrawing();
 
     const linesGroup = gLines();
     const ballGroup = gBall();
@@ -642,9 +1077,10 @@
     if (linesGroup) while (linesGroup.firstChild) linesGroup.removeChild(linesGroup.firstChild);
     if (ballGroup) while (ballGroup.firstChild) ballGroup.removeChild(ballGroup.firstChild);
 
-    hideDrawHint();
     renderHighlights();
   }
+
+  // === ANIMATION AND PLAYBACK ===
 
   function playSequence() {
     if (state.lines.length === 0) {
@@ -652,9 +1088,8 @@
       return;
     }
 
-    // Simple ball animation along pass sequence
     const ballGroup = gBall();
-    if (!ballGroup || !state.ballId) {
+    if (!ballGroup || state.ballId === null) {
       alert('💡 Place the ball on a player first using Ball mode!');
       return;
     }
@@ -665,8 +1100,17 @@
       if (currentLine >= state.lines.length) return;
 
       const line = state.lines[currentLine];
-      const fromPos = state.positions.get(line.fromId);
-      const toPos = state.positions.get(line.toId);
+      let fromPos, toPos;
+
+      if (line.points && line.points.length >= 2) {
+        // Multi-point line - animate from first to last point
+        fromPos = line.points[0];
+        toPos = line.points[line.points.length - 1];
+      } else {
+        // Legacy two-point line
+        fromPos = state.positions.get(line.fromId);
+        toPos = state.positions.get(line.toId);
+      }
 
       if (!fromPos || !toPos) {
         currentLine++;
@@ -689,7 +1133,16 @@
       animation.onfinish = () => {
         ball.setAttribute('cx', toPos.x);
         ball.setAttribute('cy', toPos.y - 1.5);
-        state.ballId = line.toId; // Move ball to destination player
+
+        // Update ball position to destination player if it's a player point
+        if (line.points && line.points.length >= 2) {
+          const lastPoint = line.points[line.points.length - 1];
+          if (lastPoint.playerId !== null) {
+            state.ballId = lastPoint.playerId;
+          }
+        } else if (line.toId !== undefined) {
+          state.ballId = line.toId;
+        }
 
         currentLine++;
         if (currentLine < state.lines.length) {
@@ -701,12 +1154,14 @@
     animateNextPass();
   }
 
+  // === HISTORY MANAGEMENT ===
+
   function pushHistory() {
     const snapshot = {
       positions: new Map(state.positions),
       ballId: state.ballId,
       highlights: new Set(state.highlights),
-      lines: [...state.lines]
+      lines: JSON.parse(JSON.stringify(state.lines)) // Deep copy for lines with points
     };
 
     state.history.push(snapshot);
@@ -728,7 +1183,7 @@
       positions: new Map(state.positions),
       ballId: state.ballId,
       highlights: new Set(state.highlights),
-      lines: [...state.lines]
+      lines: JSON.parse(JSON.stringify(state.lines))
     };
     state.future.push(current);
 
@@ -755,10 +1210,12 @@
     state.positions = new Map(snapshot.positions);
     state.ballId = snapshot.ballId;
     state.highlights = new Set(snapshot.highlights);
-    state.lines = [...snapshot.lines];
+    state.lines = JSON.parse(JSON.stringify(snapshot.lines));
 
     renderAllPlayers();
   }
+
+  // === SAVE/LOAD SYSTEM ===
 
   function saveFormation() {
     try {
@@ -769,10 +1226,10 @@
         highlights: Array.from(state.highlights),
         lines: state.lines,
         timestamp: Date.now(),
-        version: 1
+        version: 2 // New version with multi-point lines
       };
 
-      localStorage.setItem('fcb_formation_v1', JSON.stringify(data));
+      localStorage.setItem('fcb_formation_v2', JSON.stringify(data));
       alert('✅ Formation saved!');
     } catch (error) {
       console.error('Save failed:', error);
@@ -782,7 +1239,7 @@
 
   function loadSavedFormation() {
     try {
-      const saved = localStorage.getItem('fcb_formation_v1');
+      const saved = localStorage.getItem('fcb_formation_v2') || localStorage.getItem('fcb_formation_v1');
       if (!saved) {
         alert('No saved formation found.');
         return;
@@ -796,20 +1253,23 @@
         sel.value = data.formation;
       }
 
-      // Restore state
-      state.positions = new Map(data.positions || []);
+      // Clear current state
+      clearAll(false);
+
+      // Restore positions
+      if (data.positions) {
+        state.positions = new Map(data.positions);
+
+        // Recreate players
+        state.positions.forEach((pos, id) => {
+          createPlayer(id, pos.x, pos.y);
+        });
+      }
+
+      // Restore other state
       state.ballId = data.ballId || null;
       state.highlights = new Set(data.highlights || []);
       state.lines = data.lines || [];
-
-      // Clear existing players and recreate
-      const playersGroup = gPlayers();
-      if (playersGroup) while (playersGroup.firstChild) playersGroup.removeChild(playersGroup.firstChild);
-
-      // Recreate players
-      state.positions.forEach((pos, id) => {
-        createPlayer(id, pos.x, pos.y);
-      });
 
       renderAllPlayers();
       pushHistory();
@@ -824,96 +1284,44 @@
   function exportFormation() {
     try {
       const s = svg();
-      if (!s) throw new Error('SVG not found');
+      if (!s) throw new Error('No SVG found');
 
       // Create canvas
       const canvas = document.createElement('canvas');
-      canvas.width = 1000;
-      canvas.height = 650;
       const ctx = canvas.getContext('2d');
 
-      // Draw background
-      const grad = ctx.createLinearGradient(0, 0, 0, 650);
-      grad.addColorStop(0, '#1c3b7a');
-      grad.addColorStop(1, '#142a4f');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1000, 650);
+      // Set canvas size (scale up for quality)
+      const scale = 2;
+      canvas.width = 1050 * scale; // SVG is 105 units wide
+      canvas.height = 680 * scale;  // SVG is 68 units tall
 
-      // Scale coordinates from viewBox (105x68) to canvas (1000x650)
-      const scaleX = 1000 / 105;
-      const scaleY = 650 / 68;
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#1e3a8a'; // Barcelona blue background
+      ctx.fillRect(0, 0, canvas.width / scale, canvas.height / scale);
 
-      // Draw pitch markings
-      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(10 * scaleX, 10 * scaleY, 85 * scaleX, 48 * scaleY);
+      // Get SVG data
+      const svgData = new XMLSerializer().serializeToString(s);
+      const img = new Image();
 
-      // Draw lines
-      state.lines.forEach(line => {
-        const fromPos = state.positions.get(line.fromId);
-        const toPos = state.positions.get(line.toId);
-        if (!fromPos || !toPos) return;
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, 105, 68);
 
-        ctx.strokeStyle = '#f2c200';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath();
-        ctx.moveTo(fromPos.x * scaleX, fromPos.y * scaleY);
-        ctx.lineTo(toPos.x * scaleX, toPos.y * scaleY);
-        ctx.stroke();
-      });
+        // Download
+        const link = document.createElement('a');
+        link.download = `formation_${Date.now()}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
 
-      // Draw players
-      state.positions.forEach((pos, id) => {
-        const x = pos.x * scaleX;
-        const y = pos.y * scaleY;
+        alert('✅ Formation exported as PNG!');
+      };
 
-        // Player circle
-        ctx.fillStyle = '#f9bf00';
-        ctx.strokeStyle = '#0b1c45';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.arc(x, y, 15, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
+      img.onerror = () => {
+        throw new Error('Export failed');
+      };
 
-        // Highlight if needed
-        if (state.highlights.has(id)) {
-          ctx.strokeStyle = '#f2c200';
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.arc(x, y, 25, 0, 2 * Math.PI);
-          ctx.stroke();
-        }
-
-        // Player number
-        ctx.fillStyle = '#0b1c45';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText((id + 1).toString(), x, y);
-      });
-
-      // Draw ball
-      if (state.ballId !== null) {
-        const pos = state.positions.get(state.ballId);
-        if (pos) {
-          ctx.fillStyle = '#ffffff';
-          ctx.strokeStyle = '#000000';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.arc(pos.x * scaleX, (pos.y - 1.5) * scaleY, 8, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.stroke();
-        }
-      }
-
-      // Download
-      const link = document.createElement('a');
-      link.download = `formation-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const blob = new Blob([svgData], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      img.src = url;
 
     } catch (error) {
       console.error('Export failed:', error);
@@ -921,19 +1329,112 @@
     }
   }
 
-  // Initialize when DOM is ready
+  // === ONBOARDING SYSTEM ===
+
+  function checkFirstRun() {
+    const seen = localStorage.getItem('flab.tutorialSeen');
+    if (!seen) {
+      setTimeout(showOnboarding, 1000); // Show after 1 second
+    }
+  }
+
+  function showOnboarding() {
+    const modal = document.getElementById('flabOnboard');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+
+    // Wire modal events
+    wireOnboardingEvents();
+
+    // Focus first slide
+    showSlide(0);
+  }
+
+  function hideOnboarding() {
+    const modal = document.getElementById('flabOnboard');
+    if (!modal) return;
+
+    modal.style.display = 'none';
+
+    // Mark as seen if checkbox is checked
+    const checkbox = document.getElementById('onboard-dont-show');
+    if (checkbox?.checked) {
+      localStorage.setItem('flab.tutorialSeen', 'true');
+    }
+  }
+
+  let currentSlide = 0;
+
+  function wireOnboardingEvents() {
+    // Close button
+    const closeBtn = document.querySelector('.flab-onboard__close');
+    closeBtn?.addEventListener('click', hideOnboarding);
+
+    // Navigation buttons
+    const prevBtn = document.querySelector('.btn-prev');
+    const nextBtn = document.querySelector('.btn-next');
+
+    prevBtn?.addEventListener('click', () => showSlide(currentSlide - 1));
+    nextBtn?.addEventListener('click', () => {
+      if (currentSlide === 3) {
+        hideOnboarding();
+      } else {
+        showSlide(currentSlide + 1);
+      }
+    });
+
+    // Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') hideOnboarding();
+    });
+
+    // Click outside to close
+    const modal = document.getElementById('flabOnboard');
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) hideOnboarding();
+    });
+  }
+
+  function showSlide(index) {
+    const slides = document.querySelectorAll('.flab-onboard__slide');
+    const prevBtn = document.querySelector('.btn-prev');
+    const nextBtn = document.querySelector('.btn-next');
+    const indicator = document.querySelector('.slide-indicator');
+
+    if (index < 0 || index >= slides.length) return;
+
+    // Hide all slides
+    slides.forEach(slide => slide.style.display = 'none');
+
+    // Show current slide
+    slides[index].style.display = 'block';
+
+    // Update navigation
+    currentSlide = index;
+
+    if (prevBtn) prevBtn.disabled = index === 0;
+    if (nextBtn) nextBtn.textContent = index === slides.length - 1 ? 'Finish' : 'Next';
+    if (indicator) indicator.textContent = `${index + 1} / ${slides.length}`;
+  }
+
+  // === INITIALIZATION ===
+
+  // Auto-initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 
-  // Expose public API
+  // Export for global access
   window.FormationLab = {
     init,
-    getState: () => state,
+    setMode,
     loadFormation,
     saveFormation,
-    exportFormation
+    exportFormation,
+    showOnboarding
   };
+
 })();

@@ -43,11 +43,11 @@
     <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
     <!-- Version pin to keep HTML/CSS/JS in sync -->
-    <script>window.__VER__='21.1';</script>
+    <script>window.__VER__='22';</script>
 
-    <link rel="stylesheet" href="styles/main.css?v=21.1" />
+    <link rel="stylesheet" href="styles/main.css?v=22" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="scripts/main.js?v=21.1" defer></script>
+    <script src="scripts/main.js?v=22" defer></script>
 
     <noscript>
         <style>
@@ -259,7 +259,20 @@
                         <!-- layers: passes/runs below, players above, proxy topmost -->
                         <g id="flabLines"></g>
                         <g id="flabPlayers" aria-live="polite"></g>
+                        <g id="flabGhostLayer"></g>
                     </svg>
+
+                    <!-- Cursor Ring -->
+                    <div id="flabCursorRing" aria-hidden="true"></div>
+
+                    <!-- Mode Hint Pill -->
+                    <div id="flabModeHint" role="status" aria-live="polite"></div>
+
+                    <!-- Help Button -->
+                    <button id="flabHelpBtn" type="button" aria-label="Show tutorial" title="Help & Tutorial">?</button>
+
+                    <!-- Mobile Draw Finish Button -->
+                    <button id="flabDrawFinish" type="button" class="flab-draw-finish" style="display: none;">Finish</button>
                 </div>
 
                 <p class="flab__tips">💡 Drag players · D = draw pass · H = highlight · B = ball · Esc = exit · S = save · P = play</p>
@@ -675,6 +688,77 @@
       addEventListener('load', hideBRStrays);
     })();
     </script>
+
+    <!-- Formation Lab Onboarding Modal -->
+    <div id="flabOnboard" class="flab-onboard" style="display: none;" role="dialog" aria-labelledby="onboard-title" aria-modal="true">
+        <div class="flab-onboard__content">
+            <header class="flab-onboard__header">
+                <h3 id="onboard-title">Formation Lab Tutorial</h3>
+                <button type="button" class="flab-onboard__close" aria-label="Close tutorial">&times;</button>
+            </header>
+
+            <div class="flab-onboard__slides">
+                <div class="flab-onboard__slide" data-slide="0">
+                    <div class="slide-content">
+                        <h4>🎯 Move Players</h4>
+                        <ul>
+                            <li>Drag players to reposition them</li>
+                            <li>Use arrow keys for precision movement</li>
+                            <li>Players snap to pitch boundaries</li>
+                        </ul>
+                        <div class="slide-demo">⚽ Drag demo animation here</div>
+                    </div>
+                </div>
+
+                <div class="flab-onboard__slide" data-slide="1" style="display: none;">
+                    <div class="slide-content">
+                        <h4>⚽ Ball Mode</h4>
+                        <ul>
+                            <li>Click Ball, then click a player to place ball</li>
+                            <li>Click Play to animate pass sequences</li>
+                            <li>Ball follows tactical movements</li>
+                        </ul>
+                        <div class="slide-demo">🏟️ Ball placement demo</div>
+                    </div>
+                </div>
+
+                <div class="flab-onboard__slide" data-slide="2" style="display: none;">
+                    <div class="slide-content">
+                        <h4>✏️ Draw Mode</h4>
+                        <ul>
+                            <li>Click to add points, lines snap to players</li>
+                            <li>Double-click or Enter to finish line</li>
+                            <li>Backspace removes last point, Esc cancels</li>
+                        </ul>
+                        <div class="slide-demo">📏 Drawing demo animation</div>
+                    </div>
+                </div>
+
+                <div class="flab-onboard__slide" data-slide="3" style="display: none;">
+                    <div class="slide-content">
+                        <h4>💾 Save & Export</h4>
+                        <ul>
+                            <li>Save formations to browser storage</li>
+                            <li>Export as PNG images</li>
+                            <li>Undo/Redo with full history</li>
+                        </ul>
+                        <div class="slide-demo">📸 Export demo</div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="flab-onboard__footer">
+                <label class="flab-onboard__checkbox">
+                    <input type="checkbox" id="onboard-dont-show"> Don't show again
+                </label>
+                <div class="flab-onboard__nav">
+                    <button type="button" class="btn-prev" disabled>Previous</button>
+                    <span class="slide-indicator">1 / 4</span>
+                    <button type="button" class="btn-next">Next</button>
+                </div>
+            </footer>
+        </div>
+    </div>
 </body>
 </html>
 

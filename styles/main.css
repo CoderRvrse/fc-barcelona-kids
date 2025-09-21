@@ -3039,6 +3039,318 @@ textarea:focus-visible {
   touch-action: none;
 }
 
+/* --- FORMATION LAB UX OVERHAUL v22 --- */
+
+/* Cursor Ring */
+#flabCursorRing {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    0 0 12px rgba(30, 58, 138, 0.4),
+    0 0 24px rgba(242, 194, 0, 0.2);
+  will-change: transform, opacity;
+  transition: opacity 0.2s ease, border-width 0.1s ease;
+}
+
+#flabCursorRing.show {
+  opacity: 1;
+}
+
+#flabCursorRing.locked {
+  border-width: 3px;
+  box-shadow:
+    0 0 16px rgba(30, 58, 138, 0.6),
+    0 0 32px rgba(242, 194, 0, 0.3);
+}
+
+/* Mode Hint Pill */
+#flabModeHint {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #f2c200 100%);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 500;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  max-width: 280px;
+}
+
+#flabModeHint.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Help Button */
+#flabHelpBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(30, 58, 138, 0.8);
+  color: white;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#flabHelpBtn:hover {
+  background: rgba(30, 58, 138, 1);
+  border-color: #f2c200;
+  transform: scale(1.05);
+}
+
+/* Mobile Draw Finish Button */
+.flab-draw-finish {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #f2c200 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 500;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.flab-draw-finish:hover {
+  transform: scale(1.05);
+}
+
+/* Ghost Path for Draw Mode */
+.flab-ghost-path {
+  stroke: url(#barcaGrad);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 2;
+  stroke-opacity: 0.35;
+  fill: none;
+  marker-end: url(#arrowhead);
+  pointer-events: none;
+}
+
+.flab-ghost-path.snapped {
+  stroke-opacity: 0.6;
+  stroke-dasharray: none;
+}
+
+/* Snap Dot */
+.flab-snap-dot {
+  fill: #f2c200;
+  stroke: #1e3a8a;
+  stroke-width: 1;
+  opacity: 0.8;
+  animation: snap-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes snap-pulse {
+  from { r: 2; opacity: 0.6; }
+  to { r: 3; opacity: 1; }
+}
+
+/* Drawing Mode Player States */
+.flab-player.draw-source {
+  filter: drop-shadow(0 0 8px #f2c200);
+}
+
+.flab-player.snap-target {
+  filter: drop-shadow(0 0 6px #1e3a8a);
+}
+
+/* Onboarding Modal */
+.flab-onboard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.flab-onboard__content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: modal-enter 0.3s ease-out;
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.flab-onboard__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #1e3a8a 0%, #f2c200 100%);
+  color: white;
+}
+
+.flab-onboard__header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.flab-onboard__close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.flab-onboard__close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.flab-onboard__slides {
+  padding: 24px;
+  min-height: 300px;
+}
+
+.flab-onboard__slide h4 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #1e3a8a;
+}
+
+.flab-onboard__slide ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.flab-onboard__slide li {
+  margin-bottom: 8px;
+  position: relative;
+  padding-left: 20px;
+}
+
+.flab-onboard__slide li:before {
+  content: "✓";
+  color: #f2c200;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.slide-demo {
+  background: #f8fafc;
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  margin: 20px 0;
+  color: #64748b;
+  font-style: italic;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flab-onboard__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.flab-onboard__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.flab-onboard__nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.flab-onboard__nav button {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.flab-onboard__nav button:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.flab-onboard__nav button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.slide-indicator {
+  font-size: 0.9rem;
+  color: #64748b;
+  min-width: 40px;
+  text-align: center;
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .flab-player,
