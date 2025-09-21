@@ -18,7 +18,13 @@ jobs:
       - name: ESLint (no install; npx only)
         run: |
           # Use ESLint 9 with proper configuration or syntax check fallback
-          node --check scripts/*.js && node --check scripts/**/*.js || {
-            echo "❌ JavaScript syntax errors found"
-            exit 1
-          }
+          shopt -s nullglob
+          js_files=(scripts/*.js scripts/**/*.js)
+          if [ ${#js_files[@]} -gt 0 ]; then
+            for f in "${js_files[@]}"; do
+              echo "Checking $f"
+              node --check "$f"
+            done
+          else
+            echo "No JavaScript files found to check"
+          fi
