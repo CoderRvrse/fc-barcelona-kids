@@ -2812,6 +2812,7 @@ textarea:focus-visible {
   border-radius: 14px;
   box-shadow: 0 20px 50px rgba(0,0,0,.35);
   background: #2d5a3d;
+  touch-action: none;
 }
 
 .flab__tips {
@@ -2825,15 +2826,21 @@ textarea:focus-visible {
 .flab-player {
   cursor: grab;
   transform-origin: center;
-  transition: transform 0.15s ease;
+  transition: transform 120ms ease;
 }
 
-.flab-player:hover {
-  transform: scale(1.1);
+.flab-player:hover:not(.is-dragging) {
+  transform: scale(1.04);
 }
 
-.flab-player:active {
+.flab-player:active,
+.flab-player.is-dragging {
   cursor: grabbing;
+}
+
+.flab-player.is-dragging,
+.is-dragging .flab-player {
+  transition: none;
 }
 
 .flab-player:focus {
@@ -2848,7 +2855,6 @@ textarea:focus-visible {
   stroke: #0b1c45;
   stroke-width: .7;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.4));
-  transition: transform 0.15s ease;
 }
 
 .flab-player__label {
@@ -2857,6 +2863,78 @@ textarea:focus-visible {
   dominant-baseline: central;
   fill: #0b1c45;
   pointer-events: none;
+}
+
+/* Selection ring */
+.flab-ring {
+  stroke: url(#barcaGrad);
+  stroke-width: .9;
+  fill: none;
+  stroke-dasharray: 4 3;
+}
+
+.flab-ring.is-active {
+  animation: ring-slow 2.4s linear infinite;
+}
+
+@keyframes ring-slow {
+  to { stroke-dashoffset: -7; }
+}
+
+/* Mode-specific states */
+.flab-player.is-highlighted {
+  animation: highlight-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.flab-player.draw-from .flab-player__dot {
+  fill: #dc2626;
+  animation: draw-hint 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes draw-hint {
+  from { stroke-width: .7; }
+  to { stroke-width: 1.2; }
+}
+
+/* Toolbar active states */
+.flab__buttons button.is-active,
+.flab__buttons button[aria-pressed="true"] {
+  background: linear-gradient(45deg, #dc2626, #ef4444);
+  color: white;
+}
+
+.flab__buttons button.is-active:hover,
+.flab__buttons button[aria-pressed="true"]:hover {
+  background: linear-gradient(45deg, #ef4444, #f87171);
+}
+
+.flab__buttons button:disabled,
+.flab__buttons button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(255,255,255,.03);
+}
+
+.flab__buttons button:disabled:hover,
+.flab__buttons button[aria-disabled="true"]:hover {
+  transform: none;
+  background: rgba(255,255,255,.03);
+}
+
+/* Pass lines */
+.flab-line {
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+.flab-line:hover {
+  opacity: 1;
+  stroke-width: 1.5;
 }
 
 /* Responsive adjustments */

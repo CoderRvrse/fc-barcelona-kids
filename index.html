@@ -43,11 +43,11 @@
     <link rel="preload" href="assets/soccer-ball.svg" as="image" type="image/svg+xml" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
     <!-- Version pin to keep HTML/CSS/JS in sync -->
-    <script>window.__VER__='20';</script>
+    <script>window.__VER__='21';</script>
 
-    <link rel="stylesheet" href="styles/main.css?v=20" />
+    <link rel="stylesheet" href="styles/main.css?v=21" />
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="scripts/main.js?v=20" defer></script>
+    <script src="scripts/main.js?v=21" defer></script>
 
     <noscript>
         <style>
@@ -245,7 +245,18 @@
                             <circle cx="93" cy="34"  r="0.8" fill="rgba(255,255,255,.85)"/>
                         </g>
 
-                        <!-- layers: passes/runs below, players above -->
+                        <!-- Barcelona gradient for pass lines -->
+                        <defs>
+                            <linearGradient id="barcaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#1e3a8a"/>
+                                <stop offset="100%" stop-color="#f2c200"/>
+                            </linearGradient>
+                            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                <polygon points="0 0, 8 3, 0 6" fill="#f2c200"/>
+                            </marker>
+                        </defs>
+
+                        <!-- layers: passes/runs below, players above, proxy topmost -->
                         <g id="flabLines"></g>
                         <g id="flabPlayers" aria-live="polite"></g>
                     </svg>

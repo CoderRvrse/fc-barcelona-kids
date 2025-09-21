@@ -826,7 +826,7 @@ const kill = (el) => {
         // Only load if Formation Lab section exists
         if (document.getElementById('flabPitch')) {
             const script = document.createElement('script');
-            script.src = './scripts/formation.js?v=20';
+            script.src = './scripts/formation.js?v=21';
             script.defer = true;
             document.head.appendChild(script);
         }
