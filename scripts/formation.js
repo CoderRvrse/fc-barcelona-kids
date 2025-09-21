@@ -19,6 +19,18 @@
   const gLines = () => document.getElementById('flabLines');
   const gDragProxy = () => document.getElementById('flabDragProxy');
   const gBall = () => document.getElementById('flabBall');
+  const labRoot = () => document.getElementById('formationLab');
+
+  // Interaction state management (Hotfix v21.1)
+  function beginInteraction() {
+    const root = labRoot();
+    if (root) root.classList.add('is-interacting');
+  }
+
+  function endInteraction() {
+    const root = labRoot();
+    if (root) root.classList.remove('is-interacting');
+  }
 
   // Formation presets
   const presets = {
@@ -64,7 +76,10 @@
     // Load default formation
     loadFormation('433');
 
-    console.log('Formation Lab v21 initialized');
+    // Set initial mode (Hotfix v21.1)
+    setMode('select');
+
+    console.log('Formation Lab v21.1 initialized');
   }
 
   function ensureLayers() {
@@ -155,6 +170,11 @@
   function setMode(mode) {
     state.mode = mode;
     state.drawFrom = null; // Reset draw state
+
+    // Set data-mode attribute for CSS hover guards (Hotfix v21.1)
+    const root = labRoot();
+    if (root) root.setAttribute('data-mode', mode);
+
     updateToolbarState();
     updateCursor();
   }
@@ -307,12 +327,16 @@
     state.draggingId = id;
     state.selectedId = id;
 
+    // Begin interaction (Hotfix v21.1)
+    beginInteraction();
+
     // Create drag proxy
     createDragProxy(id);
 
-    // Set original to ghost state
+    // Set original to ghost state and mark as dragging
     player.style.opacity = '0.5';
     player.setAttribute('aria-grabbed', 'true');
+    player.classList.add('is-dragging');
 
     document.addEventListener('pointermove', handleDragMove);
     document.addEventListener('pointerup', handleDragEnd);
@@ -380,12 +404,16 @@
     if (player) {
       player.style.opacity = '';
       player.setAttribute('aria-grabbed', 'false');
+      player.classList.remove('is-dragging');
       player.releasePointerCapture?.(e.pointerId);
     }
 
     // Clear proxy
     const proxy = gDragProxy();
     if (proxy) while (proxy.firstChild) proxy.removeChild(proxy.firstChild);
+
+    // End interaction (Hotfix v21.1)
+    endInteraction();
 
     state.draggingId = null;
     pushHistory();

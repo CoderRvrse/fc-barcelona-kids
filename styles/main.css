@@ -2981,6 +2981,64 @@ textarea:focus-visible {
   }
 }
 
+/* --- HOTFIX v21.1: GLOBAL INTERACTION KILL SWITCH --- */
+/* Disable all animations/transitions while user is interacting */
+#formationLab.is-interacting *,
+#formationLab.is-interacting .flab-player,
+#formationLab.is-interacting .flab-ring,
+#formationLab.is-interacting .flab-pass,
+#formationLab.is-interacting .flab-ball {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Disable hover effects entirely while interacting or when not in 'select' mode */
+#formationLab.is-interacting .flab-player:hover,
+#formationLab[data-mode="draw"] .flab-player:hover,
+#formationLab[data-mode="ball"] .flab-player:hover,
+#formationLab[data-mode="highlight"] .flab-player:hover {
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Hover should be subtle *only* in select mode and never while dragging */
+#formationLab[data-mode="select"] .flab-player:not(.is-dragging):hover {
+  transform: translate(var(--tx,0), var(--ty,0)) scale(1.03);
+}
+
+/* During drag: absolutely no transitions or effects on the original node */
+.flab-player.is-dragging {
+  transition: none !important;
+  animation: none !important;
+  transform: translate(var(--tx,0), var(--ty,0)) scale(1.00) !important;
+  filter: none !important;
+}
+
+/* Selection ring only when selected AND not dragging */
+.flab-ring {
+  pointer-events: none;
+}
+.flab-ring.is-active {
+  animation: ring-slow 2.4s linear infinite;
+}
+#formationLab.is-interacting .flab-ring.is-active,
+.flab-player.is-dragging .flab-ring.is-active {
+  animation: none !important;
+}
+
+/* Proxy element styling - no animations on drag proxy */
+#flabDragProxy [data-proxy="true"] {
+  transition: none !important;
+  animation: none !important;
+  cursor: grabbing;
+}
+
+/* Ensure pitch has proper touch handling */
+#flabPitch {
+  touch-action: none;
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .flab-player,
