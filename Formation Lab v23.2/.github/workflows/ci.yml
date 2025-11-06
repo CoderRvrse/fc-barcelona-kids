@@ -1,0 +1,51 @@
+name: Formation Lab CI Audit
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -D @playwright/test http-server
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build project
+        run: npm run build
+
+      - name: Start HTTP server
+        run: |
+          npx http-server -p 5500 . &
+          sleep 3
+          curl -f http://127.0.0.1:5500/ || exit 1
+
+      - name: Run Formation Lab audit
+        run: node scripts/ci-audit.mjs
+
+      - name: Upload audit results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-failure-logs
+          path: |
+            *.log
+            screenshots/
+          retention-days: 7

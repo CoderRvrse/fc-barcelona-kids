@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../scripts/version.js"],
+  "sourcesContent": ["// Version definition for Formation Lab v23.4.7.2\r\nwindow.FLAB_VERSION = 'v23.4.7.2';\r\nwindow.__mod_version = true;"],
+  "mappings": "AACA,OAAO,aAAe,YACtB,OAAO,cAAgB",
+  "names": []
+}

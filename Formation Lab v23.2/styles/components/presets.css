@@ -1,0 +1,246 @@
+/* UI Portal for floating menus/popovers */
+.ui-portal {
+  position: fixed;   /* decouples from pitch stacking context */
+  inset: 0;
+  z-index: 10000;    /* above pitch, arrows, players, everything */
+  pointer-events: none; /* only children receive events */
+}
+
+/* Preset dropdown menu styles */
+.preset-menu {
+  position: fixed;   /* align using viewport coords */
+  min-width: 220px;
+  background: var(--flab-tool-bg);
+  border: 1px solid var(--flab-tool-border);
+  border-radius: 12px;
+  box-shadow: var(--flab-player-shadow);
+  padding: 6px;
+  backdrop-filter: blur(12px);
+  pointer-events: auto; /* clickable */
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.preset-menu[hidden] {
+  display: none;
+}
+
+.preset-menu.is-open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.preset-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  outline: none;
+  tabindex: 0;
+}
+
+.preset-menu__item:focus {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 2px var(--flab-accent);
+}
+
+.preset-menu__item:hover,
+.preset-menu__item[aria-current="true"] {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.preset-menu__name {
+  color: var(--flab-text);
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preset-menu__badge {
+  font-size: 11px;
+  color: var(--flab-accent);
+  margin-left: 6px;
+  font-weight: 600;
+}
+
+.preset-menu__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.preset-menu__btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 0;
+  cursor: pointer;
+  background: var(--flab-tool-bg);
+  color: var(--flab-accent);
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.preset-menu__btn:hover {
+  background: var(--flab-tool-active);
+  transform: translateY(-1px);
+}
+
+.preset-menu__btn:active {
+  transform: translateY(0);
+}
+
+.preset-menu__btn--delete {
+  background: rgba(244, 67, 54, 0.1);
+  color: #ff6b6b;
+}
+
+.preset-menu__btn--delete:hover {
+  background: rgba(244, 67, 54, 0.2);
+}
+
+.preset-menu__divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 6px 4px;
+}
+
+.preset-menu__empty {
+  padding: 16px 10px;
+  color: var(--flab-muted);
+  font-size: 13px;
+  text-align: center;
+  font-style: italic;
+}
+
+.preset-menu__quick-action {
+  color: var(--flab-accent);
+  font-weight: 500;
+}
+
+.preset-menu__quick-action:hover {
+  background: var(--flab-tool-active);
+}
+
+/* Animation for menu appearance */
+.preset-menu {
+  transform-origin: top;
+  animation: preset-menu-appear 0.2s ease-out forwards;
+}
+
+@keyframes preset-menu-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Erase dropdown menu styles */
+.erase-menu {
+  position: fixed;
+  min-width: 220px;
+  background: var(--flab-tool-bg);
+  border: 1px solid var(--flab-tool-border);
+  border-radius: 12px;
+  box-shadow: var(--flab-player-shadow);
+  padding: 6px;
+  z-index: 10000;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  backdrop-filter: blur(12px);
+}
+
+.erase-menu.is-open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.erase-menu[hidden] {
+  display: none;
+}
+
+.erase-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--flab-text);
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+  outline: none;
+  tabindex: 0;
+}
+
+.erase-menu__item:hover,
+.erase-menu__item[aria-current="true"] {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.erase-menu__item:focus {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 2px var(--flab-accent);
+}
+
+.erase-menu__hint {
+  color: var(--flab-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.erase-menu__danger {
+  color: #ff7575;
+}
+
+.erase-menu__danger .erase-menu__hint {
+  color: #ffb3b3;
+}
+
+.erase-menu__divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 6px 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .preset-menu {
+    min-width: 200px;
+    right: 6px;
+    left: auto;
+  }
+
+  .preset-menu__name {
+    font-size: 13px;
+  }
+
+  .preset-menu__btn {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+
+  .erase-menu {
+    min-width: 200px;
+  }
+
+  .erase-menu__item {
+    font-size: 13px;
+  }
+}
