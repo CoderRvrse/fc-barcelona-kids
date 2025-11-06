@@ -1,0 +1,44 @@
+/* Field component styles */
+:root {
+  --pitch-url: url("../../assets/landscape/pitch-landscape.svg");
+}
+
+.flab-field {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-image: var(--pitch-url);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  cursor: default;
+}
+
+.flab-pitch-wrapper {
+  flex: 1;
+  display: flex;
+  padding: 16px;
+  min-height: 0;
+}
+
+/* Field container must be a positioning context */
+#pitchMount {
+  position: relative;
+  touch-action: none;
+}
+
+/* Arrow SVG must be above field, full bleed */
+#arrow-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;              /* higher than field, below halo/tooltips if any */
+  pointer-events: none;    /* arrows never block clicks */
+}
+
+#arrow-layer .hit {
+  pointer-events: auto;    /* rare: if you add interactive nodes */
+}

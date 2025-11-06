@@ -1,0 +1,106 @@
+/* Arrow/pass component styles */
+
+/* General pass shaft styling */
+.pass-shaft {
+  color: var(--pass-color);  /* ensure markers inherit correct color */
+}
+
+/* Pass highlighting for selected passes */
+#arrow-group [data-arrow-id].is-selected .pass-shaft {
+  filter: drop-shadow(0 0 2px rgba(255,255,255,.45));
+  stroke-linecap: round;
+}
+
+#arrow-group [data-arrow-id].is-selected .pass-headghost {
+  transform: scale(1.06);
+}
+
+/* The field is the coordinate root */
+.flab-field {
+  position: relative;
+}
+
+/* Arrowhead sizing and color variables */
+:root {
+  /* head sizing (px) — much bigger than before */
+  --pass-head-base: 28;          /* ↑ was ~22 */
+  --pass-head-base-comic: 32;    /* ↑ was ~26 */
+  --pass-head-min: 24;           /* ↑ was ~18 */
+  --pass-head-max: 48;           /* ↑ was ~36 */
+  --pass-head-outline: 1.4;      /* ↑ was ~1.2 */
+
+  /* pass colors */
+  --pass-color: #ffd166;         /* unified shaft/head color */
+  --pass-outline: #1d1300;       /* head outline color */
+}
+
+/* Arrow layer must be a child of .flab-field and cover it exactly */
+.flab-arrow-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.flab-arrow-layer.is-interactive {
+  pointer-events: auto;
+}
+
+.flab-arrow-layer.is-interactive .svg-pass {
+  cursor: pointer;
+}
+
+.flab-arrow-layer.is-interactive .svg-pass:hover {
+  opacity: 0.8;
+}
+
+/* Pass stroke styles with improved sizing */
+svg .pass-shaft.pass-solid {
+  stroke: currentColor;
+  color: var(--pass-color);  /* for currentColor in markers */
+  stroke-width: 4px;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+svg .pass-shaft.pass-dashed {
+  stroke: currentColor;
+  color: var(--pass-color);  /* for currentColor in markers */
+  stroke-width: 4px;
+  stroke-dasharray: 14 10;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+svg .pass-shaft.pass-comic {
+  stroke: currentColor;
+  color: var(--pass-color);  /* for currentColor in markers */
+  stroke-width: 5px;
+  stroke-dasharray: none;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Arrow hitboxes */
+.flab-arrow-hitbox {
+  stroke: transparent;
+  stroke-width: 12;
+  fill: none;
+  pointer-events: stroke;
+}
+
+/* Preview arrow */
+.flab-arrow-preview {
+  opacity: 0.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Canonicalized head styling */
+.pass-head {
+  pointer-events: none;
+}
+
+#arrow-layer {
+  --pass-color: var(--accent-500, #ffd166);
+}\nsvg .pass-shaft.pass-comic-flat {\n  stroke-dasharray: none;\n}\n\nsvg .pass-shaft.pass-comic-halftone {\n  stroke-dasharray: 4 4;\n}\n
