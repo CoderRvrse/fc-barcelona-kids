@@ -181,115 +181,25 @@
             <div id="squadGrid" class="squad__grid" aria-live="polite"></div>
         </section>
 
-        <section id="formationLab" class="flab">
+        <section id="formationLab" class="flab-cta" data-section>
             <div class="container">
-                <div class="flab__head">
-                    <h2>Formation Lab</h2>
-                    <p>Create, visualize, and share tactical formations with interactive drag &amp; drop</p>
-                    <p style="margin-top: 0.5rem;"><a href="formation-lab/" style="color: var(--primary); font-weight: 600;">→ Open Full Formation Lab v23.2</a></p>
-                </div>
-
-                <div class="flab__controls">
-                    <select id="flabFormation">
-                        <option value="442">4–4–2</option>
-                        <option value="433" selected>4–3–3</option>
-                        <option value="451">4–5–1</option>
-                        <option value="343">3–4–3</option>
-                        <option value="352">3–5–2</option>
-                    </select>
-                    <div class="flab__buttons">
-                        <button data-mode="ball">Ball</button>
-                        <button data-mode="draw">Draw</button>
-                        <button data-mode="highlight">Highlight</button>
-                        <button data-action="undo">Undo</button>
-                        <button data-action="redo">Redo</button>
-                        <button data-action="clear">Clear</button>
-                        <button data-action="play">Play</button>
-                        <button data-action="save">Save</button>
-                        <button data-action="load">Load</button>
-                        <button data-action="export">Export</button>
+                <h2 data-underline>Formation Lab v23.2</h2>
+                <p class="section-intro">Design youth soccer drills with surgical drag precision, tactical pass arrows, and instant PNG exports.</p>
+                <div class="flab-cta-content" style="text-align: center; padding: 3rem 0;">
+                    <div class="flab-preview" style="margin-bottom: 2rem;">
+                        <img src="formation-lab/audit-failure.png" alt="Formation Lab v23.2 interface preview" style="max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" />
                     </div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary);">✨ New in v23.2: Surgical Drag Precision</h3>
+                    <ul style="list-style: none; padding: 0; margin: 2rem auto; max-width: 600px; text-align: left;">
+                        <li style="padding: 0.5rem 0;">⚡ Centered halo ring with pixel-perfect positioning</li>
+                        <li style="padding: 0.5rem 0;">🎯 Zero-boing hover effects during drag</li>
+                        <li style="padding: 0.5rem 0;">🎨 Multiple arrow styles: Solid, Comic Flat, Comic Halftone</li>
+                        <li style="padding: 0.5rem 0;">💾 Save/load formations with localStorage</li>
+                        <li style="padding: 0.5rem 0;">📱 Mobile-responsive with touch support</li>
+                        <li style="padding: 0.5rem 0;">⚙️ Formation presets: 4-3-3, 4-4-2, 3-5-2, and more</li>
+                    </ul>
+                    <a href="formation-lab/" class="btn" style="display: inline-block; padding: 1rem 2.5rem; font-size: 1.125rem; margin-top: 1rem;">Launch Formation Lab v23.2 →</a>
                 </div>
-
-                <!-- Responsive SVG pitch (105x68 scale) -->
-                <div class="flab__stage">
-                    <!-- Mobile Pro Mode viewport wrapper -->
-                    <div class="lab-viewport" id="flabViewport">
-                        <!-- Full-screen toggle button (mobile only) -->
-                        <button class="flab-fullscreen-btn" id="flabFullscreenBtn" aria-label="Enter full-screen mode" title="Enter full-screen mode">
-                            📱
-                        </button>
-
-                        <div class="lab-content" id="flabContent">
-                            <svg id="flabPitch" viewBox="0 0 105 68" aria-label="Soccer pitch" role="img">
-                        <!-- gradient backdrop -->
-                        <defs>
-                            <linearGradient id="grass" x1="0" x2="0" y1="0" y2="1">
-                                <stop offset="0" stop-color="#1c3b7a"/>
-                                <stop offset="1" stop-color="#142a4f"/>
-                            </linearGradient>
-                            <pattern id="mow" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(90)">
-                                <rect width="6" height="3" fill="rgba(255,255,255,.03)"/>
-                                <rect y="3" width="6" height="3" fill="rgba(0,0,0,.03)"/>
-                            </pattern>
-                        </defs>
-
-                        <rect x="0" y="0" width="105" height="68" fill="url(#grass)"/>
-                        <rect x="0" y="0" width="105" height="68" fill="url(#mow)"/>
-
-                        <!-- pitch markings (slightly translucent for style) -->
-                        <g stroke="rgba(255,255,255,.85)" stroke-width="0.4" fill="none">
-                            <rect x="1" y="1" width="103" height="66"/>
-                            <line x1="52.5" y1="1" x2="52.5" y2="67"/>
-                            <circle cx="52.5" cy="34" r="9"/>
-                            <!-- penalty boxes -->
-                            <rect x="1" y="18" width="16.5" height="32"/>
-                            <rect x="87.5" y="18" width="16.5" height="32"/>
-                            <!-- six-yard boxes -->
-                            <rect x="1" y="26" width="5.5" height="16"/>
-                            <rect x="98.5" y="26" width="5.5" height="16"/>
-                            <!-- penalty spots & center -->
-                            <circle cx="52.5" cy="34" r="0.8" fill="rgba(255,255,255,.85)"/>
-                            <circle cx="12" cy="34"  r="0.8" fill="rgba(255,255,255,.85)"/>
-                            <circle cx="93" cy="34"  r="0.8" fill="rgba(255,255,255,.85)"/>
-                        </g>
-
-                        <!-- Barcelona gradient for pass lines -->
-                        <defs>
-                            <linearGradient id="barcaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#1e3a8a"/>
-                                <stop offset="100%" stop-color="#f2c200"/>
-                            </linearGradient>
-                            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                                <polygon points="0 0, 8 3, 0 6" fill="#f2c200"/>
-                            </marker>
-                        </defs>
-
-                        <!-- layers: passes/runs below, players above, proxy topmost -->
-                        <g id="flabLines"></g>
-                        <g id="flabPlayers" aria-live="polite"></g>
-                        <g id="flabGhostLayer"></g>
-                    </svg>
-
-                    <!-- Cursor Ring -->
-                    <div id="flabCursorRing" aria-hidden="true"></div>
-
-                    <!-- Mode Hint Pill -->
-                    <div id="flabModeHint" role="status" aria-live="polite"></div>
-
-                    <!-- Help Button -->
-                    <button id="flabHelpBtn" type="button" aria-label="Show tutorial" title="Help & Tutorial">?</button>
-
-                    <!-- Mobile Draw Finish Button -->
-                    <button id="flabDrawFinish" type="button" class="flab-draw-finish" style="display: none;">Finish</button>
-
-                    <!-- Toast Container -->
-                    <div id="flabToastHost" class="flab-toast-host" aria-live="polite"></div>
-                        </div> <!-- /lab-content -->
-                    </div> <!-- /lab-viewport -->
-                </div>
-
-                <p class="flab__tips">💡 Drag players · D = draw pass · H = highlight · B = ball · Esc = exit · S = save · P = play</p>
             </div>
         </section>
 
