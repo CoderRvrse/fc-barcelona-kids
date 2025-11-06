@@ -1,0 +1,174 @@
+/* Toolbar component styles */
+.flab-sidepanel {
+  width: 280px;
+  min-width: 280px;
+  background: var(--flab-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid var(--flab-outline);
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 24px;
+}
+
+.flab-header {
+  text-align: center;
+}
+
+.flab-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--flab-text);
+}
+
+.flab-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--flab-muted);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+.flab-subtitle {
+  font-size: 14px;
+  color: var(--flab-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.flab-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flab-tool {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--flab-tool-bg);
+  border: 1px solid var(--flab-tool-border);
+  border-radius: 8px;
+  color: var(--flab-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.flab-tool:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.flab-tool[aria-pressed="true"] {
+  background: var(--flab-tool-active);
+  border-color: var(--flab-accent);
+}
+
+.flab-tool svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.flab-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flab-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--flab-accent);
+  color: #0b2b66;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flab-action:hover {
+  background: var(--flab-accent-dark);
+  transform: translateY(-1px);
+}
+
+.flab-action svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.toolbar-row {
+  display: flex;
+  gap: 8px;
+}
+
+.toolbar-row .flab-action {
+  flex: 1;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.btn-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.btn-group .flab-action {
+  font-size: 11px;
+  padding: 6px 8px;
+}
+
+.flab-keytips {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: auto;
+}
+
+.flab-keytips h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--flab-text);
+}
+
+.flab-keytips ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.flab-keytips li {
+  font-size: 12px;
+  color: var(--flab-muted);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flab-keytips kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--flab-text);
+}
+

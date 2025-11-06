@@ -1,0 +1,106 @@
+/* Player component styles */
+.flab-players {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.flab-player,
+.player {
+  position: absolute;
+  width: var(--flab-player-size);
+  height: var(--flab-player-size);
+  pointer-events: auto;
+  cursor: grab;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  border-radius: 50%;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: none;
+  user-select: none;
+}
+
+.flab-player:focus,
+.player:focus {
+  outline: 2px solid var(--flab-accent);
+  outline-offset: 2px;
+}
+
+.flab-player.is-grabbing,
+.player.is-grabbing {
+  cursor: grabbing;
+  z-index: 50;
+  filter: brightness(1.1);
+}
+
+.flab-player .jersey,
+.player .jersey {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: var(--flab-player-shadow);
+}
+
+.flab-player .num,
+.player .num {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: var(--flab-accent);
+  color: #0b2b66;
+  font-size: 14px;
+  font-weight: 700;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Halo styles */
+.flab-halo {
+  position: absolute;
+  width: var(--flab-halo-size);
+  height: var(--flab-halo-size);
+  border: 2px solid var(--flab-accent);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--flab-halo-glow) 0%, transparent 60%);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  z-index: 5;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.flab-halo.is-visible {
+  opacity: 1;
+}
+
+/* Aim-assist visual states */
+.player[data-aim="pre"] .jersey {
+  box-shadow: var(--flab-player-shadow), 0 0 0 6px rgba(255, 209, 102, 0.35) inset, 0 0 12px rgba(255, 209, 102, 0.4);
+}
+
+.player[data-aim="lock"] .jersey {
+  box-shadow: var(--flab-player-shadow), 0 0 0 8px rgba(255, 209, 102, 0.65) inset, 0 0 18px rgba(255, 209, 102, 0.6);
+}
+
+/* Hover states */
+.flab-field.can-hover .flab-player:hover,
+.flab-field.can-hover .player:hover {
+  filter: brightness(1.05);
+  transform: translate(-50%, -50%) scale(1.02);
+}
+
+.flab-field.lab-pressing .flab-player,
+.flab-field.is-engaged .flab-player,
+.flab-field.lab-pressing .player,
+.flab-field.is-engaged .player {
+  transition: none;
+}

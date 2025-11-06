@@ -1,0 +1,29 @@
+{
+  "description": "Formation Lab v23.4.3 Performance Budget",
+  "lighthouse": {
+    "performance": 0.95,
+    "accessibility": 0.90,
+    "bestPractices": 0.90,
+    "seo": 0.85
+  },
+  "metrics": {
+    "firstContentfulPaint": 1800,
+    "largestContentfulPaint": 2200,
+    "totalBlockingTime": 150,
+    "cumulativeLayoutShift": 0.1,
+    "speedIndex": 2000
+  },
+  "budgets": {
+    "scripts": 150,
+    "stylesheets": 50,
+    "images": 200,
+    "fonts": 0,
+    "other": 100
+  },
+  "notes": [
+    "Performance targets for Formation Lab tactical board application",
+    "Optimized for desktop Chrome on 4x CPU slowdown",
+    "Mobile performance may vary due to complex SVG rendering",
+    "Bundle size reduced 40% in v23.4.2 (113KB → 68KB)"
+  ]
+}
