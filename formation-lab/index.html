@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Formation Lab v23.4.7.1</title>
+    <meta name="description" content="Formation Lab v23.4.7.1 – youth soccer tactics board with drag, pass arrows, and export." />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="stylesheet" href="styles/main.css?v=23.4.7.1" />
+  </head>
+  <body class="flab-body">
+    <noscript class="flab-noscript">Formation Lab requires JavaScript to run. Please enable it to use the tactics editor.</noscript>
+    <main class="flab-app" data-version="v23.4.7.1">
+      <section class="flab-sidepanel" aria-label="Formation Lab controls">
+        <header class="flab-header">
+          <h1 class="flab-title">Formation Lab <span class="flab-badge">v23.4.7.1</span></h1>
+          <p class="flab-subtitle">Design youth soccer drills with drag, pass arrows, and instant exports.</p>
+        </header>
+        <nav class="flab-toolbar" role="toolbar" aria-label="Editor modes">
+          <button type="button" class="flab-tool" data-mode="select" aria-pressed="true">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#pointer"></use></svg>
+            <span>Select / Drag</span>
+          </button>
+          <button type="button" class="flab-tool" data-mode="pass" aria-pressed="false">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#pass"></use></svg>
+            <span>Pass</span>
+          </button>
+          <button type="button" class="flab-tool" data-mode="erase" aria-pressed="false">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#erase"></use></svg>
+            <span>Erase</span>
+          </button>
+          <button type="button" class="flab-tool flab-tool--help" id="helpButton" aria-haspopup="dialog" aria-expanded="false">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#help"></use></svg>
+            <span>Help</span>
+          </button>
+        </nav>
+        <div class="flab-actions" aria-label="Primary actions">
+          <button type="button" class="flab-action" id="exportButton">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#export"></use></svg>
+            <span>Export PNG</span>
+          </button>
+          <button type="button" class="flab-action" id="resetButton">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#reset"></use></svg>
+            <span>Reset 4-3-3</span>
+          </button>
+          <div class="toolbar-row">
+            <button type="button" class="flab-action" id="btnSavePreset">Save Current</button>
+            <button type="button" class="flab-action" id="btnApplyDefault">Apply Default</button>
+            <button type="button" class="flab-action" id="btnManagePresets">Manage…</button>
+          </div>
+          <div class="toolbar-row">
+            <button type="button" class="flab-action" id="btnLandscape">Landscape</button>
+            <button type="button" class="flab-action" id="btnPortrait">Portrait</button>
+            <button type="button" class="flab-action" id="btnFlip">Flip Sides</button>
+          </div>
+          <button type="button" class="flab-action" id="btnPassStyle" aria-haspopup="menu" aria-expanded="false">
+            <div class="passstyle-trigger">
+              <span class="passstyle-trigger__name">Solid</span>
+              <svg class="passstyle-trigger__chevron" aria-hidden="true" focusable="false" width="12" height="8" viewBox="0 0 12 8">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </button>
+          <div class="toolbar-row" id="passPlaybackControls" style="display: none;">
+            <button type="button" class="flab-action" id="btnPlayLast" disabled>
+              <span>▶ Play Last</span>
+            </button>
+            <button type="button" class="flab-action" id="btnPlayAll" disabled>
+              <span>▶ Play All</span>
+            </button>
+            <button type="button" class="flab-action" id="btnStopPlayback" disabled>
+              <span>⏹ Stop</span>
+            </button>
+            <button type="button" class="flab-action" id="btnDiagnostics" title="Show ball playback diagnostics">
+              <span>🔍 Diagnostics</span>
+            </button>
+          </div>
+        </div>
+        <section class="flab-keytips" aria-label="Keyboard shortcuts">
+          <h2>Quick Keys</h2>
+          <ul>
+            <li><kbd>Tab</kbd> cycle players</li>
+            <li><kbd>Enter</kbd> select</li>
+            <li><kbd>Alt</kbd> + drag for curved passes</li>
+            <li><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> nudges (⇧ ×10)</li>
+            <li><kbd>Esc</kbd> cancel / exit mode</li>
+          </ul>
+        </section>
+      </section>
+      <section class="flab-pitch-wrapper" aria-label="Pitch canvas">
+        <div class="flab-field" id="pitchMount" data-field-version="v23.4">
+          <svg class="flab-arrow-layer" id="arrow-layer" width="100%" height="100%" role="img" aria-label="Pass arrows">
+            <defs>
+              <!-- Clip to rounded pitch -->
+              <clipPath id="pitchClip">
+                <rect x="0" y="0" width="100%" height="100%" rx="16" ry="16"></rect>
+              </clipPath>
+              <!-- Solid -->
+              <marker id="passHead-solid" markerUnits="userSpaceOnUse" orient="auto"
+                      refX="12" refY="8" markerWidth="12" markerHeight="12">
+                <image href="assets/arrows/head-solid.svg" x="0" y="0" width="24" height="16"/>
+              </marker>
+
+              <!-- Comic Flat -->
+              <marker id="passHead-comic-flat" markerUnits="userSpaceOnUse" orient="auto"
+                      refX="14" refY="11" markerWidth="14" markerHeight="14">
+                <image href="assets/arrows/head-comic-flat.svg" x="0" y="0" width="28" height="22"/>
+              </marker>
+
+              <!-- Comic Halftone -->
+              <marker id="passHead-comic-halftone" markerUnits="userSpaceOnUse" orient="auto"
+                      refX="14" refY="11" markerWidth="14" markerHeight="14">
+                <image href="assets/arrows/head-comic-halftone.svg" x="0" y="0" width="28" height="22"/>
+              </marker>
+            </defs>
+            <g id="arrow-group" clip-path="url(#pitchClip)"></g>
+          </svg>
+          <div class="flab-players" role="presentation"></div>
+          <div class="flab-halo" id="flabHalo" aria-hidden="true"></div>
+          <div class="flab-toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
+        </div>
+      </section>
+    </main>
+
+    <section class="flab-help" id="helpOverlay" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="helpTitle">
+      <div class="flab-help__content">
+        <header>
+          <h2 id="helpTitle">Formation Lab Help</h2>
+          <button type="button" class="flab-help__close" id="closeHelpButton">
+            <span class="sr-only">Close help</span>
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#close"></use></svg>
+          </button>
+        </header>
+        <article>
+          <p>Drag players to plan drills. Switch to Pass mode and drag to draw crisp pass arrows. Hold Alt while drawing for curved passes. Export captures the full pitch at display resolution.</p>
+          <ul>
+            <li>Tokens are keyboard accessible: Tab, Enter, and arrow keys nudge positions.</li>
+            <li>Alt + drag creates curved passes with live handles.</li>
+            <li>Esc cancels drags or closes this help panel.</li>
+            <li>Reset restores the default 4-3-3 formation.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- Emergency SW bypass: ?sw=off temporarily disables service worker -->
+    <script>
+      if (new URL(location).searchParams.get('sw') === 'off') {
+        navigator.serviceWorker?.getRegistrations().then(registrations => {
+          registrations.forEach(reg => reg.unregister());
+          console.log('🚨 Service Worker disabled via ?sw=off');
+
+          // Show toast notification
+          setTimeout(() => {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#ff6b6b;color:white;padding:12px 16px;border-radius:8px;z-index:9999;font-family:sans-serif;font-size:14px;';
+            toast.textContent = '🚨 Offline caching disabled';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+          }, 100);
+        });
+      }
+    </script>
+
+    <!-- Development mode: use /scripts/* directly. Production: run `npm run build` and switch to /dist/scripts/* -->
+    <!-- UI portal for floating menus/popovers -->
+    <div id="ui-portal" class="ui-portal"></div>
+
+    <script src="scripts/version.js?v=23.4.7.1" defer></script>
+    <script type="module" src="scripts/main.js?v=23.4.7.1"></script>
+  </body>
+</html>

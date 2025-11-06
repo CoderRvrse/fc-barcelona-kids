@@ -1,0 +1,63 @@
+/* Ball animation styles - Cross-engine hardening */
+
+#ball-layer {
+  pointer-events: none !important;
+  isolation: isolate; /* Prevent blend modes from affecting ball */
+}
+
+#ball-debug, #arrow-debug-layer {
+  pointer-events: none !important;
+}
+
+.flab-ball {
+  opacity: 1 !important;  /* prevent inherited transparency */
+  filter: drop-shadow(0 0 2px rgba(0,0,0,.35));
+  /* NEVER use mix-blend-mode for the ball – keep natural colors */
+  isolation: isolate; /* Ensure ball doesn't inherit parent blend modes */
+}
+
+.flab-ball .flab-ball-img,
+#ball-layer .ball {
+  image-rendering: auto;
+  shape-rendering: geometricPrecision;
+  opacity: 1 !important;  /* belt & suspenders */
+  filter: drop-shadow(0 0 2px rgba(0,0,0,.35));
+}
+
+.ball-halo {
+  fill: rgba(255,255,255,.65); /* faint ring to pop on grass */
+  opacity: 1 !important;
+}
+
+.ball-fallback {
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.5));
+}
+
+@media (prefers-contrast: more) {
+  .ball-halo {
+    fill: rgba(255,255,255,.9);
+  }
+}
+
+/* Ensure ball stays above arrows but below UI */
+#ball-layer {
+  z-index: 6;
+}
+
+/* Prevent any parent group from making ball transparent */
+#arrow-layer > * {
+  opacity: 1; /* Reset any group opacity that might affect visibility */
+}
+
+/* Guard against accidental transparency from parent elements */
+#ball-layer *,
+#arrow-group #ball-layer * {
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Ensure ball layer inherits the clipping from arrow-group */
+#arrow-group #ball-layer {
+  pointer-events: none !important;
+}
