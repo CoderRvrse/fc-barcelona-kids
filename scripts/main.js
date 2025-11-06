@@ -1,4 +1,6 @@
 /* eslint-env browser */
+// FC Barcelona Kids - Main JavaScript
+// Claude Code environment verified and ready ✓
 
 (() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
