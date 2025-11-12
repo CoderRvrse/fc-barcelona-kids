@@ -130,7 +130,11 @@ export function enterFullscreen() {
   sidepanel.style.display = 'none';
   app.classList.add('flab-app--fullscreen');
   document.body.classList.add('flab-body--fullscreen');
+  document.documentElement.classList.add('flab-body--fullscreen');
   document.body.style.padding = '0';
+  document.body.style.margin = '0';
+  document.documentElement.style.margin = '0';
+  document.documentElement.style.padding = '0';
 
   moveControlsToOverlay();
   closePitchControls();
@@ -167,9 +171,15 @@ export function exitFullscreen(options = {}) {
   sidepanel.style.display = originalSidepanelDisplay || '';
   document.body.style.padding =
     originalBodyPadding !== null ? originalBodyPadding : '';
+  document.body.style.margin = '';
+  document.body.style.position = '';
+  document.documentElement.style.margin = '';
+  document.documentElement.style.padding = '';
+  document.documentElement.style.position = '';
 
   app.classList.remove('flab-app--fullscreen');
   document.body.classList.remove('flab-body--fullscreen');
+  document.documentElement.classList.remove('flab-body--fullscreen');
 
   restoreControlsFromOverlay();
   updateAllFullscreenButtons(false);
