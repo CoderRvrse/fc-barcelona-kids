@@ -18,6 +18,7 @@ Visit: **https://coderrvse.github.io/fc-barcelona-kids/**
 - **Accessibility** - Screen reader support, keyboard navigation
 - **SEO Optimized** - Structured data, social sharing, sitemap
 - **Performance** - Optimized assets, lazy loading, reduced motion support
+- **Formation Lab v23.2** - Embedded full tactics board (drag/draw/export) straight from `Formation Lab v23.2/`
 
 ## 🛠️ Development
 

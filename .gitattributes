@@ -1,5 +1,6 @@
 # Always normalize to LF in source files
 *.js   text eol=lf
+"Formation Lab v23.2/scripts/*.js" -text
 *.css  text eol=lf
 *.html text eol=lf
 *.yml  text eol=lf

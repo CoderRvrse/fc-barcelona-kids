@@ -822,27 +822,18 @@ const kill = (el) => {
     }
 })();
 
-// Formation Lab Integration
+// Formation Lab embed helper
 (() => {
-    function loadFormationLab() {
-        // Only load if Formation Lab section exists
-        if (document.getElementById('flabPitch')) {
-            const script = document.createElement('script');
-            script.src = './scripts/formation.js?v=23.1';
-            script.defer = true;
-            document.head.appendChild(script);
-        }
-    }
+    const embed = document.querySelector('.flab-frame');
+    if (!embed) return;
 
-    // Initialize Formation Lab when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadFormationLab);
-    } else {
-        loadFormationLab();
-    }
+    // Auto-adjust iframe height for tall viewports
+    const resize = () => {
+        const min = 520;
+        const desired = Math.max(min, window.innerHeight * 0.85);
+        embed.style.minHeight = `${Math.round(desired)}px`;
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
 })();
-
-
-
-
-

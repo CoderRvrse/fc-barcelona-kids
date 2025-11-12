@@ -22,3 +22,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Local overrides
+.claude/settings.local.json
+test.html
