@@ -25,7 +25,7 @@ jobs:
           mkdir -p ci
           echo '${{ toJson(github.event) }}' > ci/event.json
       - name: Upload debug payload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: auto-regression-debug
           path: ci/event.json
