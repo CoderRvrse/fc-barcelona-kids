@@ -142,18 +142,15 @@ export function enterFullscreen() {
     setOrientation('landscape');
   });
 
-  // Try to lock screen orientation to landscape on mobile
-  if (screen?.orientation?.lock) {
-    screen.orientation.lock('landscape-primary').catch(err => {
-      console.warn('Could not lock screen orientation:', err);
-    });
-  }
+  // Note: screen.orientation API not reliable on iOS
+  // CSS body.flab-body--fullscreen lock handles the fullscreen aspect
 
   window.dispatchEvent(new Event('resize'));
 
   isFullscreen = true;
   showFullscreenHint();
-  requestNativeFullscreen(document.documentElement);
+  // Note: Native fullscreen API doesn't work on iOS Safari
+  // CSS-only approach is used instead (body.flab-body--fullscreen locks viewport)
   openPitchControls();
 }
 
@@ -183,18 +180,9 @@ export function exitFullscreen(options = {}) {
     import('./orientation.js').then(({ autoOrientation }) => autoOrientation());
   }, 50);
 
-  // Unlock screen orientation on exit
-  if (screen?.orientation?.unlock) {
-    screen.orientation.unlock();
-  }
-
   window.dispatchEvent(new Event('resize'));
 
   console.log('? Fullscreen mode disabled');
-
-  if (!skipNative && getNativeFullscreenElement()) {
-    exitNativeFullscreen();
-  }
 
   closePitchControls();
 }
