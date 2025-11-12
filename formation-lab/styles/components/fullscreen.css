@@ -16,8 +16,8 @@
 .flab-app--fullscreen .flab-pitch-wrapper {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100svw;
+  height: 100svh;
   padding: 0;
   margin: 0;
   display: flex;
@@ -28,7 +28,7 @@
 
 .flab-app--fullscreen .flab-field {
   position: relative;
-  width: min(100vw, calc(100vh * (105 / 68)));
+  width: min(100svw, calc(100svh * (105 / 68)));
   height: auto;
   max-width: none;
   max-height: none;
@@ -718,11 +718,151 @@ body.flab-body--fullscreen .flab-app {
   }
 }
 
+/* Extra small phones - 480px and below */
+@media (max-width: 480px) {
+  .flab-theme-btn-corner {
+    top: 6px;
+    left: 6px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .flab-theme-btn-corner svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .flab-fullscreen-btn-corner {
+    bottom: 6px;
+    right: 6px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .flab-fullscreen-btn-corner svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .flab-undo-redo-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .flab-undo-redo-btn--undo {
+    top: 56px;
+    right: 6px;
+  }
+
+  .flab-undo-redo-btn--redo {
+    top: 102px;
+    right: 6px;
+  }
+
+  .flab-undo-redo-btn--erase {
+    top: 148px;
+    right: 6px;
+  }
+
+  .flab-undo-redo-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .flab-overlay-controls {
+    top: 6px;
+    right: 6px;
+    gap: 4px;
+  }
+
+  .flab-overlay-btn {
+    padding: 5px 8px;
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 9px;
+  }
+
+  .flab-overlay-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Very small phones - 359px and below */
+@media (max-width: 359px) {
+  .flab-theme-btn-corner {
+    top: 4px;
+    left: 4px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .flab-theme-btn-corner svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .flab-fullscreen-btn-corner {
+    bottom: 4px;
+    right: 4px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .flab-fullscreen-btn-corner svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .flab-undo-redo-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .flab-undo-redo-btn--undo {
+    top: 52px;
+    right: 4px;
+  }
+
+  .flab-undo-redo-btn--redo {
+    top: 96px;
+    right: 4px;
+  }
+
+  .flab-undo-redo-btn--erase {
+    top: 140px;
+    right: 4px;
+  }
+
+  .flab-undo-redo-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .flab-overlay-controls {
+    top: 4px;
+    right: 4px;
+    gap: 3px;
+  }
+
+  .flab-overlay-btn {
+    padding: 4px 6px;
+    min-width: 34px;
+    min-height: 34px;
+    font-size: 8px;
+  }
+
+  .flab-overlay-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 /* Floating toolbelt injected in fullscreen */
 .flab-fullscreen-controls {
   position: absolute;
   left: 50%;
-  bottom: clamp(32px, 5vh, 80px);
+  bottom: max(clamp(32px, 5vh, 80px), env(safe-area-inset-bottom));
   transform: translate(-50%, 140%);
   display: none;
   align-items: center;

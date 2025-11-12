@@ -5,7 +5,7 @@ import { preloadArrowAssets } from './assets.arrows.js';
 import { ensureHalo, relayoutAllPlayers } from './render.js';
 import { initDrag } from './drag.js';
 import { initPassTool } from './pass.js';
-import { setOrientation } from './orientation.js';
+import { setOrientation, initOrientationListener } from './orientation.js';
 import { wireUI } from './ui.js';
 import { initKeyboard } from './keyboard.js';
 import { loadSettings } from './persist.js';
@@ -104,6 +104,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Initialize border and corner animations
   initBorderAnimations();
+
+  // Initialize orientation listener for mobile device rotation
+  initOrientationListener();
 
   // Initialize ball animation system
   import('./animate.js').then(({ ensureBallLayer, preloadBall }) => {

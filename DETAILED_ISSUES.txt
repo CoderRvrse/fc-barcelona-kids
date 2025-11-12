@@ -1,0 +1,265 @@
+FORMATION LAB MOBILE FULLSCREEN ISSUES - DETAILED BREAKDOWN
+
+=== CSS BREAKPOINT INCONSISTENCIES ===
+
+main.css breakpoints (lines 950-1165):
+- 1024px: Large tablets
+- 768px: Tablets  
+- 480px: Small phones
+- 359px: Extra small
+- 500px height + landscape: Mobile landscape
+
+fullscreen.css breakpoints (lines 192-847):
+- 640px: Medium phones (ONLY breakpoint!)
+- 768px: Controls width only
+
+PROBLEM: fullscreen.css is missing 480px, 359px, and 280px breakpoints
+This means phones under 640px get wrong styling in fullscreen mode.
+
+=== FIXED POSITIONING CASCADE ===
+
+HTML structure:
+body
+  .flab-app--fullscreen (relative)
+    .flab-pitch-wrapper (position: fixed, inset: 0)
+      .flab-field (position: relative)
+        buttons (position: absolute, right: 12px, top: 12px)
+
+When pitch wrapper is fixed:
+- Buttons positioned relative to pitch wrapper
+- Pitch wrapper IS the viewport in fullscreen
+- Buttons go off-screen on small phones
+- Touch events may not register
+
+=== 100VH / 100VW PROBLEM ===
+
+100vh on iOS Safari (iPhone 11):
+- Screen height: 812px
+- Address bar height: 50px
+- Home indicator: 34px
+- Available viewport: 812px - 50px - 34px = 728px
+- But CSS sees: 100vh = 812px
+- Result: Content overflows 84px below visible area
+
+100vw on any phone:
+- Includes scrollbar width (varies by device)
+- Can be 12-17px wider than actual viewport
+- Pitch field overflows horizontally
+
+=== ASPECT RATIO CALCULATION ===
+
+Current formula: width: min(100vw, calc(100vh * (105 / 68)))
+
+On iPhone SE (375 x 667):
+- 100vh = 667px (wrong on iOS)
+- 667 * (105 / 68) = 1030px
+- min(375, 1030) = 375px used
+- Height = 375 / 1.544 = 243px
+- Unused vertical space: 667 - 243 = 424px (64%!)
+
+On Android phone (360 x 720):
+- 100vh = 720px
+- 720 * (105 / 68) = 1110px
+- min(360, 1110) = 360px used
+- Height = 360 / 1.544 = 233px
+- Unused: 720 - 233 = 487px (68%!)
+
+The issue: Landscape pitch in portrait phone = wasted space
+
+=== BUTTON POSITIONING ISSUES ===
+
+From fullscreen.css lines 596-611:
+- Undo button: top: 68px; right: 12px
+- Redo button: top: 120px; right: 12px
+- Erase button: top: 172px; right: 12px
+
+On 320px wide phone with padding:
+- Container has: padding: 24px on sides
+- Available width: 320 - 48 = 272px
+- Button width: 44px
+- Button position right: 12px means left edge = 320 - 12 - 44 = 264px
+- In fullscreen mode with fixed pitch wrapper:
+  - Buttons positioned relative to .flab-field
+  - .flab-field IS the fullscreen element
+  - Buttons at right: 12px go outside visible area
+
+At max-width: 640px breakpoint, only:
+- Undo: top 60px
+- Redo: top 108px
+- Erase: top 156px
+
+NO changes for 480px, 359px, or smaller phones!
+
+=== KEYBOARD OVERLAP ===
+
+From fullscreen.css line 725:
+bottom: clamp(32px, 5vh, 80px)
+
+On 667px phone:
+- 5vh = 33px (very small)
+- Mobile keyboard = 250-300px tall
+- Controls positioned at: 33px from bottom
+- Keyboard appears and hides controls completely
+- NO detection of keyboard appearance
+- NO adjustment when keyboard shows/hides
+
+=== SAFE AREA INSETS MISSING ===
+
+Current button positioning:
+.flab-undo-redo-btn { top: 12px; right: 12px; }
+.flab-theme-btn-corner { top: 12px; left: 12px; }
+
+Missing safe area handling:
+- iPhone with notch: safe-area-inset-top = 44-47px
+- Button at top: 12px goes UNDER notch
+- iPhone bottom: safe-area-inset-bottom = 34px (home indicator)
+- Controls at bottom: 80px may still overlap home indicator
+
+Should be:
+right: max(12px, env(safe-area-inset-right))
+top: max(12px, env(safe-area-inset-top))
+bottom: max(80px, env(safe-area-inset-bottom))
+
+=== NATIVE FULLSCREEN API FAILURES ===
+
+iOS Safari: No support for requestFullscreen on document element
+- Silently fails (no error thrown)
+- Only supports fullscreen on <video> elements
+- Game over - can't enter native fullscreen
+
+iOS Chrome: Uses webkit prefix but doesn't actually support
+- Returns false immediately
+- Fallback to CSS fullscreen (which has all above issues)
+
+Android Chrome: Supports but needs user gesture
+- If called from setTimeout, fails
+- Requires direct user interaction
+- Current code doesn't validate gesture context
+
+=== FORCED LANDSCAPE ORIENTATION ===
+
+From orientation.js line 49:
+setOrientation('landscape');  // Forces landscape!
+
+Problems:
+- Mobile phones can be held in portrait or landscape
+- Code prevents portrait orientation
+- No device rotation handling
+- Portrait CSS is disabled (see field.css:101)
+- No portrait pitch SVG assets
+- User frustrated - can only view in landscape
+
+=== VIEWPORT META TAG ===
+
+Current: <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+Missing directives:
+- viewport-fit=cover (handles notch/safe areas)
+- user-scalable=yes (accessibility - user can zoom)
+- maximum-scale=5 (reasonable zoom limit)
+
+Should be:
+<meta name="viewport" 
+  content="width=device-width,
+           initial-scale=1,
+           viewport-fit=cover,
+           user-scalable=yes,
+           maximum-scale=5" />
+
+=== TOUCH GESTURE INCOMPLETE ===
+
+From touch-gestures.js:
+- Pinch zoom partially implemented
+- Long-press detection incomplete
+- Haptic feedback doesn't work on most devices
+- Not integrated with fullscreen mode
+- Zoom/pan might conflict with field rendering
+
+=== SUMMARY OF CRITICAL FILES ===
+
+PRIMARY ISSUES:
+1. fullscreen.css (943 lines) - Most critical
+   - Lines 16-40: Fixed positioning + 100vh/100vw
+   - Line 31: Aspect ratio calculation
+   - Lines 596-611: Button positioning (no 480px, 359px rules)
+   - Lines 722-757: Keyboard overlap (no detection)
+
+2. fullscreen.js (494 lines)
+   - Lines 33-56: No mobile detection
+   - Lines 121-148: No viewport fix
+   - No keyboard detection
+   - Line 140,172: Forces landscape orientation
+
+3. orientation.js (54 lines)
+   - Line 49: Forces landscape on all devices
+   - No device rotation handling
+
+SECONDARY ISSUES:
+4. main.css (1187 lines)
+   - Lines 94-102: Aspect ratio definition
+   - Inconsistent breakpoints with fullscreen.css
+
+5. field.css (138 lines)
+   - Line 11: Aspect ratio 105:68
+   - Line 101: Portrait disabled
+
+6. index.html
+   - Line 5: Viewport meta tag missing directives
+
+=== ALL MEDIA QUERIES IN FORMATION LAB ===
+
+main.css:
+- Line 288: max-width 480px (toasts)
+- Line 951: max-width 1024px
+- Line 970: max-width 768px
+- Line 1029: max-width 480px
+- Line 1107: max-width 359px
+- Line 1135: max-height 500px + orientation landscape
+
+fullscreen.css:
+- Line 192: max-width 640px (toolbar)
+- Line 293: max-width 640px (fullscreen overlay)
+- Line 361: max-width 640px (theme button)
+- Line 640: max-width 640px (undo/redo)
+- Line 655: max-width 640px (fullscreen button)
+- Line 695: max-width 640px (overlay controls)
+- Line 847: max-width 768px (fullscreen controls)
+
+toolbar.css:
+- Line 372: max-width 768px
+- Line 426: max-width 480px
+
+topbar.css:
+- Line 287: max-width 768px
+- Line 374: max-width 768px
+- Line 389: max-width 480px
+- Line 486: max-width 640px
+
+Total: 18 media query blocks, inconsistent breakpoints
+
+ISSUES FOUND:
+1. Fullscreen CSS only has breakpoint at 640px
+2. Main CSS has 480px, 359px, but fullscreen doesn't
+3. Some files have 768px, others have 640px
+4. No breakpoint for ultra-small (280px) or small (360px)
+
+=== QUICKEST FIXES POSSIBLE ===
+
+Priority 1 (Critical):
+1. Add @media (max-width: 480px) to fullscreen.css
+2. Add @media (max-width: 359px) to fullscreen.css
+3. Replace 100vh with 100svh where supported
+4. Remove position: fixed from pitch wrapper
+
+Priority 2 (High):
+5. Add safe area insets to buttons
+6. Detect keyboard and move controls up
+7. Add mobile device detection to fullscreen.js
+8. Update viewport meta tag
+
+Priority 3 (Medium):
+9. Fix aspect ratio calculation
+10. Allow portrait orientation option
+11. Remove native fullscreen on iOS
+12. Add proper breakpoints to all CSS files
+

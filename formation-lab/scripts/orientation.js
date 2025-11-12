@@ -17,16 +17,29 @@ function isMobileDevice() {
   return (hasTouch && isSmallScreen) || isMobileUA;
 }
 
-export function setOrientation(mode) {
-  // Landscape is our default/stable mode for now
-  set('orientation', 'landscape');
-  const fieldEl = document.querySelector('.flab-field');
-  fieldEl?.classList.remove('is-portrait');
+/**
+ * Detect current device orientation based on viewport dimensions
+ */
+function getDeviceOrientation() {
+  return window.innerHeight >= window.innerWidth ? 'portrait' : 'landscape';
+}
 
-  // Always point to the landscape asset until portrait mode is reintroduced
-  document.documentElement.style.setProperty('--pitch-url',
-    `url("../../assets/landscape/pitch-landscape.svg")`
-  );
+export function setOrientation(mode) {
+  // Support both landscape and portrait modes
+  set('orientation', mode);
+  const fieldEl = document.querySelector('.flab-field');
+
+  if (mode === 'portrait') {
+    fieldEl?.classList.add('is-portrait');
+    document.documentElement.style.setProperty('--pitch-url',
+      `url("../../assets/portrait/pitch-portrait.svg")`
+    );
+  } else {
+    fieldEl?.classList.remove('is-portrait');
+    document.documentElement.style.setProperty('--pitch-url',
+      `url("../../assets/landscape/pitch-landscape.svg")`
+    );
+  }
 
   // Import render functions when needed
   import('./render.js').then(({ relayoutAllPlayers, renderArrows }) => {
@@ -45,9 +58,41 @@ export function flipSides(){
   });
 }
 
+/**
+ * Auto-detect and apply orientation based on device and viewport
+ * On mobile: respond to device rotation
+ * On desktop: stay in landscape
+ */
 export function autoOrientation() {
-  // Temporarily force landscape everywhere for stability
-  setOrientation('landscape');
+  if (isMobileDevice()) {
+    // Mobile devices: respond to actual device orientation
+    const orientation = getDeviceOrientation();
+    setOrientation(orientation);
+  } else {
+    // Desktop: always use landscape
+    setOrientation('landscape');
+  }
+}
+
+/**
+ * Handle device orientation changes (for fullscreen mode on mobile)
+ */
+export function initOrientationListener() {
+  if (!isMobileDevice()) return;
+
+  // Listen for orientation changes
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => autoOrientation(), 100);
+  });
+
+  // Also listen to resize for viewport changes
+  window.addEventListener('resize', () => {
+    const currentOrientation = FLAB?.orientation || 'landscape';
+    const newOrientation = getDeviceOrientation();
+    if (currentOrientation !== newOrientation) {
+      autoOrientation();
+    }
+  });
 }
 
 window.__mod_orientation = true;
