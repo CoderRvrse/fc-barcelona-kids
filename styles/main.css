@@ -1357,12 +1357,26 @@ textarea:focus-visible {
 }
 
 /* Footer Premium Badge Styling */
-.site-footer .premium-vipspot-badge {
-    margin-top: 1rem;
+.credit {
+    display: flex;
+    align-items: center;
     justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    text-align: center;
+}
+
+.site-footer .premium-vipspot-badge {
+    margin: 0 auto;
+    display: inline-flex !important;
 }
 
 @media (max-width: 640px) {
+    .credit {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
     .site-footer .premium-vipspot-badge {
         font-size: 12px;
         padding: 10px 16px;
