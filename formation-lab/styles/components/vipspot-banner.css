@@ -1,0 +1,173 @@
+/* VIPSPOT.NET Powered By Banner - Animated & Lit */
+
+.vipspot-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(90deg, #FFB81C 0%, #EDBB00 25%, #FF6B00 50%, #EDBB00 75%, #FFB81C 100%);
+  background-size: 200% 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  font-weight: 900;
+  font-family: "Montserrat", "Century Gothic", Arial Black, sans-serif;
+  letter-spacing: 1px;
+  animation: vipspot-glow 3s ease-in-out infinite, vipspot-shimmer 4s linear infinite;
+  overflow: hidden;
+  border-top: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vipspot-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: vipspot-shine 2.5s ease-in-out infinite;
+  z-index: 1;
+}
+
+.vipspot-banner-text {
+  position: relative;
+  z-index: 2;
+  font-size: 16px;
+  color: #001d3d;
+  text-shadow:
+    2px 2px 0 rgba(255, 255, 255, 0.6),
+    -2px -2px 0 rgba(0, 0, 0, 0.2),
+    3px 3px 8px rgba(0, 0, 0, 0.3);
+  animation: vipspot-pulse 1.2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vipspot-star {
+  display: inline-block;
+  animation: vipspot-star-spin 2s linear infinite;
+  font-size: 18px;
+}
+
+.vipspot-star:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.vipspot-star:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.vipspot-star:nth-child(5) {
+  animation-delay: 0.6s;
+}
+
+/* Animations */
+@keyframes vipspot-glow {
+  0%, 100% {
+    box-shadow:
+      0 -4px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      0 0 20px rgba(255, 107, 0, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 -4px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      0 0 40px rgba(255, 107, 0, 0.9),
+      0 0 60px rgba(255, 183, 28, 0.7);
+  }
+}
+
+@keyframes vipspot-shimmer {
+  0% {
+    background-position: 200% 100%;
+  }
+  50% {
+    background-position: -200% 100%;
+  }
+  100% {
+    background-position: 200% 100%;
+  }
+}
+
+@keyframes vipspot-shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes vipspot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.95;
+  }
+}
+
+@keyframes vipspot-star-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .vipspot-banner {
+    height: 45px;
+  }
+
+  .vipspot-banner-text {
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .vipspot-star {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vipspot-banner {
+    height: 40px;
+  }
+
+  .vipspot-banner-text {
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .vipspot-star {
+    font-size: 14px;
+  }
+}
+
+/* Respect motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .vipspot-banner,
+  .vipspot-banner::before,
+  .vipspot-banner-text,
+  .vipspot-star {
+    animation: none !important;
+  }
+
+  .vipspot-banner {
+    background: linear-gradient(90deg, #FFB81C 0%, #EDBB00 50%, #FF6B00 100%);
+  }
+}
