@@ -137,7 +137,17 @@ export function enterFullscreen() {
   updateAllFullscreenButtons(true);
   addCloseButton();
 
-  import('./orientation.js').then(({ autoOrientation }) => autoOrientation());
+  // Force landscape orientation in fullscreen mode on mobile
+  import('./orientation.js').then(({ setOrientation }) => {
+    setOrientation('landscape');
+  });
+
+  // Try to lock screen orientation to landscape on mobile
+  if (screen?.orientation?.lock) {
+    screen.orientation.lock('landscape-primary').catch(err => {
+      console.warn('Could not lock screen orientation:', err);
+    });
+  }
 
   window.dispatchEvent(new Event('resize'));
 
@@ -168,9 +178,15 @@ export function exitFullscreen(options = {}) {
   updateAllFullscreenButtons(false);
   removeCloseButton();
 
+  // Restore auto orientation when exiting fullscreen
   setTimeout(() => {
     import('./orientation.js').then(({ autoOrientation }) => autoOrientation());
   }, 50);
+
+  // Unlock screen orientation on exit
+  if (screen?.orientation?.unlock) {
+    screen.orientation.unlock();
+  }
 
   window.dispatchEvent(new Event('resize'));
 
