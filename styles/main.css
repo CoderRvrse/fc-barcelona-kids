@@ -1346,92 +1346,31 @@ textarea:focus-visible {
     text-align: center;
 }
 
-.site-footer .vipspot-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 999px;
-    background: var(--vipspot-bg);
-    border: 1px solid var(--vipspot-border);
-    color: var(--vipspot-text);
-    text-decoration: none;
-    line-height: 1;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    box-shadow: var(--vipspot-shadow);
-    position: relative;
-    isolation: isolate;
-    backdrop-filter: saturate(140%) blur(2px);
-    transition: border-color 0.25s ease, box-shadow 0.3s ease;
-}
-
-.site-footer .vipspot-badge .vipspot-kicker {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--vipspot-kicker);
-    letter-spacing: 0.08em;
-}
-
-.site-footer .vipspot-logo {
-    flex: 0 0 20px;
-    display: block;
-}
-
-.site-footer .vipspot-wordmark {
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    font-size: 0.92rem;
-    color: var(--vipspot-text);
-}
-
-.site-footer .vipspot-wordmark .spot {
-    font-weight: 800;
-}
-
-.site-footer .vipspot-wordmark .tld {
-    opacity: 0.88;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-}
-
-.site-footer .vipspot-badge::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    background: var(--vipspot-sheen);
-    transform: translateX(-120%);
-    opacity: 0;
-    pointer-events: none;
-    z-index: -1;
-}
-
-.site-footer .vipspot-badge:hover::before,
-.site-footer .vipspot-badge:focus-visible::before {
-    animation: vipspot-sheen 1200ms cubic-bezier(.2, .8, .2, 1) forwards;
-    opacity: 0.9;
-}
-
-.site-footer .vipspot-badge:hover,
-.site-footer .vipspot-badge:focus-visible {
-    border-color: rgba(255, 255, 255, 0.35);
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
-}
-
-.site-footer .vipspot-badge:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.65);
-    outline-offset: 3px;
+/* Old vipspot-badge replaced with premium-vipspot-badge */
+.site-footer .vipspot-badge,
+.vipspot-badge.old {
+    display: none !important;
 }
 
 :root[data-whitelabel="true"] .vipspot-badge {
     display: none !important;
 }
 
+/* Footer Premium Badge Styling */
+.site-footer .premium-vipspot-badge {
+    margin-top: 1rem;
+    justify-content: center;
+}
+
 @media (max-width: 640px) {
-    .site-footer .vipspot-badge {
-        margin-top: 1rem;
+    .site-footer .premium-vipspot-badge {
+        font-size: 12px;
+        padding: 10px 16px;
+    }
+
+    .site-footer .premium-vipspot-badge .badge-icon {
+        width: 18px;
+        height: 18px;
     }
 }
 
