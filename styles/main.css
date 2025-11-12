@@ -1309,41 +1309,34 @@ textarea:focus-visible {
 .site-footer {
     background: var(--barca-navy);
     color: rgba(255, 255, 255, 0.85);
-    padding: 3.5rem 0 2.5rem;
-}
-
-.site-footer .container {
+    padding: 4rem 0 3rem;
     display: flex;
-    flex-wrap: wrap;
-    gap: 2.5rem;
-    align-items: flex-start;
-    justify-content: space-between;
-}
-
-.site-footer a {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.site-footer a:hover,
-.site-footer a:focus-visible {
-    color: var(--white);
-}
-
-.footer-links {
-    display: grid;
-    gap: 0.6rem;
-}
-
-.credit {
-    margin-top: 2rem;
-    font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.65);
-    display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.9rem;
+    gap: 1.5rem;
+}
+
+/* Clean footer badge container - badge is the star */
+.footer-badge-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.site-footer .premium-vipspot-badge {
+    display: inline-flex !important;
+    margin: 0;
+}
+
+/* Minimal footer credit text */
+.footer-credit {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
     text-align: center;
+    letter-spacing: 0.5px;
 }
 
 /* Old vipspot-badge replaced with premium-vipspot-badge */
@@ -1356,25 +1349,10 @@ textarea:focus-visible {
     display: none !important;
 }
 
-/* Footer Premium Badge Styling */
-.credit {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    text-align: center;
-}
-
-.site-footer .premium-vipspot-badge {
-    margin: 0 auto;
-    display: inline-flex !important;
-}
-
 @media (max-width: 640px) {
-    .credit {
-        flex-direction: column;
-        gap: 0.5rem;
+    .site-footer {
+        padding: 3rem 0 2rem;
+        gap: 1rem;
     }
 
     .site-footer .premium-vipspot-badge {
@@ -1385,6 +1363,10 @@ textarea:focus-visible {
     .site-footer .premium-vipspot-badge .badge-icon {
         width: 18px;
         height: 18px;
+    }
+
+    .footer-credit {
+        font-size: 0.75rem;
     }
 }
 
@@ -1957,13 +1939,12 @@ textarea:focus-visible {
 }
 
 /* Accessibility: respect reduced motion */
-@media (prefers-reduced-motion: reduce){
+@media (prefers-reduced-motion: reduce) {
   .hero-ball-img,
   .hero-ball::before,
-  .hero-ball::after{
-    animation:none !important;
+  .hero-ball::after {
+    animation: none !important;
   }
-}
   .hero-title {
     opacity: 1;
     transform: none;
