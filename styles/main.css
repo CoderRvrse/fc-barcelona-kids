@@ -1309,12 +1309,13 @@ textarea:focus-visible {
 .site-footer {
     background: var(--barca-navy);
     color: rgba(255, 255, 255, 0.85);
-    padding: 4rem 0 3rem;
+    padding: 4rem 1rem 3rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 1.5rem;
+    text-align: center;
 }
 
 /* Clean footer badge container - badge is the star */
@@ -1327,7 +1328,8 @@ textarea:focus-visible {
 
 .site-footer .premium-vipspot-badge {
     display: inline-flex !important;
-    margin: 0;
+    margin: 0 auto;
+    flex-shrink: 0;
 }
 
 /* Minimal footer credit text */
