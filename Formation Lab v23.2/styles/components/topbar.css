@@ -1,0 +1,541 @@
+/* Pitch bottom drawer + controls tab */
+
+.flab-controls-tab {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(237, 187, 0, 0.4);
+  background: linear-gradient(135deg, rgba(237, 187, 0, 0.95), rgba(255, 237, 2, 0.85));
+  color: #004D98;
+  font-weight: 600;
+  letter-spacing: 0.25px;
+  cursor: pointer;
+  z-index: 40;
+  box-shadow:
+    0 8px 20px rgba(237, 187, 0, 0.25),
+    inset 0 1px 3px rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.25s ease, opacity 0.25s ease, background 0.25s ease;
+}
+
+.flab-controls-tab:hover {
+  background: linear-gradient(135deg, rgba(237, 187, 0, 1), rgba(255, 237, 2, 0.95));
+  border-color: rgba(237, 187, 0, 0.7);
+  box-shadow:
+    0 8px 20px rgba(237, 187, 0, 0.4),
+    inset 0 1px 3px rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.flab-controls-tab:focus-visible {
+  outline: 2px solid #004D98;
+  outline-offset: 3px;
+}
+
+.flab-controls-tab svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.25s ease;
+  fill: currentColor;
+}
+
+.flab-controls-tab[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.flab-controls-sheet {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, calc(100% + 24px));
+  width: min(520px, calc(100% - 32px));
+  max-height: 60vh;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(0, 77, 152, 0.92), rgba(168, 19, 62, 0.85));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 20px 50px rgba(0, 77, 152, 0.4),
+    inset 0 1px 0 rgba(237, 187, 0, 0.12);
+  padding: clamp(16px, 2vw, 24px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+  z-index: 35;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid rgba(237, 187, 0, 0.15);
+}
+
+.flab-controls-sheet.is-open {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.flab-controls-sheet .flab-sidepanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  width: 100%;
+  color: var(--flab-text);
+}
+
+.flab-controls-sheet .flab-header,
+.flab-controls-sheet .flab-header__top {
+  display: none;
+}
+
+.flab-controls-sheet .flab-toolbar,
+.flab-controls-sheet .flab-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(12px, 1.3vw, 18px);
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.flab-controls-sheet .flab-share-footer {
+  padding-top: 14px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(237, 187, 0, 0.2);
+}
+
+.flab-controls-sheet .flab-tool,
+.flab-controls-sheet .flab-action {
+  width: 100%;
+  border-radius: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, rgba(0, 77, 152, 0.55), rgba(168, 19, 62, 0.45)) !important;
+  border: 1.5px solid rgba(237, 187, 0, 0.5) !important;
+  color: #f5f7ff !important;
+  font-weight: 500;
+  font-size: 13px;
+  box-shadow:
+    0 8px 16px rgba(0, 77, 152, 0.3),
+    inset 0 1px 2px rgba(237, 187, 0, 0.18) !important;
+  text-align: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+/* Compact Share button - small icon + text style */
+.flab-controls-sheet .flab-action--share-compact {
+  width: 100%;
+  max-width: none;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(237, 187, 0, 0.9), rgba(255, 237, 2, 0.8));
+  border: 1.5px solid rgba(237, 187, 0, 0.7);
+  color: #004D98;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  box-shadow:
+    0 8px 16px rgba(237, 187, 0, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.25);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.flab-controls-sheet .flab-action--share-compact:hover {
+  background: linear-gradient(135deg, rgba(237, 187, 0, 1), rgba(255, 237, 2, 0.95));
+  border-color: rgba(237, 187, 0, 0.9);
+  box-shadow:
+    0 10px 20px rgba(237, 187, 0, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.flab-controls-sheet .flab-action--share-compact:active {
+  transform: scale(0.96);
+  box-shadow:
+    0 6px 12px rgba(237, 187, 0, 0.25),
+    inset 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.flab-controls-sheet .flab-action--share-compact svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.flab-controls-sheet .actions-row,
+.flab-controls-sheet .actions-row--three,
+.flab-controls-sheet .actions-row--four {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+}
+
+.flab-controls-sheet .actions-row--three {
+  flex-wrap: wrap;
+}
+
+.flab-controls-sheet .actions-row .flab-action--sm {
+  flex: 1;
+}
+
+.flab-controls-sheet .passstyle-trigger__name {
+  display: none;
+}
+
+.flab-controls-sheet .passstyle-value {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.flab-body--fullscreen .flab-controls-tab {
+  display: none;
+}
+
+.flab-body--fullscreen .flab-controls-sheet {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 48px));
+  max-height: 45vh;
+  background: linear-gradient(135deg, rgba(0, 77, 152, 0.93), rgba(168, 19, 62, 0.88));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(237, 187, 0, 0.18);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 0 20px 60px rgba(0, 77, 152, 0.35), inset 0 1px 0 rgba(237, 187, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+  z-index: 45;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Quick access overlay controls */
+.flab-quick-controls {
+  position: absolute;
+  left: clamp(12px, 2vw, 28px);
+  top: clamp(12px, 2vw, 28px);
+  display: inline-flex;
+  gap: 8px;
+  z-index: 45;
+}
+
+.flab-quick-controls--bottom .flab-tool--quick {
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: rgba(6, 12, 28, 0.9);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+}
+
+.flab-tool--quick svg {
+  width: 14px;
+  height: 14px;
+}
+
+.flab-quick-erase {
+  position: absolute;
+  right: clamp(12px, 2vw, 24px);
+  top: calc(clamp(12px, 2vw, 24px) + 110px);
+  border-radius: 16px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: rgba(6, 12, 28, 0.9);
+  font-weight: 600;
+  box-shadow:
+    0 12px 22px rgba(0, 0, 0, 0.3),
+    inset 0 1px 3px rgba(255, 255, 255, 0.4);
+  z-index: 45;
+}
+
+body.flab-body--fullscreen .flab-quick-controls,
+body.flab-body--fullscreen .flab-quick-erase {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .flab-quick-controls {
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(clamp(12px, 2vw, 24px) + 60px);
+  }
+
+  .flab-quick-erase {
+    top: calc(clamp(12px, 2vw, 24px) + 160px);
+  }
+}
+
+.flab-body--fullscreen .flab-controls-sheet.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Fullscreen panel content styling */
+.flab-body--fullscreen .flab-controls-sheet .flab-sidepanel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flab-body--fullscreen .flab-controls-sheet .flab-toolbar,
+.flab-body--fullscreen .flab-controls-sheet .flab-actions {
+  gap: 6px;
+}
+
+.flab-body--fullscreen .flab-controls-sheet .flab-tool,
+.flab-body--fullscreen .flab-controls-sheet .flab-action,
+.flab-body--fullscreen .flab-controls-sheet .flab-action--sm {
+  width: 100%;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, rgba(0, 77, 152, 0.5), rgba(168, 19, 62, 0.4)) !important;
+  border: 1.5px solid rgba(237, 187, 0, 0.5) !important;
+  color: #f5f7ff !important;
+  font-weight: 500;
+  font-size: 12px;
+  box-shadow: 0 6px 12px rgba(0, 77, 152, 0.3), inset 0 1px 2px rgba(237, 187, 0, 0.15) !important;
+  text-align: center;
+  transition: all 0.2s ease;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+.flab-body--fullscreen .flab-controls-sheet .flab-action--sm {
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.flab-body--fullscreen .flab-controls-sheet .flab-action:hover:not(:disabled),
+.flab-body--fullscreen .flab-controls-sheet .flab-tool:hover:not([aria-pressed="true"]) {
+  background: linear-gradient(180deg, rgba(0, 77, 152, 0.65), rgba(168, 19, 62, 0.55)) !important;
+  border-color: rgba(237, 187, 0, 0.7) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(0, 77, 152, 0.4), inset 0 1px 2px rgba(237, 187, 0, 0.2) !important;
+}
+
+.flab-body--fullscreen .flab-controls-sheet .actions-row,
+.flab-body--fullscreen .flab-controls-sheet .actions-row--three,
+.flab-body--fullscreen .flab-controls-sheet .actions-row--four {
+  display: flex;
+  width: 100%;
+  gap: 6px;
+}
+
+.flab-body--fullscreen .flab-controls-sheet .actions-row--three {
+  flex-wrap: wrap;
+}
+
+.flab-body--fullscreen .flab-controls-sheet .actions-row .flab-action--sm {
+  flex: 1;
+  font-size: 11px;
+  padding: 7px 10px;
+}
+
+.flab-body--fullscreen .flab-controls-sheet .flab-action--share-compact {
+  width: 100%;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+@media (max-width: 768px) {
+  .flab-controls-sheet {
+    width: calc(100% - 24px);
+    border-radius: 20px 20px 0 0;
+  }
+
+  .flab-controls-sheet .actions-row {
+    flex-wrap: wrap;
+  }
+
+  .flab-controls-sheet .flab-toolbar {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .flab-controls-tab {
+    padding: 9px 14px;
+    gap: 6px;
+  }
+
+  .flab-controls-tab__label {
+    font-size: 14px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TOP CENTER SELECT/PASS BUTTONS
+   ───────────────────────────────────────────────────────────── */
+
+.flab-overlay-controls--top-center {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-35%);
+  display: flex;
+  gap: 140px;
+  z-index: 40;
+}
+
+.flab-overlay-controls--top-center .flab-overlay-btn {
+  padding: 16px 32px;
+  background: linear-gradient(135deg, rgba(237, 187, 0, 0.95), rgba(255, 237, 2, 0.85));
+  border: 2px solid rgba(237, 187, 0, 0.9);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: auto;
+  min-height: 52px;
+  color: #004D98;
+}
+
+.flab-overlay-controls--top-center .flab-overlay-btn--select {
+  margin-right: 35px;
+}
+
+.flab-overlay-controls--top-center .flab-overlay-btn--pass {
+  margin-left: 35px;
+}
+
+/* Theme button in center */
+.flab-overlay-controls--top-center .flab-overlay-btn--theme-center {
+  padding: 0;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* Fullscreen mode - match main button positioning */
+.flab-body--fullscreen .flab-overlay-controls--top-center {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-35%);
+  display: flex;
+  gap: 140px;
+  z-index: 40;
+}
+
+.flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn {
+  padding: 16px 32px;
+  background: linear-gradient(135deg, rgba(237, 187, 0, 0.95), rgba(255, 237, 2, 0.85));
+  border: 2px solid rgba(237, 187, 0, 0.9);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: auto;
+  min-height: 52px;
+  color: #004D98;
+}
+
+.flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn--select {
+  margin-right: 35px;
+}
+
+.flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn--pass {
+  margin-left: 35px;
+}
+
+.flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn--theme-center {
+  padding: 0;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+@media (max-width: 640px) {
+  .flab-overlay-controls--top-center {
+    gap: 60px;
+  }
+
+  .flab-overlay-controls--top-center .flab-overlay-btn {
+    padding: 10px 18px;
+    font-size: 12px;
+    min-height: 42px;
+  }
+
+  .flab-overlay-controls--top-center .flab-overlay-btn--select {
+    margin-right: 20px;
+  }
+
+  .flab-overlay-controls--top-center .flab-overlay-btn--pass {
+    margin-left: 20px;
+  }
+
+  .flab-overlay-controls--top-center .flab-overlay-btn span {
+    display: none;
+  }
+
+  .flab-overlay-controls--top-center .flab-overlay-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Fullscreen responsive - match mobile sizing */
+  .flab-body--fullscreen .flab-overlay-controls--top-center {
+    gap: 60px;
+  }
+
+  .flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn {
+    padding: 10px 18px;
+    font-size: 12px;
+    min-height: 42px;
+  }
+
+  .flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn--select {
+    margin-right: 20px;
+  }
+
+  .flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn--pass {
+    margin-left: 20px;
+  }
+
+  .flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn span {
+    display: none;
+  }
+
+  .flab-body--fullscreen .flab-overlay-controls--top-center .flab-overlay-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}

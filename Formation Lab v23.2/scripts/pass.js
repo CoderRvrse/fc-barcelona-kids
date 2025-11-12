@@ -7,6 +7,8 @@ import { ensureHeadMarker, rebuildAllMarkers } from './pass.markers.js';
 import { headPxFor, headTrimPx } from './pass.headsize.js';
 import { getArrowSvg, ensureGroup } from './svgroot.js';
 import { logPass } from './logger.js';
+import { saveUndoState } from './undo-redo.js';
+import { createArrowObject, findNearbyPlayer, getArrowStart, getArrowEnd } from './arrow-anchor.js';
 
 // Helper to get CSS variable in pixels
 function getVarPx(varName, fallback = 0) {
@@ -391,7 +393,9 @@ function setArrowPaths(svgGroup, A, Btip, styleKey, lenPx, shaftClass) {
 }
 
 
-function createPass({ id, fromId, to, curved = false, control = null }) {
+function createPass(arrow) {
+  const { id, fromId, to, curved = false, control = null } = arrow;
+
   const startPlayer = getPlayer(fromId);
   if (!startPlayer) return null;
 
@@ -399,9 +403,16 @@ function createPass({ id, fromId, to, curved = false, control = null }) {
   const passerEl = document.querySelector(`.player[data-id="${fromId}"]`);
   if (!passerEl) return null;
 
-  // Create a temporary element at target position for endpoint calculation
+  // NEW: Use anchor system to compute proper visual endpoints
+  // This ensures arrows follow players and snap cleanly to target player edges
+  const arrowStart = getArrowStart(fromId);
+  const arrowEnd = getArrowEnd(arrow);
+
+  if (!arrowStart || !arrowEnd) return null;
+
+  // Create a temporary element at computed endpoint for field calculations
   const tempTarget = document.createElement('div');
-  tempTarget.style.cssText = `position:absolute;left:${to.x}px;top:${to.y}px;width:56px;height:56px;pointer-events:none;`;
+  tempTarget.style.cssText = `position:absolute;left:${arrowEnd.x}px;top:${arrowEnd.y}px;width:56px;height:56px;pointer-events:none;`;
   document.querySelector('.flab-field').appendChild(tempTarget);
 
   try {
@@ -636,23 +647,11 @@ export function updatePassPreview(v) {
 export function commitArrow(fromId, point, curved = false, control = null) {
   if (!point) return;
 
-  // Get locked target from aim state
+  // NEW: Use anchor system for entity-based arrow attachment
+  // Get locked target from aim state (visual feedback during drag)
+  // ONLY snap to player if aim-locked during drag, NOT on proximity
   const lockId = FLAB.aim?.lockedId ?? null;
-
-  // Determine final target position (either locked player or cursor)
-  let finalPoint = point;
-  const locked = lockId ? getPlayer(lockId) : null;
-  if (locked) {
-    const lockedEl = getPlayerEl(locked.id);
-    if (lockedEl) {
-      const rect = lockedEl.getBoundingClientRect();
-      const fieldRect = document.querySelector('.flab-field').getBoundingClientRect();
-      finalPoint = {
-        x: rect.left + rect.width / 2 - fieldRect.left,
-        y: rect.top + rect.height / 2 - fieldRect.top
-      };
-    }
-  }
+  const toPlayerId = lockId || null;
 
   // Get passer position for metadata
   const passer = getPlayer(fromId);
@@ -667,29 +666,41 @@ export function commitArrow(fromId, point, curved = false, control = null) {
       y: passerRect.top + passerRect.height / 2 - fieldRect.top
     };
     startField = viewToField(startView);
-    endField = viewToField(finalPoint);
+
+    // For metadata, compute endpoint based on whether arrow is anchored
+    let endView = point;
+    if (toPlayerId) {
+      const targetEl = getPlayerEl(toPlayerId);
+      if (targetEl) {
+        const rect = targetEl.getBoundingClientRect();
+        const fieldRect = document.querySelector('.flab-field').getBoundingClientRect();
+        endView = {
+          x: rect.left + rect.width / 2 - fieldRect.left,
+          y: rect.top + rect.height / 2 - fieldRect.top
+        };
+      }
+    }
+    endField = viewToField(endView);
   }
 
   // Store comprehensive metadata
   const meta = {
-    toId: lockId,
+    toId: toPlayerId,
     startInsetPx: getVarPx('--pass-origin-gap', 1.5) + haloRadiusPx(),
-    endInsetPx: getVarPx('--pass-target-gap', 2) + (lockId ? tokenRadiusPx(getPlayerEl(lockId)) : 0),
+    endInsetPx: getVarPx('--pass-target-gap', 2) + (toPlayerId ? tokenRadiusPx(getPlayerEl(toPlayerId)) : 0),
     headInsetPx: 16, // arrowhead clearance
     startField,
     endField,
     createdAt: performance.now()
   };
 
+  // Create arrow with NEW entity-anchored structure
   const passId = FLAB.arrowCounter++;
-  FLAB.arrows.push({
-    id: passId,
-    fromId,
-    to: { x: finalPoint.x, y: finalPoint.y },
-    curved,
-    control: control ? { x: control.x, y: control.y } : null,
-    meta
-  });
+  const arrow = createArrowObject(fromId, toPlayerId, point, curved, control);
+  arrow.id = passId;
+  arrow.meta = meta;
+
+  FLAB.arrows.push(arrow);
 
   // Remember last committed pass for "Play Last" functionality
   FLAB.lastPassId = passId;
@@ -704,9 +715,12 @@ export function commitArrow(fromId, point, curved = false, control = null) {
 
   // Highlight the new pass
   setTimeout(() => highlightPass(passId), 100);
+
+  // Save state for undo
+  saveUndoState(`Add pass from player ${fromId}`);
 }
 
-export function renderArrows() {
+export async function renderArrows() {
   const svgRoot = getArrowSvg();
   if (!svgRoot) return;
 
@@ -721,7 +735,20 @@ export function renderArrows() {
   const existingPasses = arrowGroup.querySelectorAll('.svg-pass');
   existingPasses.forEach(el => el.remove());
 
-  // Create all arrows
+  // NEW: Migrate all arrows to new entity-anchored format on first render
+  // This ensures backward compatibility with old stored arrows
+  if (FLAB.arrows && FLAB.arrows.length > 0) {
+    const { migrateArrow } = await import('./arrow-anchor.js');
+    FLAB.arrows = FLAB.arrows.map(arrow => {
+      const migrated = migrateArrow(arrow);
+      if (!migrated.to || migrated.to.playerId === undefined) {
+        console.log(`⚡ Migrated arrow #${arrow.id} to new anchor format`);
+      }
+      return migrated;
+    });
+  }
+
+  // Create all arrows with NEW entity-anchored system
   const promises = FLAB.arrows.map(arrow => createPass(arrow));
 
   Promise.all(promises).then(groups => {
@@ -786,12 +813,16 @@ export function clearLastPass() {
   if (arr.length > 0) {
     arr.pop();
     console.log('Cleared last pass');
+    // Save state for undo
+    saveUndoState('Delete last pass');
   }
 }
 
 export function clearAllPasses() {
   FLAB.arrows = [];
   console.log('Cleared all passes');
+  // Save state for undo
+  saveUndoState('Clear all passes');
 }
 
 export function initPassTool() {

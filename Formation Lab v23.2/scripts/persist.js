@@ -1,5 +1,8 @@
 // Settings persistence module for Formation Lab
 import { FLAB, set, PASS } from './state.js';
+import { validateSettings } from './validators.js';
+import { handleError } from './error-handler.js';
+import { showErrorToast } from './ui-toast.js';
 
 const STORAGE_KEY = 'formation-lab-settings';
 
@@ -25,20 +28,17 @@ export function loadSettings() {
       settings.passStyle = 'comic-halftone';
     }
 
-    // Validate and sanitize loaded settings
-    const valid = {
-      orientation: ['landscape', 'portrait'].includes(settings.orientation)
-        ? settings.orientation : DEFAULT_SETTINGS.orientation,
-      passStyle: ['solid', 'comic-flat', 'comic-halftone'].includes(settings.passStyle)
-        ? settings.passStyle : DEFAULT_SETTINGS.passStyle,
-      passWidth: (typeof settings.passWidth === 'number' && settings.passWidth >= 1 && settings.passWidth <= 10)
-        ? settings.passWidth : DEFAULT_SETTINGS.passWidth,
-      passColor: (typeof settings.passColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(settings.passColor))
-        ? settings.passColor : DEFAULT_SETTINGS.passColor,
-      passRecent: Array.isArray(settings.passRecent)
-        ? settings.passRecent.filter(c => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)).slice(0, 3)
-        : DEFAULT_SETTINGS.passRecent
-    };
+    // Validate and sanitize loaded settings using validators module
+    const validation = validateSettings(settings);
+
+    if (!validation.valid) {
+      console.warn('Settings validation errors:', validation.errors);
+      // Show error toast if settings are corrupted
+      showErrorToast('Settings were corrupted and have been reset to defaults.');
+    }
+
+    // Use sanitized settings (either valid or defaults)
+    const valid = validation.sanitized || DEFAULT_SETTINGS;
 
     // Apply to FLAB state
     set('orientation', valid.orientation);
@@ -59,6 +59,7 @@ export function loadSettings() {
     return valid;
 
   } catch (error) {
+    handleError(error, 'loadSettings', false);
     console.warn('Failed to load settings, using defaults:', error);
     return DEFAULT_SETTINGS;
   }
@@ -76,11 +77,23 @@ export function saveSettings(partial = {}) {
       ...partial
     };
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-    console.log('💾 Settings saved to localStorage:', current);
-    return current;
+    // Validate before saving
+    const validation = validateSettings(current);
+
+    if (!validation.valid) {
+      console.error('Cannot save invalid settings:', validation.errors);
+      showErrorToast('Cannot save settings: Invalid configuration.');
+      return null;
+    }
+
+    // Save sanitized settings
+    const sanitized = validation.sanitized;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+    console.log('💾 Settings saved to localStorage:', sanitized);
+    return sanitized;
 
   } catch (error) {
+    handleError(error, 'saveSettings', true);
     console.warn('Failed to save settings:', error);
     return null;
   }

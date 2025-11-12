@@ -1,0 +1,168 @@
+/* ═══════════════════════════════════════════════════════════════
+   FORMATION LAB - PROFESSIONAL SHARE MENU
+   Elegant social media sharing with Lucide icons
+   ═══════════════════════════════════════════════════════════════ */
+
+.flab-share-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--flab-accent);
+  color: #0b2b66;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+  min-height: 38px;
+  position: relative;
+  overflow: visible;
+}
+
+.flab-share-toggle:hover {
+  background: var(--flab-accent-dark);
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(255, 193, 7, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flab-share-toggle:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: var(--flab-accent-dark);
+}
+
+.flab-share-toggle svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.flab-share-toggle:hover svg {
+  transform: scale(1.1);
+}
+
+/* Share menu - floating overlay on pitch */
+.flab-share-menu {
+  position: fixed;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(0, 77, 152, 0.92), rgba(168, 19, 62, 0.85));
+  border: 2px solid rgba(237, 187, 0, 0.3);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 20px 50px rgba(0, 77, 152, 0.4),
+    inset 0 0 24px rgba(237, 187, 0, 0.08);
+  z-index: 1000;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 240px;
+  width: fit-content;
+  pointer-events: auto;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Individual share link buttons */
+.flab-share-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(237, 187, 0, 0.15);
+  border: 1.5px solid rgba(237, 187, 0, 0.3);
+  border-radius: 6px;
+  color: #f5f7ff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.flab-share-link:hover {
+  background: linear-gradient(135deg, rgba(237, 187, 0, 0.9), rgba(255, 237, 2, 0.8));
+  border-color: rgba(237, 187, 0, 0.9);
+  color: #004D98;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(237, 187, 0, 0.4);
+}
+
+.flab-share-link:active {
+  transform: scale(0.92);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.flab-share-link svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.flab-share-link:hover svg {
+  transform: scale(1.15);
+}
+
+/* Responsive: 3-column grid on smaller screens */
+@media (max-width: 240px) {
+  .flab-share-menu {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Light mode overrides */
+body.theme-light .flab-share-footer {
+  border-top-color: var(--flab-outline);
+}
+
+body.theme-light .flab-share-menu {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(230, 240, 249, 0.95));
+  border-color: rgba(0, 77, 152, 0.2);
+  box-shadow:
+    0 20px 50px rgba(0, 77, 152, 0.15),
+    inset 0 0 24px rgba(237, 187, 0, 0.08);
+}
+
+body.theme-light .flab-share-toggle {
+  background: linear-gradient(135deg, rgba(237, 187, 0, 0.95), rgba(255, 237, 2, 0.85));
+  color: #004D98;
+}
+
+body.theme-light .flab-share-toggle:hover {
+  background: linear-gradient(135deg, rgba(237, 187, 0, 1), rgba(255, 237, 2, 0.95));
+  box-shadow:
+    0 6px 16px rgba(237, 187, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.theme-light .flab-share-link {
+  background: rgba(0, 77, 152, 0.08);
+  border-color: rgba(0, 77, 152, 0.2);
+  color: #004D98;
+}
+
+body.theme-light .flab-share-link:hover {
+  background: linear-gradient(135deg, rgba(237, 187, 0, 0.9), rgba(255, 237, 2, 0.8));
+  border-color: rgba(237, 187, 0, 0.8);
+  color: #004D98;
+  box-shadow: 0 4px 12px rgba(237, 187, 0, 0.3);
+}

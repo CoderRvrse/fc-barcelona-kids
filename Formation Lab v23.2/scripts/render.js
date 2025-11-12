@@ -154,6 +154,11 @@ export function renderArrows() {
 
 // Resize handling
 export function handleResize() {
+  // Check if orientation needs adjustment (desktop stays landscape, mobile can rotate)
+  import('./orientation.js').then(({ autoOrientation }) => {
+    autoOrientation();
+  });
+
   // Re-measure and re-layout everything
   relayoutAllPlayers();
   updateHalo();

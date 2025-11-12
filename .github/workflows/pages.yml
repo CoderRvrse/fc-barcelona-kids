@@ -10,6 +10,7 @@ on:
       - "scripts/**"
       - "assets/**"
       - "sw.js"
+      - "Formation Lab v23.2/**"
       - ".github/workflows/pages.yml"
 
 permissions:

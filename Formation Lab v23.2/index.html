@@ -6,88 +6,53 @@
     <title>Formation Lab v23.4.7.1</title>
     <meta name="description" content="Formation Lab v23.4.7.1 – youth soccer tactics board with drag, pass arrows, and export." />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
-    <link rel="stylesheet" href="styles/main.css?v=23.4.7.1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles/main.css?v=23.4.7.2" />
+    <link rel="stylesheet" href="styles/light-mode.css?v=23.4.7.2" />
   </head>
   <body class="flab-body">
     <noscript class="flab-noscript">Formation Lab requires JavaScript to run. Please enable it to use the tactics editor.</noscript>
+
+    <!-- PITCH CANVAS -->
     <main class="flab-app" data-version="v23.4.7.1">
-      <section class="flab-sidepanel" aria-label="Formation Lab controls">
-        <header class="flab-header">
-          <h1 class="flab-title">Formation Lab <span class="flab-badge">v23.4.7.1</span></h1>
-          <p class="flab-subtitle">Design youth soccer drills with drag, pass arrows, and instant exports.</p>
-        </header>
-        <nav class="flab-toolbar" role="toolbar" aria-label="Editor modes">
-          <button type="button" class="flab-tool" data-mode="select" aria-pressed="true">
-            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#pointer"></use></svg>
-            <span>Select / Drag</span>
-          </button>
-          <button type="button" class="flab-tool" data-mode="pass" aria-pressed="false">
-            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#pass"></use></svg>
-            <span>Pass</span>
-          </button>
-          <button type="button" class="flab-tool" data-mode="erase" aria-pressed="false">
-            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#erase"></use></svg>
-            <span>Erase</span>
-          </button>
-          <button type="button" class="flab-tool flab-tool--help" id="helpButton" aria-haspopup="dialog" aria-expanded="false">
-            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#help"></use></svg>
-            <span>Help</span>
-          </button>
-        </nav>
-        <div class="flab-actions" aria-label="Primary actions">
-          <button type="button" class="flab-action" id="exportButton">
-            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#export"></use></svg>
-            <span>Export PNG</span>
-          </button>
-          <button type="button" class="flab-action" id="resetButton">
-            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#reset"></use></svg>
-            <span>Reset 4-3-3</span>
-          </button>
-          <div class="toolbar-row">
-            <button type="button" class="flab-action" id="btnSavePreset">Save Current</button>
-            <button type="button" class="flab-action" id="btnApplyDefault">Apply Default</button>
-            <button type="button" class="flab-action" id="btnManagePresets">Manage…</button>
-          </div>
-          <div class="toolbar-row">
-            <button type="button" class="flab-action" id="btnLandscape">Landscape</button>
-            <button type="button" class="flab-action" id="btnPortrait">Portrait</button>
-            <button type="button" class="flab-action" id="btnFlip">Flip Sides</button>
-          </div>
-          <button type="button" class="flab-action" id="btnPassStyle" aria-haspopup="menu" aria-expanded="false">
-            <div class="passstyle-trigger">
-              <span class="passstyle-trigger__name">Solid</span>
-              <svg class="passstyle-trigger__chevron" aria-hidden="true" focusable="false" width="12" height="8" viewBox="0 0 12 8">
-                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-          </button>
-          <div class="toolbar-row" id="passPlaybackControls" style="display: none;">
-            <button type="button" class="flab-action" id="btnPlayLast" disabled>
-              <span>▶ Play Last</span>
-            </button>
-            <button type="button" class="flab-action" id="btnPlayAll" disabled>
-              <span>▶ Play All</span>
-            </button>
-            <button type="button" class="flab-action" id="btnStopPlayback" disabled>
-              <span>⏹ Stop</span>
-            </button>
-            <button type="button" class="flab-action" id="btnDiagnostics" title="Show ball playback diagnostics">
-              <span>🔍 Diagnostics</span>
-            </button>
-          </div>
-        </div>
-        <section class="flab-keytips" aria-label="Keyboard shortcuts">
-          <h2>Quick Keys</h2>
-          <ul>
-            <li><kbd>Tab</kbd> cycle players</li>
-            <li><kbd>Enter</kbd> select</li>
-            <li><kbd>Alt</kbd> + drag for curved passes</li>
-            <li><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> nudges (⇧ ×10)</li>
-            <li><kbd>Esc</kbd> cancel / exit mode</li>
-          </ul>
-        </section>
-      </section>
       <section class="flab-pitch-wrapper" aria-label="Pitch canvas">
+        <!-- Four corner accent markers for animated border effects -->
+        <div class="flab-corner-marker flab-corner--top-left" aria-hidden="true"></div>
+        <div class="flab-corner-marker flab-corner--top-right" aria-hidden="true"></div>
+        <div class="flab-corner-marker flab-corner--bottom-right" aria-hidden="true"></div>
+        <div class="flab-corner-marker flab-corner--bottom-left" aria-hidden="true"></div>
+
+        <!-- Animated connecting lines between corners -->
+        <svg class="flab-corner-lines" aria-hidden="true" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <path id="pathTop" d="M 0,8 L 100,8" fill="none" />
+            <path id="pathRight" d="M 98,0 L 98,100" fill="none" />
+            <path id="pathBottom" d="M 100,92 L 0,92" fill="none" />
+            <path id="pathLeft" d="M 2,98 L 2,2" fill="none" />
+          </defs>
+
+          <line class="flab-corner-line flab-line--top" x1="0" y1="0" x2="100%" y2="0"></line>
+          <line class="flab-corner-line flab-line--right" x1="100%" y1="0" x2="100%" y2="100%"></line>
+          <line class="flab-corner-line flab-line--bottom" x1="100%" y1="100%" x2="0" y2="100%"></line>
+          <line class="flab-corner-line flab-line--left" x1="0" y1="100%" x2="0" y2="0"></line>
+
+          <!-- Animated text along left border (scrolling down) -->
+          <text class="flab-border-text flab-border-text--left" font-family="Montserrat, Futura, Century Gothic, Arial Black, sans-serif" font-size="0.5" font-weight="900" fill="rgba(156, 39, 176, 0.95)" letter-spacing="-0.05">
+            <textPath href="#pathLeft" startOffset="0%" text-anchor="middle" spacing="auto">
+              FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA •
+            </textPath>
+          </text>
+
+          <!-- Animated text along right border (scrolling up) -->
+          <text class="flab-border-text flab-border-text--right" font-family="Montserrat, Futura, Century Gothic, Arial Black, sans-serif" font-size="0.5" font-weight="900" fill="rgba(156, 39, 176, 0.95)" letter-spacing="-0.05">
+            <textPath href="#pathRight" startOffset="0%" text-anchor="middle" spacing="auto">
+              FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA • FC BARCELONA •
+            </textPath>
+          </text>
+        </svg>
+
         <div class="flab-field" id="pitchMount" data-field-version="v23.4">
           <svg class="flab-arrow-layer" id="arrow-layer" width="100%" height="100%" role="img" aria-label="Pass arrows">
             <defs>
@@ -118,6 +83,138 @@
           <div class="flab-players" role="presentation"></div>
           <div class="flab-halo" id="flabHalo" aria-hidden="true"></div>
           <div class="flab-toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
+          <div class="flab-fullscreen-controls" id="fullscreenControlsOverlay" aria-hidden="true"></div>
+
+          <!-- Top center Select/Pass/Theme buttons -->
+          <div class="flab-overlay-controls flab-overlay-controls--top-center" aria-label="Quick access controls">
+            <button type="button" class="flab-overlay-btn flab-overlay-btn--select" data-mode="select" aria-pressed="true">
+              <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#pointer"></use></svg>
+              <span>Select</span>
+            </button>
+            <button type="button" class="flab-overlay-btn flab-overlay-btn--theme-center" id="btnThemeToggleCenter" title="Toggle theme">
+              <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#sun"></use></svg>
+            </button>
+            <button type="button" class="flab-overlay-btn flab-overlay-btn--pass" data-mode="pass">
+              <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#pass"></use></svg>
+              <span>Pass</span>
+            </button>
+          </div>
+
+          <!-- Bottom center Tools button -->
+          <button type="button" class="flab-controls-tab" id="btnControlsTab" aria-expanded="false" aria-controls="pitchControlsSheet">
+            <span class="flab-controls-tab__label">Tools</span>
+            <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 16 16">
+              <path d="M4 9l4-4 4 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <!-- Top right Undo/Redo buttons -->
+          <!-- Undo button -->
+          <button type="button" class="flab-undo-redo-btn flab-undo-redo-btn--undo" id="btnUndo" title="Undo (Ctrl+Z)">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#undo"></use></svg>
+          </button>
+
+          <!-- Redo button -->
+          <button type="button" class="flab-undo-redo-btn flab-undo-redo-btn--redo" id="btnRedo" title="Redo (Ctrl+Y)">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#redo"></use></svg>
+          </button>
+
+          <!-- Erase button -->
+          <button type="button" class="flab-undo-redo-btn flab-undo-redo-btn--erase" id="btnErase" data-mode="erase" title="Erase">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#erase"></use></svg>
+          </button>
+
+          <!-- Bottom right fullscreen button (like YouTube) -->
+          <button type="button" class="flab-fullscreen-btn-corner" id="btnFullscreenCorner" title="Fullscreen">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#expand"></use></svg>
+          </button>
+
+          <aside class="flab-controls-sheet" id="pitchControlsSheet" aria-hidden="true">
+            <section class="flab-sidepanel" aria-label="Formation Lab controls">
+              <header class="flab-header">
+                <div class="flab-header__top">
+                  <h1 class="flab-title">Formation Lab <span class="flab-badge">v23.4.7.1</span></h1>
+                </div>
+                <p class="flab-subtitle">Design youth soccer drills with drag, pass arrows, and instant exports.</p>
+              </header>
+              <div class="flab-actions" aria-label="Primary actions">
+                <div class="actions-row">
+                  <button type="button" class="flab-action" id="exportButton" title="Export formation as PNG">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#export"></use></svg>
+                    <span>Export</span>
+                  </button>
+                  <button type="button" class="flab-action" id="resetButton" title="Reset to 4-3-3">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#reset"></use></svg>
+                    <span>Reset</span>
+                  </button>
+                  <button type="button" class="flab-action flab-action--help" id="helpButton" aria-haspopup="dialog" aria-expanded="false" title="Help">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#help"></use></svg>
+                    <span>Help</span>
+                  </button>
+                </div>
+                <button type="button" class="flab-action" id="btnPassStyle" aria-haspopup="menu" aria-expanded="false" title="Pass style">
+                  <span class="passstyle-trigger__name">Pass Style:</span>
+                  <span class="passstyle-value">Solid</span>
+                  <svg class="passstyle-trigger__chevron" aria-hidden="true" focusable="false" width="10" height="6" viewBox="0 0 10 6">
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <div class="actions-row actions-row--three">
+                  <button type="button" class="flab-action flab-action--sm" id="btnSavePreset" title="Save current formation">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#save-preset"></use></svg>
+                  </button>
+                  <button type="button" class="flab-action flab-action--sm" id="btnApplyDefault" title="Apply default preset">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#apply-preset"></use></svg>
+                  </button>
+                  <button type="button" class="flab-action flab-action--sm" id="btnManagePresets" title="Manage presets">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#manage-presets"></use></svg>
+                  </button>
+                </div>
+                <div id="passPlaybackControls" style="display: none;" class="actions-row actions-row--four">
+                  <button type="button" class="flab-action flab-action--sm" id="btnPlayLast" disabled title="Play last pass">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#play"></use></svg>
+                  </button>
+                  <button type="button" class="flab-action flab-action--sm" id="btnPlayAll" disabled title="Play all passes">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#skip-back"></use></svg>
+                  </button>
+                  <button type="button" class="flab-action flab-action--sm" id="btnStopPlayback" disabled title="Stop playback">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#stop"></use></svg>
+                  </button>
+                  <button type="button" class="flab-action flab-action--sm" id="btnDiagnostics" title="Diagnostics">
+                    <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#diagnostic"></use></svg>
+                  </button>
+                </div>
+                <button type="button" class="flab-action flab-action--share-compact" id="btnShareToggle" title="Share formation">
+                  <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#share"></use></svg>
+                  <span>Share</span>
+                </button>
+              </div>
+            </section>
+          </aside>
+        </div>
+        <!-- Share menu - floats over pitch -->
+        <div class="flab-share-menu" id="shareMenu" style="display: none;">
+          <a href="#" class="flab-share-link" id="shareFacebook" title="Share on Facebook">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#facebook"></use></svg>
+          </a>
+          <a href="#" class="flab-share-link" id="shareTwitter" title="Share on Twitter">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#twitter"></use></svg>
+          </a>
+          <a href="#" class="flab-share-link" id="shareLinkedin" title="Share on LinkedIn">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#linkedin"></use></svg>
+          </a>
+          <a href="#" class="flab-share-link" id="shareInstagram" title="Share on Instagram">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#instagram"></use></svg>
+          </a>
+          <a href="#" class="flab-share-link" id="shareEmail" title="Share via Email">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#mail"></use></svg>
+          </a>
+          <a href="#" class="flab-share-link" id="shareCopy" title="Copy share link">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#link"></use></svg>
+          </a>
+          <a href="#" class="flab-share-link" id="shareQR" title="QR code">
+            <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#qr-code"></use></svg>
+          </a>
         </div>
       </section>
     </main>
@@ -166,7 +263,7 @@
     <!-- UI portal for floating menus/popovers -->
     <div id="ui-portal" class="ui-portal"></div>
 
-    <script src="scripts/version.js?v=23.4.7.1" defer></script>
-    <script type="module" src="scripts/main.js?v=23.4.7.1"></script>
+    <script src="scripts/version.js?v=23.4.7.2" defer></script>
+    <script type="module" src="scripts/main.js?v=23.4.7.2"></script>
   </body>
 </html>

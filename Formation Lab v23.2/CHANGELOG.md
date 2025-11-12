@@ -1,5 +1,53 @@
 # Formation Lab Changelog
 
+## [v23.4.8] - 2025-11-10
+
+### Added
+- **UI Overlay Controls**: Top center Select/Pass/Theme buttons with 120px spacing
+- **Dark/Light Mode**: Circular theme toggle button in center with icon switching (sun/moon)
+- **Undo/Redo Buttons**: Top right stacked vertically (Undo at 68px, Redo at 120px, Erase at 172px)
+- **Erase Menu**: Click-to-toggle menu when in erase mode with "Clear all passes" option
+- **Z Key Shortcut**: Quick pass undo with warning toast (separate from Ctrl+Z redo/undo system)
+- **Share Button Redesign**: Prominent full-width yellow button in Tools panel
+- **Share Menu**: Floating overlay on pitch (centered) with social platform icons
+- **Share Toast Notifications**: User feedback when share menu opens
+- **Fullscreen Controls**: All buttons visible in fullscreen mode (Select, Pass, Theme, Undo, Redo, Erase)
+- **Fullscreen Tools Panel**: Compact square styling (12px border-radius) instead of pill shape
+- **Mobile Responsiveness**: Media query at 640px breakpoint for reduced button sizes
+- **Keyboard Accessibility**: Tab cycling, arrow key nudging, Escape cancellation
+
+### Changed
+- **UI Layout**: Reorganized from scattered buttons to strategic corner positioning
+- **Controls Tab**: Moved to bottom center of pitch (below Select/Pass/Theme)
+- **Share Menu Position**: Fixed positioning (not inside Tools panel) to avoid scroll constraints
+- **Fullscreen Close Button**: Hidden to prevent overlap with theme toggle
+- **Tools Panel Styling**: Reduced from 999px radius (pill) to 12px (square) in fullscreen
+- **Button Styling**: Consistent yellow (rgba(255, 193, 7)) across all overlay controls
+- **Z-Index Management**: Proper layering (40, 35, 36 for controls)
+
+### Fixed
+- **Fullscreen Visibility**: All buttons now visible in fullscreen mode
+- **Theme Toggle Blocking**: Removed X close button that was covering theme toggle
+- **Share Menu Overflow**: Moved menu outside Tools panel to allow proper fixed positioning
+- **Erase Button Wiring**: Fixed selector from class-based to data-mode attribute matching
+- **Pass Undo**: Separated Z key from Ctrl+Z system with distinct warning messages
+
+### Technical
+- **CSS Refactoring**: Updated topbar.css and fullscreen.css for new layout
+- **HTML Restructuring**: Reorganized overlay controls, moved share menu outside panel
+- **JavaScript Updates**: Enhanced theme.js, share.js, ui.erase.menu.js, keyboard.js
+- **Modal Management**: Auto-close Tools panel when Share button clicked
+- **Event Handling**: Proper event delegation and click-outside detection for menus
+
+### UI/UX Improvements
+- More intuitive button placement (corners of viewport)
+- Clear visual hierarchy with yellow accent buttons
+- Responsive scaling for mobile devices
+- Immersive fullscreen experience with all controls available
+- Toast notifications for user feedback
+
+---
+
 ## [v23.4.3] - 2024-01-15
 
 ### Added

@@ -81,19 +81,6 @@ function renderMenu() {
   m.innerHTML = '';
   m.setAttribute('role', 'menu');
 
-  // Undo last pass
-  const undoItem = createMenuItem('Undo last pass', 'Z', false, () => {
-    if ((FLAB.arrows || []).length === 0) {
-      showToast('No passes to undo');
-      closeMenu();
-      return;
-    }
-    clearLastPass();
-    renderArrows();
-    showToast('Undid last pass');
-    closeMenu();
-  });
-
   // Clear all passes
   const clearAllItem = createMenuItem('Clear all passes', '', true, () => {
     if ((FLAB.arrows || []).length === 0) {
@@ -101,18 +88,20 @@ function renderMenu() {
       closeMenu();
       return;
     }
-    if (confirm('Clear ALL passes?')) {
+    if (confirm('Clear ALL passes? This action cannot be undone!')) {
       clearAllPasses();
       renderArrows();
-      showToast('Cleared all passes');
+      showToast('⚠️ Cleared all passes (cannot be undone with Redo)', 'warning');
       closeMenu();
     }
   });
 
-  m.append(undoItem, clearAllItem);
+  m.append(clearAllItem);
 
-  // Add divider before future sections
-  m.append(createDivider());
+  // Add divider before future sections (only if we have optional modules)
+  if (window.__mod_markers || window.__mod_notes) {
+    m.append(createDivider());
+  }
 
   // Future: markers section (when markers module exists)
   if (window.__mod_markers) {
@@ -136,23 +125,23 @@ function renderMenu() {
     m.append(clearNotesItem);
   }
 
-  // Clear ALL section
+  // Only show "CLEAR ALL" option if we have optional modules
   if (window.__mod_markers || window.__mod_notes) {
     m.append(createDivider());
+
+    const clearAllDataItem = createMenuItem('CLEAR ALL (passes, markers, notes)', '', true, () => {
+      if (confirm('This will clear EVERYTHING (passes, markers, notes). This action cannot be undone!')) {
+        clearAllPasses();
+        renderArrows();
+        // clearAllMarkers?.(); // Future
+        // setNotes?.(''); // Future
+        showToast('⚠️ Cleared everything (cannot be undone with Redo)', 'warning');
+        closeMenu();
+      }
+    });
+
+    m.append(clearAllDataItem);
   }
-
-  const clearAllDataItem = createMenuItem('CLEAR ALL (passes, markers, notes)', '', true, () => {
-    if (confirm('This will clear passes, markers, and notes. Continue?')) {
-      clearAllPasses();
-      renderArrows();
-      // clearAllMarkers?.(); // Future
-      // setNotes?.(''); // Future
-      showToast('Cleared everything');
-      closeMenu();
-    }
-  });
-
-  m.append(clearAllDataItem);
 
   return m;
 }
@@ -279,22 +268,42 @@ function closeMenu() {
 }
 
 export function wireEraseMenu() {
-  const btn = document.querySelector('.flab-tool[data-mode="erase"]');
-  if (!btn) return;
+  console.log('🔧 wireEraseMenu() called - initializing erase menu');
 
-  btn.addEventListener('click', (e) => {
-    // Only show menu if we're not already in erase mode, or if we're clicking again
-    if (FLAB.mode === 'erase') {
-      e.preventDefault();
-      e.stopPropagation();
+  const buttons = document.querySelectorAll('[data-mode="erase"]');
+  console.log(`🔍 Found ${buttons.length} erase button(s):`, buttons);
 
-      if (open) {
-        closeMenu();
+  if (!buttons.length) {
+    console.warn('⚠️ No erase buttons found with [data-mode="erase"]');
+    return;
+  }
+
+  buttons.forEach((btn, index) => {
+    console.log(`📌 Button ${index + 1}: id="${btn.id}" class="${btn.className}"`);
+
+    btn.addEventListener('click', (e) => {
+      console.log(`🖱️ Erase button clicked! Current mode: ${FLAB.mode}, Menu open: ${open}`);
+
+      // Only show menu if we're not already in erase mode, or if we're clicking again
+      if (FLAB.mode === 'erase') {
+        console.log('✅ Mode is "erase" - toggling menu');
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (open) {
+          console.log('📂 Menu is open - closing it');
+          closeMenu();
+        } else {
+          console.log('📂 Menu is closed - opening it');
+          openMenu(btn);
+        }
       } else {
-        openMenu(btn);
+        console.log(`❌ Mode is "${FLAB.mode}" not "erase" - menu not shown (need to switch to erase mode first)`);
       }
-    }
+    });
   });
+
+  console.log('✅ wireEraseMenu() complete');
 }
 
 window.__mod_erasemenu = true;

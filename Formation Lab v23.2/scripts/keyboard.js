@@ -23,6 +23,27 @@ function handleGlobalKeydown(evt) {
     return;
   }
 
+  // Z key: Undo last pass
+  if ((evt.key === "z" || evt.key === "Z") && !evt.ctrlKey && !evt.shiftKey && !evt.altKey && !evt.metaKey) {
+    evt.preventDefault();
+
+    import('./pass.js').then(({ clearLastPass, renderArrows }) => {
+      if ((FLAB.arrows || []).length === 0) {
+        import('./ui-toast.js').then(({ showToast }) => {
+          showToast('No passes to undo');
+        });
+        return;
+      }
+      clearLastPass();
+      renderArrows();
+      import('./ui-toast.js').then(({ showToast }) => {
+        showToast('⚠️ Undid last pass (cannot be undone with Redo)', 'warning');
+      });
+    });
+
+    return;
+  }
+
   if (evt.key === "Tab" && !evt.ctrlKey && !evt.altKey && !evt.metaKey) {
     // Cycle through players
     evt.preventDefault();

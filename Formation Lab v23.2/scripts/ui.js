@@ -45,8 +45,8 @@ function setMode(mode) {
   const clamped = ['select', 'pass', 'erase'].includes(mode) ? mode : 'select';
   set('mode', clamped);
 
-  // Update button states
-  const toolButtons = document.querySelectorAll('.flab-tool[data-mode]');
+  // Update button states (both sidepanel and overlay)
+  const toolButtons = document.querySelectorAll('.flab-tool[data-mode], .flab-overlay-btn[data-mode]');
   toolButtons.forEach(btn => {
     const pressed = btn.dataset.mode === FLAB.mode;
     btn.setAttribute("aria-pressed", pressed ? "true" : "false");
@@ -187,8 +187,8 @@ function logAcceptanceChecklist() {
 
 // Wire up all UI interactions
 export function wireUI() {
-  // Mode buttons
-  document.querySelectorAll('.flab-tool[data-mode]').forEach(btn => {
+  // Mode buttons (sidepanel tools, overlay buttons, and undo/redo buttons)
+  document.querySelectorAll('.flab-tool[data-mode], .flab-overlay-btn[data-mode], .flab-undo-redo-btn[data-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
       setMode(btn.dataset.mode);
     });
@@ -202,6 +202,25 @@ export function wireUI() {
   const resetButton = document.getElementById('resetButton');
   resetButton?.addEventListener('click', resetFormation);
 
+  // Controls tab button (Tools panel toggle)
+  const btnControlsTab = document.getElementById('btnControlsTab');
+  const pitchControlsSheet = document.getElementById('pitchControlsSheet');
+
+  btnControlsTab?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = pitchControlsSheet?.classList.contains('is-open');
+
+    if (isOpen) {
+      // Close the panel
+      pitchControlsSheet.classList.remove('is-open');
+      btnControlsTab.setAttribute('aria-expanded', 'false');
+    } else {
+      // Open the panel
+      pitchControlsSheet.classList.add('is-open');
+      btnControlsTab.setAttribute('aria-expanded', 'true');
+    }
+  });
+
   // Preset buttons
   const btnSavePreset = document.getElementById('btnSavePreset');
   const btnApplyDefault = document.getElementById('btnApplyDefault');
@@ -214,8 +233,26 @@ export function wireUI() {
   const btnLandscape = document.getElementById('btnLandscape');
   const btnPortrait = document.getElementById('btnPortrait');
   btnLandscape?.addEventListener('click', () => {
-    setOrientation('landscape');
-    saveSettings({ orientation: 'landscape' });
+    // On desktop, landscape mode = fullscreen mode for better display
+    import('./orientation.js').then(({ autoOrientation }) => {
+      // Check if we're on desktop
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.screen.width <= 1024 || window.screen.height <= 1024;
+      const mobilePattern = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      const isMobileUA = mobilePattern.test(navigator.userAgent);
+      const isMobile = (hasTouch && isSmallScreen) || isMobileUA;
+
+      if (!isMobile) {
+        // Desktop: trigger fullscreen instead
+        import('./fullscreen.js').then(({ enterFullscreen }) => {
+          enterFullscreen();
+        });
+      } else {
+        // Mobile: just set orientation
+        setOrientation('landscape');
+        saveSettings({ orientation: 'landscape' });
+      }
+    });
   });
   btnPortrait?.addEventListener('click', () => {
     setOrientation('portrait');
@@ -266,6 +303,58 @@ export function wireUI() {
         handleResize();
       });
     }, 16); // ~60fps throttling
+  });
+
+  // Undo/Redo buttons
+  import('./undo-redo.js').then(({ undoManager }) => {
+    const btnUndo = document.getElementById('btnUndo');
+    const btnRedo = document.getElementById('btnRedo');
+
+    if (btnUndo) {
+      btnUndo.addEventListener('click', () => {
+        undoManager.undo();
+      });
+    }
+
+    if (btnRedo) {
+      btnRedo.addEventListener('click', () => {
+        undoManager.redo();
+      });
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Undo: Ctrl+Z or Cmd+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undoManager.undo();
+      }
+      // Redo: Ctrl+Y or Cmd+Y or Ctrl+Shift+Z
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        undoManager.redo();
+      }
+    });
+  });
+
+  // Close controls sheet when clicking on pitch
+  const pitchWrapper = document.querySelector('.flab-pitch-wrapper');
+  const pitchField = document.querySelector('.flab-field');
+
+  pitchWrapper?.addEventListener('click', (e) => {
+    // Don't close if clicking on a control button or the sheet itself
+    if (e.target.closest('.flab-controls-tab') || e.target.closest('.flab-controls-sheet')) {
+      return;
+    }
+
+    // Close the panel if it's open
+    const pitchControlsSheet = document.getElementById('pitchControlsSheet');
+    const btnControlsTab = document.getElementById('btnControlsTab');
+
+    if (pitchControlsSheet?.classList.contains('is-open')) {
+      pitchControlsSheet.classList.remove('is-open');
+      btnControlsTab?.setAttribute('aria-expanded', 'false');
+    }
   });
 
   // Wire up pass playback controls
@@ -433,6 +522,17 @@ function setupPassPlaybackControls() {
       showBallPlaybackDiagnostics();
     });
   }
+
+  document.querySelectorAll('[data-proxy]').forEach(btn => {
+    const targetSelector = btn.getAttribute('data-proxy');
+    if (!targetSelector) return;
+    btn.addEventListener('click', () => {
+      const target = document.querySelector(targetSelector);
+      if (target) {
+        target.click();
+      }
+    });
+  });
 
   // Pass click handling for one-click play
   const arrowLayer = document.getElementById('arrow-layer');

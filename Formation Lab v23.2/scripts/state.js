@@ -66,16 +66,16 @@ if (!window.FLAB.aim) {
 // Legacy export for compatibility
 export const aimState = window.FLAB.aim;
 
-// Pass styling configuration
-const existingPass = window.PASS || {};
-export const PASS = Object.assign(existingPass, {
-  style: existingPass.style || FLAB.passStyle || 'solid',
-  color: existingPass.color || '#ffd166',
-  outline: existingPass.outline || '#1d1300',
-  recent: Array.isArray(existingPass.recent) ? existingPass.recent.slice(0, 3) : []
-});
-window.PASS = PASS;
-
+// Pass styling configuration
+const existingPass = window.PASS || {};
+export const PASS = Object.assign(existingPass, {
+  style: existingPass.style || FLAB.passStyle || 'solid',
+  color: existingPass.color || '#ffd166',
+  outline: existingPass.outline || '#1d1300',
+  recent: Array.isArray(existingPass.recent) ? existingPass.recent.slice(0, 3) : []
+});
+window.PASS = PASS;
+
 // Legacy aim state - replaced by aimState export
 
 // Pass style definitions (3 styles matching our arrow SVGs)

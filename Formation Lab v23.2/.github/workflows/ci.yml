@@ -44,8 +44,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: audit-failure-logs
-          path: |
-            *.log
-            screenshots/
+          name: audit-failure-screenshot
+          path: audit-failure.png
           retention-days: 7
+          if-no-files-found: warn
