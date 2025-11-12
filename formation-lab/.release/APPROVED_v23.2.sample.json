@@ -1,0 +1,16 @@
+{
+  "artifact": "Formation Lab",
+  "version": "v23.2.1",
+  "cacheVersion": "v23.2.1",
+  "files": [
+    "index.html",
+    "styles/main.css?v=23.2.1",
+    "scripts/formation.js?v=23.2.1",
+    "sw.js",
+    "assets/favicon.png",
+    "assets/icons.svg",
+    "assets/jersey.svg"
+  ],
+  "notes": "Reference build manifest used for GitHub Pages deployment validation.",
+  "verified": true
+}

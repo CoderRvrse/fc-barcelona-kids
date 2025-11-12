@@ -1,0 +1,1007 @@
+/* Pitch border overlay system */
+
+/* Border container overlays the pitch */
+.flab-field::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Animated glow effect */
+.flab-field::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  pointer-events: none;
+  z-index: 0;
+  border: 2px solid transparent;
+  border-radius: 18px;
+  background: linear-gradient(
+    45deg,
+    rgba(76, 175, 80, 0.3) 0%,
+    rgba(33, 150, 243, 0.3) 25%,
+    rgba(156, 39, 176, 0.3) 50%,
+    rgba(255, 193, 7, 0.3) 75%,
+    rgba(76, 175, 80, 0.3) 100%
+  );
+  background-size: 400% 400%;
+  animation: borderGlow 8s ease infinite;
+  opacity: 0.4;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 2px;
+}
+
+@keyframes borderGlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Fullscreen mode - thicker, more prominent border */
+.flab-app--fullscreen .flab-field::before {
+  border-width: 5px;
+  border-color: rgba(255, 255, 255, 0.25);
+  border-radius: 0;
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(255, 255, 255, 0.2);
+}
+
+.flab-app--fullscreen .flab-field::after {
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-width: 4px;
+  border-radius: 0;
+  opacity: 0.6;
+  animation: borderGlowFullscreen 6s ease infinite;
+  padding: 4px;
+}
+
+@keyframes borderGlowFullscreen {
+  0% {
+    background-position: 0% 50%;
+    opacity: 0.6;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 0% 50%;
+    opacity: 0.6;
+  }
+}
+
+/* Corner markers for alignment debugging */
+.flab-field[data-debug-borders="true"]::before {
+  border-color: rgba(255, 0, 0, 0.8);
+  border-width: 4px;
+  border-style: dashed;
+}
+
+.flab-field[data-debug-borders="true"]::after {
+  background: linear-gradient(
+    45deg,
+    rgba(255, 0, 0, 0.5) 0%,
+    rgba(255, 255, 0, 0.5) 50%,
+    rgba(255, 0, 0, 0.5) 100%
+  );
+  opacity: 1;
+  animation: debugPulse 1s ease infinite;
+}
+
+@keyframes debugPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Subtle inner shadow for depth */
+.flab-field {
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.35),
+    inset 0 0 30px rgba(0, 0, 0, 0.2);
+}
+
+.flab-app--fullscreen .flab-field {
+  box-shadow:
+    inset 0 0 60px rgba(0, 0, 0, 0.4),
+    inset 0 0 100px rgba(0, 0, 0, 0.2),
+    0 0 80px rgba(50, 205, 80, 0.6),
+    0 0 140px rgba(60, 200, 90, 0.4);
+}
+
+/* Enhanced animations for portrait mode (non-fullscreen) */
+.flab-field.is-portrait:not(.flab-app--fullscreen .flab-field) {
+  position: relative;
+}
+
+/* Layer 1: White light tracing along border edges */
+.flab-field.is-portrait::before {
+  border-width: 4px;
+  border-style: solid;
+  border-image: linear-gradient(
+    90deg,
+    rgba(50, 205, 80, 0.9) 0%,
+    rgba(255, 255, 255, 0.95) 15%,
+    rgba(240, 250, 245, 0.9) 25%,
+    rgba(50, 205, 80, 0.85) 40%,
+    rgba(60, 200, 90, 0.8) 60%,
+    rgba(255, 255, 255, 0.95) 75%,
+    rgba(240, 250, 245, 0.9) 85%,
+    rgba(50, 205, 80, 0.9) 100%
+  ) 1;
+  background-size: 400% 400%;
+  animation: borderLightTrace 6s linear infinite;
+  box-shadow:
+    inset 0 0 30px rgba(0, 0, 0, 0.4),
+    0 0 25px rgba(255, 255, 255, 0.4),
+    0 0 50px rgba(50, 205, 80, 0.5);
+}
+
+/* Layer 2: Pulsing grass green outer glow */
+.flab-field.is-portrait::after {
+  border-width: 3px;
+  opacity: 0.7;
+  background: linear-gradient(
+    90deg,
+    rgba(45, 190, 75, 0.7) 0%,
+    rgba(60, 210, 95, 0.75) 16%,
+    rgba(50, 200, 85, 0.8) 33%,
+    rgba(180, 230, 200, 0.5) 50%,
+    rgba(55, 195, 80, 0.8) 66%,
+    rgba(65, 215, 100, 0.75) 83%,
+    rgba(45, 190, 75, 0.7) 100%
+  );
+  background-size: 600% 600%;
+  animation: portraitGlowPulse 6s ease infinite, portraitColorShift 10s linear infinite;
+  filter: blur(2px);
+}
+
+/* Layer 3: White glow traveling around border perimeter */
+.flab-pitch-wrapper:has(.flab-field.is-portrait:not(.flab-app--fullscreen .flab-field))::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 18px;
+  background: transparent;
+  box-shadow:
+    inset 0 0 0 3px transparent,
+    0 0 20px rgba(255, 255, 255, 0.6);
+  animation: borderPerimeterGlow 4s linear infinite;
+}
+
+/* Keyframe animations for portrait mode */
+@keyframes borderLightTrace {
+  0% {
+    border-image-source: linear-gradient(
+      90deg,
+      rgba(50, 205, 80, 0.9) 0%,
+      rgba(255, 255, 255, 0.95) 15%,
+      rgba(240, 250, 245, 0.9) 25%,
+      rgba(50, 205, 80, 0.85) 40%,
+      rgba(60, 200, 90, 0.8) 60%,
+      rgba(255, 255, 255, 0.95) 75%,
+      rgba(240, 250, 245, 0.9) 85%,
+      rgba(50, 205, 80, 0.9) 100%
+    );
+  }
+  50% {
+    border-image-source: linear-gradient(
+      90deg,
+      rgba(60, 200, 90, 0.8) 0%,
+      rgba(50, 205, 80, 0.9) 15%,
+      rgba(255, 255, 255, 0.95) 40%,
+      rgba(240, 250, 245, 0.9) 50%,
+      rgba(50, 205, 80, 0.85) 60%,
+      rgba(60, 200, 90, 0.8) 85%,
+      rgba(255, 255, 255, 0.95) 100%
+    );
+  }
+  100% {
+    border-image-source: linear-gradient(
+      90deg,
+      rgba(50, 205, 80, 0.9) 0%,
+      rgba(255, 255, 255, 0.95) 15%,
+      rgba(240, 250, 245, 0.9) 25%,
+      rgba(50, 205, 80, 0.85) 40%,
+      rgba(60, 200, 90, 0.8) 60%,
+      rgba(255, 255, 255, 0.95) 75%,
+      rgba(240, 250, 245, 0.9) 85%,
+      rgba(50, 205, 80, 0.9) 100%
+    );
+  }
+}
+
+@keyframes borderPerimeterGlow {
+  0% {
+    box-shadow:
+      0 -4px 15px rgba(255, 255, 255, 0.7),
+      0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  25% {
+    box-shadow:
+      4px 0 15px rgba(255, 255, 255, 0.7),
+      0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 4px 15px rgba(255, 255, 255, 0.7),
+      0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  75% {
+    box-shadow:
+      -4px 0 15px rgba(255, 255, 255, 0.7),
+      0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    box-shadow:
+      0 -4px 15px rgba(255, 255, 255, 0.7),
+      0 0 8px rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes portraitGlowPulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes portraitColorShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 600% 50%;
+  }
+}
+
+
+/* Enhanced grass green glow shadow for portrait mode borders only */
+.flab-field.is-portrait {
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.4),
+    inset 0 0 40px rgba(0, 0, 0, 0.3),
+    0 0 60px rgba(50, 205, 80, 0.5),
+    0 0 100px rgba(60, 200, 90, 0.35);
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .flab-field::before {
+    border-width: 2px;
+  }
+
+  .flab-field::after {
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    border-width: 1px;
+    padding: 1px;
+  }
+
+  .flab-app--fullscreen .flab-field::before {
+    border-width: 3px;
+  }
+
+  .flab-app--fullscreen .flab-field::after {
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-width: 2px;
+    padding: 2px;
+  }
+
+  /* Reduce portrait mode effects on mobile for performance */
+  .flab-field.is-portrait::before {
+    animation-duration: 12s;
+  }
+
+  .flab-field.is-portrait::after {
+    filter: blur(1px);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENHANCED NEON CORNER ACCENTS & INTERACTIVE ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Corner accent elements for enhanced visual appeal */
+.flab-field::before {
+  --border-accent: rgba(255, 193, 7, 0.8);
+  --border-secondary: rgba(76, 175, 80, 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOUR CORNER ROTATING ACCENT ELEMENTS
+   ═══════════════════════════════════════════════════════════════ */
+
+.flab-corner-marker {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  pointer-events: none !important;
+  z-index: 1;
+  border: 2px solid transparent;
+  border-radius: 8px;
+}
+
+/* Top-left corner - cycles through FC Barcelona colors */
+.flab-corner--top-left {
+  top: -8px;
+  left: -8px;
+  border-top: 2px solid rgba(0, 77, 152, 0.6);
+  border-left: 2px solid rgba(0, 77, 152, 0.6);
+  border-radius: 8px 0 0 0;
+  animation: cornerRotateTopLeft 10s linear infinite, cornerColorCycle 20s linear infinite;
+  box-shadow: 0 0 20px rgba(0, 77, 152, 0.4), inset 0 0 15px rgba(0, 77, 152, 0.3);
+}
+
+/* Top-right corner - cycles through FC Barcelona colors */
+.flab-corner--top-right {
+  top: -8px;
+  right: -8px;
+  border-top: 2px solid rgba(0, 77, 152, 0.6);
+  border-right: 2px solid rgba(0, 77, 152, 0.6);
+  border-radius: 0 8px 0 0;
+  animation: cornerRotateTopRight 10s linear infinite, cornerColorCycle 20s linear infinite;
+  box-shadow: 0 0 20px rgba(0, 77, 152, 0.4), inset 0 0 15px rgba(0, 77, 152, 0.3);
+}
+
+/* Bottom-right corner - cycles through FC Barcelona colors */
+.flab-corner--bottom-right {
+  bottom: -8px;
+  right: -8px;
+  border-bottom: 2px solid rgba(0, 77, 152, 0.6);
+  border-right: 2px solid rgba(0, 77, 152, 0.6);
+  border-radius: 0 0 8px 0;
+  animation: cornerRotateBottomRight 10s linear infinite, cornerColorCycle 20s linear infinite;
+  box-shadow: 0 0 20px rgba(0, 77, 152, 0.4), inset 0 0 15px rgba(0, 77, 152, 0.3);
+}
+
+/* Bottom-left corner - cycles through FC Barcelona colors */
+.flab-corner--bottom-left {
+  bottom: -8px;
+  left: -8px;
+  border-bottom: 2px solid rgba(0, 77, 152, 0.6);
+  border-left: 2px solid rgba(0, 77, 152, 0.6);
+  border-radius: 0 0 0 8px;
+  animation: cornerRotateBottomLeft 10s linear infinite, cornerColorCycle 20s linear infinite;
+  box-shadow: 0 0 20px rgba(0, 77, 152, 0.4), inset 0 0 15px rgba(0, 77, 152, 0.3);
+}
+
+/* Rotating corner animations - each corner cycles through brightness */
+@keyframes cornerRotateTopLeft {
+  0%, 100% {
+    opacity: 0.3;
+    border-color: rgba(255, 193, 7, 0.4);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.2), inset 0 0 8px rgba(255, 193, 7, 0.15);
+  }
+  25% {
+    opacity: 0.6;
+    border-color: rgba(255, 193, 7, 0.7);
+    box-shadow: 0 0 20px rgba(255, 193, 7, 0.4), inset 0 0 12px rgba(255, 193, 7, 0.25);
+  }
+  50% {
+    opacity: 1;
+    border-color: rgba(255, 193, 7, 0.95);
+    box-shadow: 0 0 35px rgba(255, 193, 7, 0.7), inset 0 0 20px rgba(255, 193, 7, 0.5);
+  }
+  75% {
+    opacity: 0.6;
+    border-color: rgba(255, 193, 7, 0.7);
+    box-shadow: 0 0 20px rgba(255, 193, 7, 0.4), inset 0 0 12px rgba(255, 193, 7, 0.25);
+  }
+}
+
+@keyframes cornerRotateTopRight {
+  0%, 100% {
+    opacity: 0.3;
+    border-color: rgba(33, 150, 243, 0.4);
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.2), inset 0 0 8px rgba(33, 150, 243, 0.15);
+  }
+  25% {
+    opacity: 0.6;
+    border-color: rgba(33, 150, 243, 0.7);
+    box-shadow: 0 0 20px rgba(33, 150, 243, 0.4), inset 0 0 12px rgba(33, 150, 243, 0.25);
+  }
+  50% {
+    opacity: 1;
+    border-color: rgba(33, 150, 243, 0.95);
+    box-shadow: 0 0 35px rgba(33, 150, 243, 0.7), inset 0 0 20px rgba(33, 150, 243, 0.5);
+  }
+  75% {
+    opacity: 0.6;
+    border-color: rgba(33, 150, 243, 0.7);
+    box-shadow: 0 0 20px rgba(33, 150, 243, 0.4), inset 0 0 12px rgba(33, 150, 243, 0.25);
+  }
+}
+
+@keyframes cornerRotateBottomRight {
+  0%, 100% {
+    opacity: 0.3;
+    border-color: rgba(76, 175, 80, 0.4);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.2), inset 0 0 8px rgba(76, 175, 80, 0.15);
+  }
+  25% {
+    opacity: 0.6;
+    border-color: rgba(76, 175, 80, 0.7);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.4), inset 0 0 12px rgba(76, 175, 80, 0.25);
+  }
+  50% {
+    opacity: 1;
+    border-color: rgba(76, 175, 80, 0.95);
+    box-shadow: 0 0 35px rgba(76, 175, 80, 0.7), inset 0 0 20px rgba(76, 175, 80, 0.5);
+  }
+  75% {
+    opacity: 0.6;
+    border-color: rgba(76, 175, 80, 0.7);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.4), inset 0 0 12px rgba(76, 175, 80, 0.25);
+  }
+}
+
+@keyframes cornerRotateBottomLeft {
+  0%, 100% {
+    opacity: 0.3;
+    border-color: rgba(156, 39, 176, 0.4);
+    box-shadow: 0 0 10px rgba(156, 39, 176, 0.2), inset 0 0 8px rgba(156, 39, 176, 0.15);
+  }
+  25% {
+    opacity: 0.6;
+    border-color: rgba(156, 39, 176, 0.7);
+    box-shadow: 0 0 20px rgba(156, 39, 176, 0.4), inset 0 0 12px rgba(156, 39, 176, 0.25);
+  }
+  50% {
+    opacity: 1;
+    border-color: rgba(156, 39, 176, 0.95);
+    box-shadow: 0 0 35px rgba(156, 39, 176, 0.7), inset 0 0 20px rgba(156, 39, 176, 0.5);
+  }
+  75% {
+    opacity: 0.6;
+    border-color: rgba(156, 39, 176, 0.7);
+    box-shadow: 0 0 20px rgba(156, 39, 176, 0.4), inset 0 0 12px rgba(156, 39, 176, 0.25);
+  }
+}
+
+/* Corner color cycling - FC Barcelona official colors (6 colors over 20s) */
+@keyframes cornerColorCycle {
+  0% {
+    border-color: rgba(0, 77, 152, 0.6);           /* Blue (Blau) */
+    box-shadow: 0 0 20px rgba(0, 77, 152, 0.4), inset 0 0 15px rgba(0, 77, 152, 0.3);
+  }
+  16.66% {
+    border-color: rgba(168, 19, 62, 0.6);         /* Claret (Grana) */
+    box-shadow: 0 0 20px rgba(168, 19, 62, 0.4), inset 0 0 15px rgba(168, 19, 62, 0.3);
+  }
+  33.33% {
+    border-color: rgba(237, 187, 0, 0.6);         /* Gold */
+    box-shadow: 0 0 20px rgba(237, 187, 0, 0.4), inset 0 0 15px rgba(237, 187, 0, 0.3);
+  }
+  50% {
+    border-color: rgba(255, 237, 2, 0.6);         /* Yellow (senyera) */
+    box-shadow: 0 0 20px rgba(255, 237, 2, 0.4), inset 0 0 15px rgba(255, 237, 2, 0.3);
+  }
+  66.66% {
+    border-color: rgba(219, 0, 48, 0.6);          /* Bright Red */
+    box-shadow: 0 0 20px rgba(219, 0, 48, 0.4), inset 0 0 15px rgba(219, 0, 48, 0.3);
+  }
+  83.33% {
+    border-color: rgba(0, 77, 152, 0.6);          /* Blue (Blau) */
+    box-shadow: 0 0 20px rgba(0, 77, 152, 0.4), inset 0 0 15px rgba(0, 77, 152, 0.3);
+  }
+  100% {
+    border-color: rgba(0, 77, 152, 0.6);          /* Blue (loop back) */
+    box-shadow: 0 0 20px rgba(0, 77, 152, 0.4), inset 0 0 15px rgba(0, 77, 152, 0.3);
+  }
+}
+
+/* Rotating edge highlight for landscape mode */
+.flab-field:not(.is-portrait) {
+  position: relative;
+  overflow: visible;
+}
+
+.flab-field:not(.is-portrait)::before {
+  animation: borderPulseHorizontal 2s ease-in-out infinite;
+}
+
+@keyframes borderPulseHorizontal {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 20px rgba(0, 0, 0, 0.3),
+      0 0 15px rgba(255, 255, 255, 0.1),
+      0 0 30px rgba(255, 193, 7, 0.1);
+    filter: drop-shadow(0 0 3px rgba(255, 193, 7, 0.2));
+  }
+  50% {
+    box-shadow:
+      inset 0 0 20px rgba(0, 0, 0, 0.3),
+      0 0 20px rgba(255, 193, 7, 0.3),
+      0 0 45px rgba(255, 193, 7, 0.2);
+    filter: drop-shadow(0 0 6px rgba(255, 193, 7, 0.4));
+  }
+}
+
+/* Fullscreen corner accents - scale up corners for immersive experience */
+.flab-body--fullscreen .flab-corner-marker {
+  width: 60px;
+  height: 60px;
+}
+
+.flab-body--fullscreen .flab-corner--top-left,
+.flab-body--fullscreen .flab-corner--top-right,
+.flab-body--fullscreen .flab-corner--bottom-right,
+.flab-body--fullscreen .flab-corner--bottom-left {
+  border-width: 3px;
+  animation-duration: 8s;
+  top: -12px;
+  left: -12px;
+  right: auto;
+  bottom: auto;
+}
+
+.flab-body--fullscreen .flab-corner--top-right {
+  top: -12px;
+  right: -12px;
+  left: auto;
+}
+
+.flab-body--fullscreen .flab-corner--bottom-right {
+  bottom: -12px;
+  right: -12px;
+  left: auto;
+  top: auto;
+}
+
+.flab-body--fullscreen .flab-corner--bottom-left {
+  bottom: -12px;
+  left: -12px;
+  right: auto;
+  top: auto;
+}
+
+/* Scanning line effect for extra visual interest */
+.flab-field {
+  position: relative;
+}
+
+.flab-field::before {
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 45%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0.1) 55%,
+      transparent 100%
+    ) no-repeat,
+    transparent;
+  background-size: 200% 100%;
+  background-position: -100% 0;
+  animation:
+    borderGlow 8s ease infinite,
+    scanningLine 6s ease-in-out infinite 0.5s;
+}
+
+@keyframes scanningLine {
+  0% {
+    background-position: -100% 0, 0 0;
+  }
+  50% {
+    background-position: 200% 0, 0 0;
+  }
+  100% {
+    background-position: -100% 0, 0 0;
+  }
+}
+
+/* Interactive hover state for enhanced engagement */
+.flab-pitch-wrapper:hover::before,
+.flab-pitch-wrapper:hover::after {
+  animation-play-state: paused;
+  opacity: 0;
+}
+
+.flab-pitch-wrapper:hover .flab-field::before {
+  animation-play-state: paused;
+  border-color: rgba(255, 193, 7, 0.9);
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.3),
+    0 0 25px rgba(255, 193, 7, 0.4),
+    0 0 50px rgba(255, 193, 7, 0.2);
+}
+
+.flab-pitch-wrapper:hover .flab-field::after {
+  animation-play-state: paused;
+  opacity: 0.8;
+}
+
+/* Pulsing accent for active interactions */
+.flab-field[data-active="true"]::before {
+  border-color: rgba(255, 193, 7, 0.9);
+  animation: activePulse 0.6s ease-in-out !important;
+}
+
+@keyframes activePulse {
+  0%, 100% {
+    border-color: rgba(255, 193, 7, 0.6);
+    box-shadow:
+      inset 0 0 20px rgba(0, 0, 0, 0.3),
+      0 0 15px rgba(255, 193, 7, 0.2);
+  }
+  50% {
+    border-color: rgba(255, 193, 7, 1);
+    box-shadow:
+      inset 0 0 20px rgba(0, 0, 0, 0.3),
+      0 0 35px rgba(255, 193, 7, 0.5),
+      0 0 60px rgba(255, 193, 7, 0.3);
+  }
+}
+
+/* Extra glow layer for maximum wow-factor */
+.flab-pitch-wrapper {
+  box-shadow:
+    0 0 40px rgba(255, 193, 7, 0.15),
+    0 0 80px rgba(76, 175, 80, 0.1);
+  transition: box-shadow 0.3s ease;
+  position: relative;
+  overflow: visible;
+}
+
+.flab-pitch-wrapper:hover {
+  box-shadow:
+    0 0 50px rgba(255, 193, 7, 0.25),
+    0 0 100px rgba(76, 175, 80, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATED CORNER CONNECTING LINES
+   ═══════════════════════════════════════════════════════════════ */
+
+.flab-corner-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none !important;
+  z-index: 10;
+}
+
+.flab-corner-line {
+  stroke-width: 2px;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.4;
+}
+
+/* Top line - cycles through FC Barcelona colors */
+.flab-line--top {
+  stroke: rgba(0, 77, 152, 0.8);
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: linePulseTop 8s ease-in-out infinite, lineColorCycle 20s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(0, 77, 152, 0.5));
+}
+
+/* Right line - cycles through FC Barcelona colors */
+.flab-line--right {
+  stroke: rgba(0, 77, 152, 0.8);
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: linePulseRight 8s ease-in-out infinite 2s, lineColorCycle 20s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(0, 77, 152, 0.5));
+}
+
+/* Bottom line - cycles through FC Barcelona colors */
+.flab-line--bottom {
+  stroke: rgba(0, 77, 152, 0.8);
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: linePulseBottom 8s ease-in-out infinite 4s, lineColorCycle 20s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(0, 77, 152, 0.5));
+}
+
+/* Left line - cycles through FC Barcelona colors matching text animation */
+.flab-line--left {
+  stroke: rgba(0, 77, 152, 0.9);
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: linePulseLeft 8s ease-in-out infinite 6s, lineColorCycle 20s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(0, 77, 152, 0.6));
+}
+
+/* Line pulse animations - each side cycles independently */
+@keyframes linePulseTop {
+  0%, 100% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+    stroke-width: 2px;
+  }
+  25% {
+    stroke-dashoffset: 750;
+    opacity: 0.6;
+    stroke-width: 2.5px;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 15px rgba(255, 180, 0, 0.8));
+  }
+  75% {
+    stroke-dashoffset: 250;
+    opacity: 0.65;
+    stroke-width: 2.5px;
+  }
+}
+
+@keyframes linePulseRight {
+  0%, 100% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+    stroke-width: 2px;
+  }
+  25% {
+    stroke-dashoffset: 750;
+    opacity: 0.6;
+    stroke-width: 2.5px;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 15px rgba(0, 150, 255, 0.8));
+  }
+  75% {
+    stroke-dashoffset: 250;
+    opacity: 0.65;
+    stroke-width: 2.5px;
+  }
+}
+
+@keyframes linePulseBottom {
+  0%, 100% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+    stroke-width: 2px;
+  }
+  25% {
+    stroke-dashoffset: 750;
+    opacity: 0.6;
+    stroke-width: 2.5px;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 15px rgba(50, 200, 80, 0.8));
+  }
+  75% {
+    stroke-dashoffset: 250;
+    opacity: 0.65;
+    stroke-width: 2.5px;
+  }
+}
+
+@keyframes linePulseLeft {
+  0%, 100% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+    stroke-width: 2px;
+  }
+  25% {
+    stroke-dashoffset: 750;
+    opacity: 0.6;
+    stroke-width: 2.5px;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 15px rgba(200, 50, 200, 0.8));
+  }
+  75% {
+    stroke-dashoffset: 250;
+    opacity: 0.65;
+    stroke-width: 2.5px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BORDER TEXT ANIMATIONS - Words cycling along edges
+   ═══════════════════════════════════════════════════════════════ */
+
+.flab-border-text {
+  font-size: 14px;
+  font-weight: 600;
+  fill: rgba(255, 193, 7, 0.7);
+  text-anchor: middle;
+  letter-spacing: 1px;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.flab-border-text--top {
+  animation: moveTextTop 12s linear infinite;
+}
+
+.flab-border-text--right {
+  animation: moveTextRight 12s linear infinite;
+}
+
+.flab-border-text--bottom {
+  animation: moveTextBottom 12s linear infinite;
+}
+
+.flab-border-text--left {
+  animation: moveTextLeft 12s linear infinite;
+}
+
+/* Text animation for top border - moves left to right then back */
+@keyframes moveTextTop {
+  0% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px rgba(255, 193, 7, 0.4);
+  }
+  25% {
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
+  }
+  75% {
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+  }
+  100% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px rgba(255, 193, 7, 0.4);
+  }
+}
+
+/* Text animation for right border - moves top to bottom then back */
+@keyframes moveTextRight {
+  0% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px rgba(33, 150, 243, 0.4);
+  }
+  25% {
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(33, 150, 243, 0.6);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(33, 150, 243, 0.8);
+  }
+  75% {
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(33, 150, 243, 0.6);
+  }
+  100% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px rgba(33, 150, 243, 0.4);
+  }
+}
+
+/* Text animation for bottom border - moves right to left then back */
+@keyframes moveTextBottom {
+  0% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px rgba(76, 175, 80, 0.4);
+  }
+  25% {
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+  }
+  75% {
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+  }
+  100% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px rgba(76, 175, 80, 0.4);
+  }
+}
+
+/* Text animation for left border - moves bottom to top then back */
+@keyframes moveTextLeft {
+  0% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px rgba(156, 39, 176, 0.4);
+  }
+  25% {
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(156, 39, 176, 0.6);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(156, 39, 176, 0.8);
+  }
+  75% {
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(156, 39, 176, 0.6);
+  }
+  100% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px rgba(156, 39, 176, 0.4);
+  }
+}
+
+/* Left line color cycling - FC Barcelona official colors (6 colors over 20s) */
+@keyframes lineColorCycle {
+  0% {
+    stroke: rgba(0, 77, 152, 0.9);       /* Blue (Blau) */
+    filter: drop-shadow(0 0 10px rgba(0, 77, 152, 0.6));
+  }
+  16.66% {
+    stroke: rgba(168, 19, 62, 0.9);      /* Claret (Grana) */
+    filter: drop-shadow(0 0 10px rgba(168, 19, 62, 0.6));
+  }
+  33.33% {
+    stroke: rgba(237, 187, 0, 0.9);      /* Gold */
+    filter: drop-shadow(0 0 10px rgba(237, 187, 0, 0.6));
+  }
+  50% {
+    stroke: rgba(255, 237, 2, 0.9);      /* Yellow (senyera) */
+    filter: drop-shadow(0 0 10px rgba(255, 237, 2, 0.6));
+  }
+  66.66% {
+    stroke: rgba(219, 0, 48, 0.9);       /* Bright Red */
+    filter: drop-shadow(0 0 10px rgba(219, 0, 48, 0.6));
+  }
+  83.33% {
+    stroke: rgba(0, 77, 152, 0.9);       /* Blue (Blau) */
+    filter: drop-shadow(0 0 10px rgba(0, 77, 152, 0.6));
+  }
+  100% {
+    stroke: rgba(0, 77, 152, 0.9);       /* Blue (loop back) */
+    filter: drop-shadow(0 0 10px rgba(0, 77, 152, 0.6));
+  }
+}

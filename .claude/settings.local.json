@@ -47,7 +47,9 @@
       "Bash(git branch:*)",
       "Bash(echo \"Exit code: $?\")",
       "Bash(git merge:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(robocopy:*)",
+      "Bash(powershell -Command:*)"
     ],
     "deny": [],
     "ask": []
